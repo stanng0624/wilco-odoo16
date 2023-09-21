@@ -1,0 +1,10 @@
+# exclude official package
+odoo/
+filestore/*
+!filestore/README.md
+logs/*
+!logs/README.md
+.idea/
+**/.DS_Store
+
+!.gitignore

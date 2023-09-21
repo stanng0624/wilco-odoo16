@@ -1,0 +1,18 @@
+[Unit]
+Description=Odoo16
+Requires=postgresql.service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+SyslogIdentifier=odoo16
+PermissionsStartOnly=true
+User=odoo16
+Group=odoo-dev
+ExecStart=/opt/anaconda3/envs/wilco-odoo16/bin/python /opt/odoo/wilco-odoo/16.0/odoo/odoo-bin -c /opt/odoo/wilco-odoo/16.0/conf/odoo16-ubuntu.conf
+StandardOutput=journal+console
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
