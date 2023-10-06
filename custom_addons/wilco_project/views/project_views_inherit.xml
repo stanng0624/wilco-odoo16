@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="wilco_view_project_project_filter_inherit" model="ir.ui.view">
+        <field name="name">project.project.select.inherited</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_project_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+              <field name="wilco_project_name" string="Project Name"/>
+              <field name="description" string="Description"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="wilco_edit_project_inherit" model="ir.ui.view">
+        <field name="name">project.project.form.inherited</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='label_tasks']" position="before">
+              <field name="wilco_project_name" string="Project Name"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="wilco_project_project_view_form_simplified_inherit" model="ir.ui.view">
+        <field name="name">project.project.view.form.simplified.inherited</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.project_project_view_form_simplified"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@for='name']" position="replace">
+                <label for="name" string="Project Number"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="name" class="o_project_name oe_inline" placeholder="e.g. WC-P23010"/>
+            </xpath>
+            <xpath expr="//field[@name='user_id']" position="before">
+                <div class="oe_title">
+                    <label for="wilco_project_name" string="Project Name"/>
+                    <h1>
+                        <field name="wilco_project_name" class="o_project_name oe_inline" placeholder="e.g. Office Party"/>
+                    </h1>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="wilco_view_project_inherit" model="ir.ui.view">
+        <field name="name">project.project.tree.inherited</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='display_name']" position="replace">
+                <field name="display_name" string="Project" class="fw-bold"/>
+            </xpath>
+            <xpath expr="//field[@name='display_name']" position="after">
+              <field name="description" string="Description" class="fw-bold"/>
+            </xpath>
+            <xpath expr="//field[@name='analytic_account_id']" position="replace">
+                <field name="analytic_account_id" optional="show" groups="analytic.group_analytic_accounting"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

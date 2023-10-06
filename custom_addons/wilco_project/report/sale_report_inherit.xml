@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="sale_report_inherit_template" inherit_id="sale.report_saleorder_document">
+        <xpath expr="//div[@t-field='doc.partner_id']" position="after">
+            <div t-field="doc.partner_id"
+                t-options='{"widget": "contact", "fields": ["phone", "email"], "no_marker": True, "phone_icons": True}' />
+        </xpath>
+        <xpath expr="//span[@t-field='doc.name']" position="replace">
+            <span t-field="doc.wilco_document_number"/>
+        </xpath>
+        <xpath expr="//div[@id='informations']" position="before">
+            <h3 class="mt-4">
+                <span t-if="doc.wilco_order_header" t-field="doc.wilco_order_header" class="text-center"/>
+            </h3>
+        </xpath>
+        <xpath expr="//p[@t-field='doc.note']" position="before">
+            <div t-if="doc.wilco_revision_no">Rev <span t-field="doc.wilco_revision_no"/>: <span class="m-0" t-field="doc.wilco_revision_date" t-options='{"widget": "date","format": "yyyy-MM-dd"}'/></div>
+            <div t-else="">Rev 0: <span class="m-0" t-field="doc.date_order" t-options='{"widget": "date","format": "yyyy-MM-dd"}'/></div>
+        </xpath>
+    </template>
+</odoo>

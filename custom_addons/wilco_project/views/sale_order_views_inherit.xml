@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="wilco_view_order_form_inherit" model="ir.ui.view">
+        <field name="name">sale.order.form.inherited</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_shipping_id']" position="after">
+                <field name="wilco_order_header"/>
+                <field name="analytic_account_id" string="Project Number/Analytic Account" context="{'default_partner_id':partner_invoice_id, 'default_name':name}" attrs="{'readonly': [('invoice_count','!=',0),('state','=','sale')]}" groups="analytic.group_analytic_accounting" force_save="1"/>
+            </xpath>
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="wilco_contact_info"/>
+                <field name="wilco_revision_no"/>
+                <field name="wilco_revision_date"/>
+                <field name="wilco_document_number"/>
+            </xpath>
+
+        </field>
+    </record>
+
+
+    <record id="wilco_view_order_tree_inherit" model="ir.ui.view">
+        <field name="name">sale.order.inherited</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_quotation_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="wilco_document_number"/>
+                <field name="wilco_revision_no"/>
+                <field name="wilco_revision_date"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="wilco_order_header"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
