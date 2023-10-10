@@ -16,6 +16,7 @@
                             <field name="ref"/>
                             <field name="gender"/>
                             <field name="active" invisible="1"/>
+                            <field name="analytic_account_id" domain="[('company_id', '=', False)]" context="{'default_partner_id': False}" groups="analytic.group_analytic_accounting"/>
                         </group>
                     </group>
                 </sheet>
@@ -38,6 +39,7 @@
                 <field name="age"/>
                 <field name="ref"/>
                 <field name="gender"/>
+                <field name="analytic_account_id"/>
             </tree>
         </field>
     </record>
@@ -53,6 +55,7 @@
                 <!--<field name="age"/>-->
                 <field name="ref"/>
                 <field name="gender"/>
+                <field name="analytic_account_id"/>
                 <field name="active" invisible="1"/>
                 <filter name="filter_male" string="Male" domain="[('gender', '=', 'male')]"/>
                 <filter name="filter_female" string="Female" domain="[('gender', '=', 'female')]"/>
@@ -77,7 +80,8 @@
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">hospital.patient</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'search_default_group_by_gender': 1, 'search_default_filter_male': 1}</field>
+        <field name="context">{'search_default_group_by_gender': 1}</field>
+<!--        <field name="context">{'search_default_group_by_gender': 1, 'search_default_filter_male': 1}</field>-->
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first patient!
