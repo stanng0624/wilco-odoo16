@@ -8,10 +8,10 @@
                 <span>Attn: </span><span t-field="doc.wilco_contact_info"/>
             </div>
         </xpath>
-        <xpath expr="//span[@t-field='doc.name']" position="replace">
-            <t t-if="doc.wilco_document_number"><span t-field="doc.wilco_document_number"/></t>
-            <t t-else=""><span t-field="doc.name"/></t>
-        </xpath>
+<!--        <xpath expr="//span[@t-field='doc.name']" position="replace">-->
+<!--            <t t-if="doc.wilco_document_number"><span t-field="doc.wilco_document_number"/></t>-->
+<!--            <t t-else=""><span t-field="doc.name"/></t>-->
+<!--        </xpath>-->
         <xpath expr="//div[@id='informations']" position="before">
             <h3 class="mt-4 text-center">
                 <span t-if="doc.wilco_order_header" t-field="doc.wilco_order_header"/>
