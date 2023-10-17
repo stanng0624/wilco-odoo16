@@ -17,20 +17,41 @@
                 <p class="m-0" t-field="o.invoice_origin"/>
             </div>
         </xpath>
-        <xpath expr="//div[@name='origin']" position="after">
-            <div class="col-auto col-3 mw-100 mb-2" t-if="o.wilco_our_ref" name="wilco_our_ref">
-                <strong>Our Reference:</strong>
-                <p class="m-0" t-field="o.wilco_our_ref"/>
-            </div>
-        </xpath>
+<!--        <xpath expr="//div[@name='origin']" position="after">-->
+<!--            <div class="col-auto col-3 mw-100 mb-2" t-if="o.wilco_our_ref" name="wilco_our_ref">-->
+<!--                <strong>Our Reference:</strong>-->
+<!--                <p class="m-0" t-field="o.wilco_our_ref"/>-->
+<!--            </div>-->
+<!--        </xpath>-->
         <xpath expr="//div[@name='customer_code']" position="replace">
-            <div class="col-auto col-3 mw-100 mb-2" t-if="o.partner_id.ref" name="customer_code">
-                <t t-if="o.move_type in ('out_invoice','out_refund','out_receipt')"><strong>Customer Code:</strong></t>
-                <t t-if="o.move_type in ('in_invoice','in_refund')"><strong>Vendor Code:</strong></t>
-                <t t-else=""><strong>Company Code</strong></t>
+            <div class="col-auto col-3 mw-100 mb-2" t-if="False" name="customer_code">
+                <t t-if="o.move_type in ('out_invoice','out_refund','out_receipt')">
+                    <strong>Customer Code:</strong>
+                </t>
+                <t t-if="o.move_type in ('in_invoice','in_refund')">
+                    <strong>Vendor Code:</strong>
+                </t>
                 <p class="m-0" t-field="o.partner_id.ref"/>
             </div>
         </xpath>
+        <xpath expr="//div[@id='informations']" position="after">
+            <div id="informations" class="row mt-4 mb-4">
+                <div class="col-auto col-3 mw-100 mb-2" t-if="o.partner_id.ref" name="wilco_company_code">
+                    <t t-if="o.move_type in ('out_invoice','out_refund','out_receipt')">
+                        <strong>Customer Code:</strong>
+                    </t>
+                    <t t-if="o.move_type in ('in_invoice','in_refund')">
+                        <strong>Vendor Code:</strong>
+                    </t>
+                    <p class="m-0" t-field="o.partner_id.ref"/>
+                </div>
+                <div class="col-auto col-3 mw-100 mb-2" t-if="o.wilco_our_ref" name="wilco_our_ref">
+                    <strong>Our Reference:</strong>
+                    <p class="m-0" t-field="o.wilco_our_ref"/>
+                </div>
+            </div>
+        </xpath>
+
         <xpath expr="//div[@id='partner_vat_address_not_same_as_shipping']" position="before">
             <div t-if="o.wilco_contact_info">
                 <span>Attn: </span><span t-field="o.wilco_contact_info"/>

@@ -12,6 +12,9 @@
             <t t-if="doc.wilco_document_number"><span t-field="doc.wilco_document_number"/></t>
             <t t-else=""><span t-field="doc.name"/></t>
         </xpath>-->
+        <xpath expr="//span[@t-field='doc.name']" position="replace">
+            <span t-field="doc.wilco_document_number"/>
+        </xpath>
         <xpath expr="//div[@id='informations']" position="before">
             <h3 class="mt-4 text-center">
                 <span t-if="doc.wilco_order_header" t-field="doc.wilco_order_header"/>
@@ -22,15 +25,7 @@
                 <strong>Our Reference:</strong>
                 <p class="m-0" t-field="doc.wilco_our_ref"/>
             </div>
-        </xpath>
-        <!--<xpath expr="//div[@id='informations']" position="after">
-            <div class="row mt-4 mb-4" id="wilco_informations_extension">
-                <div t-if="doc.wilco_contact_info" class="col-auto col-3 mw-100 mb-2" name="wilco_contact_info">
-                    <strong>Attn:</strong>
-                    <p class="m-0" t-field="doc.wilco_contact_info"/>
-                </div>
-            </div>
-        </xpath>-->
+        </xpath>å
         <xpath expr="//p[@t-field='doc.note']" position="before">
             <div t-if="doc.wilco_revision_no">Rev <span t-field="doc.wilco_revision_no"/>: <span class="m-0" t-field="doc.wilco_revision_date" t-options='{"widget": "date"}'/></div>
             <div t-else="">Rev 0: <span class="m-0" t-field="doc.date_order" t-options='{"widget": "date"}'/></div>

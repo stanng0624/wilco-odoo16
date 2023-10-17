@@ -40,7 +40,6 @@
                        attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund'))]}"/>
                 <field name="wilco_project_id"/>
                 <field name="wilco_revision_no"/>
-                <field name="wilco_revision_no"/>
                 <field name="wilco_revision_date"/>
             </xpath>
             <xpath expr="//field[@name='payment_reference']" position="after">
