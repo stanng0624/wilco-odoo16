@@ -9,7 +9,7 @@
                 <field name="ref"/>
             </xpath>
             <xpath expr="//field[@name='vat']" position="after">
-                <field name="ref"/>
+                <field name="ref" id="wilco_ref"/>
             </xpath>
         </field>
     </record>

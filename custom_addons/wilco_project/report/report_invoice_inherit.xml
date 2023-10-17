@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="wilco_report_invoice_document_inherit" inherit_id="account.report_invoice_document">
+        <xpath expr="//p[@name='payment_communication']" position="before">
+            <div t-if="o.wilco_revision_no">Rev <span t-field="o.wilco_revision_no"/>: <span class="m-0" t-field="o.wilco_revision_date" t-options='{"widget": "date","format": "yyyy-MM-dd"}'/></div>
+            <div t-else="">Rev 0: <span class="m-0" t-field="o.invoice_date" t-options='{"widget": "date","format": "yyyy-MM-dd"}'/></div>
+        </xpath>
+        <xpath expr="//div[@name='invoice_date']/p[@t-field='o.invoice_date']" position="replace">
+            <p class="m-0" t-field="o.invoice_date" t-options='{"widget": "date"}'/>
+        </xpath>
+        <xpath expr="//div[@name='due_date']/p[@t-field='o.invoice_date_due']" position="replace">
+            <p class="m-0" t-field="o.invoice_date_due" t-options='{"widget": "date"}'/>
+        </xpath>
+        <xpath expr="//div[@name='origin']" position="replace">
+            <div class="col-auto col-3 mw-100 mb-2" t-if="o.invoice_origin" name="origin">
+                <strong>Order:</strong>
+                <p class="m-0" t-field="o.invoice_origin"/>
+            </div>
+        </xpath>
+        <xpath expr="//div[@name='origin']" position="after">
+            <div class="col-auto col-3 mw-100 mb-2" t-if="o.wilco_our_ref" name="wilco_our_ref">
+                <strong>Our Reference:</strong>
+                <p class="m-0" t-field="o.wilco_our_ref"/>
+            </div>
+        </xpath>
+        <xpath expr="//div[@name='customer_code']" position="replace">
+            <div class="col-auto col-3 mw-100 mb-2" t-if="o.partner_id.ref" name="customer_code">
+                <t t-if="o.move_type in ('out_invoice','out_refund','out_receipt')"><strong>Customer Code:</strong></t>
+                <t t-if="o.move_type in ('in_invoice','in_refund')"><strong>Vendor Code:</strong></t>
+                <t t-else=""><strong>Company Code</strong></t>
+                <p class="m-0" t-field="o.partner_id.ref"/>
+            </div>
+        </xpath>
+        <xpath expr="//div[@id='partner_vat_address_not_same_as_shipping']" position="before">
+            <div t-if="o.wilco_contact_info">
+                <span>Attn: </span><span t-field="o.wilco_contact_info"/>
+            </div>
+        </xpath>
+        <xpath expr="//div[@id='partner_vat_address_same_as_shipping']" position="before">
+            <div t-if="o.wilco_contact_info">
+                <span>Attn: </span><span t-field="o.wilco_contact_info"/>
+            </div>
+        </xpath>
+        <xpath expr="//div[@id='partner_vat_no_shipping']" position="before">
+            <div t-if="o.wilco_contact_info">
+                <span>Attn: </span><span t-field="o.wilco_contact_info"/>
+            </div>
+        </xpath>
+    </template>
+</odoo>

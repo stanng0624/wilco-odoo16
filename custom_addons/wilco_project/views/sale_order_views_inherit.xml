@@ -6,19 +6,30 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_shipping_id']" position="after">
+                <field name="client_order_ref" id="wilco_client_order_ref"/>
                 <field name="wilco_order_header"/>
-                <field name="analytic_account_id" string="Project Number/Analytic Account" context="{'default_partner_id':partner_invoice_id, 'default_name':name}" attrs="{'readonly': [('invoice_count','!=',0),('state','=','sale')]}" groups="analytic.group_analytic_accounting" force_save="1"/>
+                <field name="wilco_project_id"/>
+                <label for="wilco_revision_no" string="Revision no"/>
+                <div name="wilco_revision_no_div" class="o_row">
+                    <field name="wilco_revision_no"/>
+                    <field name="wilco_revision_date"/>
+                </div>
+                <field name="wilco_document_number"/>
+            </xpath>
+            <xpath expr="//field[@name='date_order']" position="after">
+                <field name="commitment_date"/>
             </xpath>
             <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="incoterm" options="{'no_open': True, 'no_create': True}" can_create="true" can_write="true" id="wilco_incoterm"/>
+                <field name="wilco_our_ref"/>
                 <field name="wilco_contact_info"/>
-                <field name="wilco_revision_no"/>
-                <field name="wilco_revision_date"/>
-                <field name="wilco_document_number"/>
+                <field name="user_id" widget="many2one_avatar_user" id="wilco_user_id"/>
+                <field name="team_id" kanban_view_ref="%(sales_team.crm_team_view_kanban)s" options="{'no_create': True}" id="wilco_team_id"/>
+                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" id="wilco_tag_ids"/>
             </xpath>
 
         </field>
     </record>
-
 
     <record id="wilco_view_order_tree_inherit" model="ir.ui.view">
         <field name="name">sale.order.inherited</field>
@@ -26,12 +37,32 @@
         <field name="inherit_id" ref="sale.view_quotation_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
+                <field name="wilco_our_ref"/>
                 <field name="wilco_document_number"/>
                 <field name="wilco_revision_no"/>
                 <field name="wilco_revision_date"/>
             </xpath>
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="wilco_order_header"/>
+                <field name="wilco_contact_info"/>
+                <field name="wilco_project_id"/>
+            </xpath>
+        </field>
+    </record>
+
+     <record id="wilco_view_sales_order_filter_inherit" model="ir.ui.view">
+        <field name="name">sale.order.list.select.inherited</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="name" string="Order"
+                    filter_domain="['|', '|', ('name', 'ilike', self), ('client_order_ref', 'ilike', self), ('partner_id', 'child_of', self), ('wilco_our_ref', 'ilike', self)]"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="wilco_order_header"/>
+                <field name="wilco_contact_info"/>
+                <field name="wilco_project_id"/>
             </xpath>
         </field>
     </record>

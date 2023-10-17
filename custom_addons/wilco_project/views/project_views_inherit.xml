@@ -5,9 +5,16 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.view_project_project_filter"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='name']" position="after">
-              <field name="wilco_project_name" string="Project Name"/>
+            <!--<xpath expr="//field[@name='name']" position="after">
+              <field name="wilco_project_name" string="Project Name" />
               <field name="description" string="Description"/>
+            </xpath>-->
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="name"
+                   filter_domain="['|', '|', '|', '|', ('name', 'ilike', self), ('wilco_project_name', 'ilike', self), ('description', 'ilike', self)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='start_date']" position="before">
+                <filter name="wilco_date_award" date="wilco_date_award"/>
             </xpath>
         </field>
     </record>
@@ -18,7 +25,10 @@
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='label_tasks']" position="before">
-              <field name="wilco_project_name" string="Project Name"/>
+              <field name="wilco_project_name" string="Project Name" required="True"/>
+            </xpath>
+            <xpath expr="//label[@for='date_start']" position="before">
+              <field name="wilco_date_award"/>
             </xpath>
             <xpath expr="//button[@name='project_update_all_action']" position="after">
                 <button class="oe_stat_button" type="object" name="wilco_action_view_analytic_account_entries" icon="fa-usd" attrs="{'invisible': [('analytic_account_id', '=', False)]}" groups="analytic.group_analytic_accounting">
@@ -48,7 +58,7 @@
                 <div class="oe_title">
                     <label for="wilco_project_name" string="Project Name"/>
                     <h1>
-                        <field name="wilco_project_name" class="o_project_name oe_inline" placeholder="e.g. Office Party"/>
+                        <field name="wilco_project_name" class="o_project_name oe_inline" placeholder="e.g. Office Party" required="True"/>
                     </h1>
                 </div>
             </xpath>
@@ -68,6 +78,9 @@
             </xpath>
             <xpath expr="//field[@name='analytic_account_id']" position="replace">
                 <field name="analytic_account_id" optional="show" groups="analytic.group_analytic_accounting"/>
+            </xpath>
+            <xpath expr="//field[@name='date_start']" position="before">
+                <field name="wilco_date_award"/>
             </xpath>
         </field>
     </record>

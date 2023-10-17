@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="wilco_purchase_order_form_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherited</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_ref']" position="after">
+                <field name="wilco_order_header"/>
+                <field name="wilco_project_id"/>
+                <label for="wilco_revision_no" string="Revision no"/>
+                <div name="wilco_revision_no_div" class="o_row">
+                    <field name="wilco_revision_no"/>
+                    <field name="wilco_revision_date"/>
+                </div>
+                <field name="wilco_document_number"/>
+            </xpath>
+            <xpath expr="//div[@name='date_planned_div']" position="after">
+                <field name="payment_term_id" attrs="{'readonly': ['|', ('invoice_status','=', 'invoiced'), ('state', '=', 'done')]}" options="{'no_create': True}" id="wilco_payment_term_id"/>
+                <field name="incoterm_id" options="{'no_open': True, 'no_create': True}" can_create="true" can_write="true" id="wilco_incoterm_id"/>
+                <field name="wilco_our_ref"/>
+                <field name="wilco_contact_info"/>
+            </xpath>
+           <xpath expr="//field[@name='fiscal_position_id']" position="after">
+               <field name="wilco_analytic_account_id" context="{'default_partner_id':partner_id, 'default_name':name}" attrs="{'readonly': [('invoice_count','!=',0),('state','=','purchase')]}" groups="analytic.group_analytic_accounting" force_save="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="wilco_purchase_order_tree_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.tree.inherited</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="wilco_our_ref"/>
+                <field name="wilco_document_number"/>
+                <field name="wilco_revision_no"/>
+                <field name="wilco_revision_date"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="wilco_order_header"/>
+                <field name="wilco_contact_info"/>
+                <field name="wilco_project_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="wilco_view_purchase_order_filter_inherit" model="ir.ui.view">
+        <field name="name">request.quotation.select.inherited</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="name" string="Order"
+                    filter_domain="['|', '|', ('name', 'ilike', self), ('partner_ref', 'ilike', self), ('partner_id', 'child_of', self), ('wilco_our_ref', 'ilike', self)]"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="wilco_order_header"/>
+                <field name="wilco_contact_info"/>
+                <field name="wilco_project_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="wilco_purchase_order_view_search_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.select.inherited</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="name" string="Order"
+                    filter_domain="['|', '|', ('name', 'ilike', self), ('partner_ref', 'ilike', self), ('partner_id', 'child_of', self), ('wilco_our_ref', 'ilike', self)]"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="wilco_order_header"/>
+                <field name="wilco_contact_info"/>
+                <field name="wilco_project_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="wilco_view_invoice_tree_inherit" model="ir.ui.view">
+        <field name="name">account.invoice.tree.inherited</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='payment_reference']" position="after">
+                <field name="wilco_our_ref"/>
+                <field name="wilco_contact_info"/>
+                <field name="wilco_project_id"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="wilco_view_account_invoice_filter_inherit" model="ir.ui.view">
+        <field name="name">account.invoice.select.inherited</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date']" position="after">
+                <field name="wilco_our_ref"/>
+                <field name="wilco_contact_info"/>
+                <field name="wilco_project_id"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="wilco_view_move_form_inherit" model="ir.ui.view">
+        <field name="name">account.move.form.inherited</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@id='header_left_group']" position="inside">
+                <label for="ref"
+                       id="wilco_customer_ref_label"
+                       string="Customer Reference"
+                       attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund'))]}"/>
+                <field name="ref"
+                       id="wilco_customer_ref"
+                       nolabel="1"
+                       attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund'))]}"/>
+                <field name="wilco_project_id"/>
+                <field name="wilco_revision_no"/>
+                <field name="wilco_revision_no"/>
+                <field name="wilco_revision_date"/>
+            </xpath>
+            <xpath expr="//field[@name='payment_reference']" position="after">
+                <field name="wilco_our_ref"/>
+                <field name="wilco_contact_info"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_bank_id']" position="after">
+                <field name="invoice_incoterm_id"
+                       id="wilco_invoice_incoterm_id"
+                       attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'))]}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

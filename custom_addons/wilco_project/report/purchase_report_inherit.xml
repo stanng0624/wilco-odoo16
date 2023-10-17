@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="wilco_report_purchaseorder_document_inherit" inherit_id="purchase.report_purchaseorder_document">
+        <xpath expr="//div[@t-field='o.partner_id']" position="after">
+            <t t-if="o.wilco_contact_info">
+               <span>Attn: </span><span t-field="o.wilco_contact_info"/>
+            </t>
+        </xpath>
+        <xpath expr="//div[@id='informations']/div[@t-if='o.partner_ref']" position="before">
+            <div t-if="o.wilco_our_ref" class="col-3 bm-2">
+                <strong>Our Reference:</strong>
+                <p t-field="o.wilco_our_ref" class="m-0"/>
+            </div>
+        </xpath>
+        <xpath expr="//p[@t-field='o.date_approve']" position="replace">
+            <p t-field="o.date_approve" class="m-0" t-options='{"widget": "date"}'/>
+        </xpath>
+        <xpath expr="//p[@t-field='o.date_order']" position="replace">
+            <p t-field="o.date_order" class="m-0" t-options='{"widget": "date"}'/>
+        </xpath>
+        <xpath expr="//span[@t-field='line.date_planned']" position="replace">
+            <span t-field="line.date_planned" t-options='{"widget": "date"}'/>
+        </xpath>
+        <xpath expr="//div[@class='page']/div[@class='mt-4']" position="replace">
+            <div class="mt-4">
+                <h2>
+                    <span t-if="o.state in ['draft', 'sent', 'to approve']">Request for Quotation #</span>
+                    <span t-if="o.state in ['purchase', 'done']">Purchase Order #</span>
+                    <span t-if="o.state == 'cancel'">Cancelled Purchase Order #</span>
+                    <t t-if="o.wilco_document_number"><span t-field="o.wilco_document_number"/></t>
+                    <t t-else=""><span t-field="o.name"/></t>
+                </h2>
+            </div>
+        </xpath>
+        <xpath expr="//p[@t-field='o.notes']" position="before">
+            <div t-if="o.wilco_revision_no">Rev <span t-field="o.wilco_revision_no"/>: <span class="m-0" t-field="o.wilco_revision_date" t-options='{"widget": "date"}'/></div>
+            <div t-else="">Rev 0: <span class="m-0" t-field="o.date_order" t-options='{"widget": "date"}'/></div>
+        </xpath>
+    </template>
+</odoo>
