@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 class Project(models.Model):
     _inherit = 'project.project'
@@ -6,6 +7,23 @@ class Project(models.Model):
     name = fields.Char(string='Project Number')
     wilco_project_name = fields.Char(string='Project Name', translate=True)
     wilco_date_award = fields.Date(string='Award Date')
+
+    @api.constrains('name')
+    def _check_name(self):
+        for project in self:
+            if not project.name:
+                continue
+
+            if ' ' in project.name:
+                raise UserError("Project Number cannot contain space.")
+
+            project_check_exist_name = self.env['project.project'].search([
+                ('name', '=', project.name),
+                ('id', '!=', self.id),
+            ], limit=1)
+            if project_check_exist_name:
+                raise UserError("Project Number '{}' has already been used by another project (Project Name: {}).".format(
+                    project.name, project_check_exist_name.wilco_project_name))
 
     def name_get(self):
         result = []
@@ -29,7 +47,13 @@ class Project(models.Model):
             if not analytic_account_id:
                 analytic_account = self._create_analytic_account_from_values(vals)
                 vals['analytic_account_id'] = analytic_account.id
-        return super().create(vals_list)
+
+        result = super().create(vals_list)
+
+        for project in result:
+            project._wilco_create_external_identifier(project.name)
+
+        return result
 
     def write(self, values):
         if not values.get('analytic_account_id'):
@@ -52,6 +76,9 @@ class Project(models.Model):
             ])
             analytic_account_to_update.write({'partner_id': self.partner_id})
 
+        for project in self:
+            project._wilco_write_external_identifier(project.name)
+
         return result
 
     def wilco_action_view_analytic_account_entries(self):
@@ -68,3 +95,59 @@ class Project(models.Model):
             'view_mode': 'tree,form,graph,pivot',
             'context': {'search_default_group_date': 1, 'default_account_id': self.analytic_account_id.id}
         }
+
+    def _wilco_exist_external_identifier(self, module = '__import__'):
+        self.ensure_one()
+        external_identifier = self.env['ir.model.data'].search([
+            ('module', '=', module),
+            ('res_id', '=', self.id),
+            ('model', '=', self._name),
+        ], limit=1)
+
+        if external_identifier:
+            return True
+
+        return False
+
+    def _wilco_create_external_identifier(
+            self,
+            external_identifier_name: str,
+            module = '__import__'):
+        self.ensure_one()
+        # Remove space, name is not allowed with space
+        external_identifier_name = external_identifier_name.replace(" ","")
+        self.env['ir.model.data'].sudo().create({
+            'name': external_identifier_name,
+            'module': module,
+            'res_id': self.id,
+            'model': self._name,
+            'noupdate': False
+        })
+
+    def _wilco_update_external_identifier(
+            self,
+            external_identifier_name: str,
+            module='__import__'):
+        self.ensure_one()
+        # Remove space, name is not allowed with space
+        external_identifier_name = external_identifier_name.replace(" ","")
+        external_identifier = self.env['ir.model.data'].search([
+            ('module', '=', module),
+            ('res_id', '=', self.id),
+            ('model', '=', self._name),
+        ], limit=1)
+
+        if external_identifier and external_identifier.name != external_identifier_name:
+            external_identifier.sudo().write({'name': external_identifier_name})
+
+    def _wilco_write_external_identifier(
+            self,
+            external_identifier_name: str,
+            module='__import__',
+            override_existing_id = True):
+        self.ensure_one()
+        if override_existing_id and self._wilco_exist_external_identifier(module):
+            self._wilco_update_external_identifier(external_identifier_name, module)
+        else:
+            self._wilco_create_external_identifier(external_identifier_name, module)
+

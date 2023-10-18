@@ -28,6 +28,16 @@ class SaleOrder(models.Model):
         else:
             self.wilco_revision_date = fields.datetime.today()
 
+    @api.model_create_multi
+    def create(self, vals_list):
+
+        result = super().create(vals_list)
+
+        for order in result:
+            order._wilco_create_external_identifier(order.name)
+
+        return result
+
     def _wilco_compute_document_name(self):
         for document in self:
             name = ""
@@ -56,3 +66,58 @@ class SaleOrder(models.Model):
         invoice_vals['wilco_our_ref'] = self.wilco_our_ref
 
         return invoice_vals
+
+    def _wilco_exist_external_identifier(self, module = '__import__'):
+        self.ensure_one()
+        external_identifier = self.env['ir.model.data'].search([
+            ('module', '=', module),
+            ('model', '=', self._name),
+            ('res_id', '=', self.id),
+        ], limit=1)
+
+        if external_identifier:
+            return True
+
+        return False
+
+    def _wilco_create_external_identifier(
+            self,
+            external_identifier_name: str,
+            module = '__import__'):
+        self.ensure_one()
+        # Remove space, name is not allowed with space
+        external_identifier_name = external_identifier_name.replace(" ","")
+        self.env['ir.model.data'].sudo().create({
+            'name': external_identifier_name,
+            'module': module,
+            'model': self._name,
+            'res_id': self.id,
+            'noupdate': False
+        })
+
+    def _wilco_update_external_identifier(
+            self,
+            external_identifier_name: str,
+            module='__import__'):
+        self.ensure_one()
+        # Remove space, name is not allowed with space
+        external_identifier_name = external_identifier_name.replace(" ","")
+        external_identifier = self.env['ir.model.data'].search([
+            ('module', '=', module),
+            ('model', '=', self._name),
+            ('res_id', '=', self.id),
+        ], limit=1)
+
+        if external_identifier and external_identifier.name != external_identifier_name:
+            external_identifier.sudo().write({'name': external_identifier_name})
+
+    def _wilco_write_external_identifier(
+            self,
+            external_identifier_name: str,
+            module='__import__',
+            override_existing_id = True):
+        self.ensure_one()
+        if override_existing_id and self._wilco_exist_external_identifier(module):
+            self._wilco_update_external_identifier(external_identifier_name, module)
+        else:
+            self._wilco_create_external_identifier(external_identifier_name, module)
