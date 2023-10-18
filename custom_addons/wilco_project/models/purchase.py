@@ -71,7 +71,6 @@ class PurchaseOrder(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-
         result = super().create(vals_list)
 
         for order in result:

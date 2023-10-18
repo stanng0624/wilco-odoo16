@@ -38,19 +38,12 @@ class Project(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """ Create an analytic account if don't provide one
-            Note: create it before calling super() to avoid raising the ValidationError from _check_allow_timesheet
-        """
-        defaults = self.default_get(['analytic_account_id'])
-        for vals in vals_list:
-            analytic_account_id = vals.get('analytic_account_id', defaults.get('analytic_account_id'))
-            if not analytic_account_id:
-                analytic_account = self._create_analytic_account_from_values(vals)
-                vals['analytic_account_id'] = analytic_account.id
-
         result = super().create(vals_list)
 
         for project in result:
+            if not project.analytic_account_id:
+                project._create_analytic_account()
+
             if not project._wilco_exist_external_identifier():
                 project._wilco_create_external_identifier(project.name)
 
