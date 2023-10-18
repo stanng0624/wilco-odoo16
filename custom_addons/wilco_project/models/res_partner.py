@@ -29,7 +29,7 @@ class ResPartner(models.Model):
         result = super().create(vals_list)
 
         for partner in result:
-            if partner.ref:
+            if partner.ref and not partner._wilco_exist_external_identifier():
                 partner._wilco_create_external_identifier(partner.ref)
 
         return result

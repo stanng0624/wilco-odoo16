@@ -34,7 +34,8 @@ class SaleOrder(models.Model):
         result = super().create(vals_list)
 
         for order in result:
-            order._wilco_create_external_identifier(order.name)
+            if not order._wilco_exist_external_identifier():
+                order._wilco_create_external_identifier(order.name)
 
         return result
 

@@ -51,7 +51,8 @@ class Project(models.Model):
         result = super().create(vals_list)
 
         for project in result:
-            project._wilco_create_external_identifier(project.name)
+            if not project._wilco_exist_external_identifier():
+                project._wilco_create_external_identifier(project.name)
 
         return result
 
