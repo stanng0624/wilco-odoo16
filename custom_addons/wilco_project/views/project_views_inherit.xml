@@ -11,7 +11,7 @@
             </xpath>-->
             <xpath expr="//field[@name='name']" position="replace">
                 <field name="name"
-                   filter_domain="['|', '|', '|', '|', ('name', 'ilike', self), ('wilco_project_name', 'ilike', self), ('description', 'ilike', self)]"/>
+                   filter_domain="['|', '|', ('name', 'ilike', self), ('wilco_project_name', 'ilike', self), ('description', 'ilike', self)]"/>
             </xpath>
             <xpath expr="//filter[@name='start_date']" position="before">
                 <filter name="wilco_date_award" date="wilco_date_award"/>

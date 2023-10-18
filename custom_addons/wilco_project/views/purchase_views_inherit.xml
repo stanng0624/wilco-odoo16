@@ -46,7 +46,7 @@
         </field>
     </record>
 
-    
+
     <record id="wilco_purchase_order_kpis_tree_inherit" model="ir.ui.view">
         <field name="name">purchase.order.inherit.purchase.order.tree.inherited</field>
         <field name="model">purchase.order</field>
@@ -74,7 +74,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="replace">
                 <field name="name" string="Order"
-                    filter_domain="['|', '|', ('name', 'ilike', self), ('partner_ref', 'ilike', self), ('partner_id', 'child_of', self), ('wilco_our_ref', 'ilike', self)]"/>
+                    filter_domain="['|', '|', '|', ('name', 'ilike', self), ('partner_ref', 'ilike', self), ('partner_id', 'child_of', self), ('wilco_our_ref', 'ilike', self)]"/>
             </xpath>
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="wilco_order_header"/>
