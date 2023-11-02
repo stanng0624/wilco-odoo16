@@ -27,11 +27,21 @@
                 <field name="team_id" kanban_view_ref="%(sales_team.crm_team_view_kanban)s" options="{'no_create': True}" id="wilco_team_id"/>
                 <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" id="wilco_tag_ids"/>
             </xpath>
-
+            <xpath expr="//group[@name='sale_info']" position="inside">
+                <field name="wilco_invoice_method"/>
+            </xpath>
+            <xpath expr="//group[@name='sale_total']" position="inside">
+                <field name="wilco_amount_downpayment" widget="monetary" readonly="1"/>
+                <field name="wilco_amount_downpayment_deducted" widget="monetary" readonly="1"/>
+                <field name="wilco_amount_invoiced_total" widget="monetary" readonly="1"/>
+                <field name="wilco_amount_invoice_remainder" widget="monetary" readonly="1"/>
+                <field name="wilco_amount_settled_total" widget="monetary" readonly="1"/>
+                <field name="wilco_amount_residual_total" widget="monetary" readonly="1"/>
+           </xpath>
         </field>
     </record>
 
-    <record id="wilco_view_order_tree_inherit" model="ir.ui.view">
+    <record id="wilco_view_quotation_tree_inherit" model="ir.ui.view">
         <field name="name">sale.order.inherited</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_quotation_tree"/>
@@ -46,6 +56,41 @@
                 <field name="wilco_order_header"/>
                 <field name="wilco_contact_info"/>
                 <field name="wilco_project_id"/>
+            </xpath>
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="wilco_amount_downpayment" sum="Total" widget="monetary" optional="hide"/>
+                <field name="wilco_amount_downpayment_deducted" sum="Total" widget="monetary" optional="hide"/>
+                <field name="wilco_amount_invoiced_total" sum="Total" widget="monetary"/>
+                <field name="wilco_amount_invoice_remainder" sum="Total" widget="monetary"/>
+                <field name="wilco_amount_settled_total" sum="Total" widget="monetary"/>
+                <field name="wilco_amount_residual_total" sum="Total" widget="monetary"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="wilco_view_order_tree_inherit" model="ir.ui.view">
+        <field name="name">sale.order.inherited</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="wilco_our_ref"/>
+                <field name="wilco_document_number"/>
+                <field name="wilco_revision_no"/>
+                <field name="wilco_revision_date"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="wilco_order_header"/>
+                <field name="wilco_contact_info"/>
+                <field name="wilco_project_id"/>
+            </xpath>
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="wilco_amount_downpayment" widget="monetary" optional="hide"/>
+                <field name="wilco_amount_downpayment_deducted" widget="monetary" optional="hide"/>
+                <field name="wilco_amount_invoiced_total" sum="Total" widget="monetary"/>
+                <field name="wilco_amount_invoice_remainder" sum="Total" widget="monetary"/>
+                <field name="wilco_amount_settled_total" sum="Total" widget="monetary"/>
+                <field name="wilco_amount_residual_total" sum="Total" widget="monetary"/>
             </xpath>
         </field>
     </record>

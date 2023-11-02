@@ -9,7 +9,7 @@ class Project(models.Model):
     wilco_date_award = fields.Date(string='Award Date')
 
     @api.constrains('name')
-    def _check_name(self):
+    def _wilco_check_name(self):
         for project in self:
             if not project.name:
                 continue
@@ -50,10 +50,10 @@ class Project(models.Model):
         return result
 
     def write(self, values):
-        if not values.get('analytic_account_id'):
-            for project in self:
-                if not project.analytic_account_id:
-                    project._create_analytic_account()
+        # if not values.get('analytic_account_id'):
+        #     for project in self:
+        #         if not project.analytic_account_id:
+        #             project._create_analytic_account()
 
         result = super(Project, self).write(values) if values else True
 
@@ -71,7 +71,11 @@ class Project(models.Model):
             analytic_account_to_update.write({'partner_id': self.partner_id})
 
         for project in self:
-            project._wilco_write_external_identifier(project.name)
+            if not project.analytic_account_id:
+                project._create_analytic_account()
+
+            if 'name' in values:
+                project._wilco_write_external_identifier(project.name)
 
         return result
 

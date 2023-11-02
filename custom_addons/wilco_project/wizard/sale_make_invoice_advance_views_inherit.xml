@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="wilco_view_sale_advance_payment_inv_inherit" model="ir.ui.view">
+        <field name="name">view_sale_advance_payment_inv_inherited</field>
+        <field name="model">sale.advance.payment.inv</field>
+        <field name="inherit_id" ref="sale.view_sale_advance_payment_inv"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='advance_payment_method']" position="after">
+                <label for="wilco_invoice_method"
+                    attrs="{'invisible': ['|', ('count', '&gt;', 1), ('advance_payment_method', '!=', 'delivered')]}"/>
+                <div attrs="{'invisible': ['|', ('count', '&gt;', 1), ('advance_payment_method', '!=', 'delivered')]}"
+                    id="wilco_invoice_method_details">
+                    <field name="wilco_invoice_method" nolabel="1"/>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

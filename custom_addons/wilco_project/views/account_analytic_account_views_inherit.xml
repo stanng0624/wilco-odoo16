@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="wilco_view_account_analytic_account_form_inherit_budget_inherit" model="ir.ui.view">
+        <field name="name">account.analytic.account.form.inherit.budget.inherited</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
+        <field name="priority" eval="100"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='percentage']" position='replace'>
+                <field name="percentage" widget="percentage"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

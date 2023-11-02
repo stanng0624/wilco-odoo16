@@ -11,6 +11,13 @@ class AccountMove(models.Model):
     wilco_project_id = fields.Many2one(
         'project.project', 'Project', readonly=True,
         states={'draft': [('readonly', False)]})
+    wilco_amount_settled_total = fields.Monetary(string="Amount Settled", compute='_wilco_compute_settled_amounts')
+    wilco_amount_settled_total_signed = fields.Monetary(string="Amount Settled in Currency", compute='_wilco_compute_settled_amounts')
+
+    def _wilco_compute_settled_amounts(self):
+        for order in self:
+            order.wilco_amount_settled_total = order.amount_total - order.amount_residual
+            order.wilco_amount_settled_total_signed = order.amount_total_signed - order.amount_residual_signed
 
     @api.onchange('wilco_revision_no')
     def onchange_wilco_revision_no(self):

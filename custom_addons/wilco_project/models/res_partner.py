@@ -7,7 +7,7 @@ class ResPartner(models.Model):
     ref = fields.Char(string='Our reference')
 
     @api.constrains('ref')
-    def _check_ref(self):
+    def _wilco_check_ref(self):
         for partner in self:
             if not partner.ref:
                 continue
@@ -37,10 +37,11 @@ class ResPartner(models.Model):
         result = super(ResPartner, self).write(values)
 
         for partner in self:
-            if partner.ref:
-                partner._wilco_write_external_identifier(partner.ref)
-            else:
-                partner._wilco_delete_external_identifier()
+            if 'ref' in values:
+                if partner.ref:
+                    partner._wilco_write_external_identifier(partner.ref)
+                else:
+                    partner._wilco_delete_external_identifier()
 
         return result
 

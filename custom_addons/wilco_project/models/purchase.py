@@ -29,9 +29,7 @@ class PurchaseOrder(models.Model):
 
     @api.onchange('wilco_project_id')
     def onchange_wilco_project_id(self):
-        if self.wilco_project_id:
-            self.wilco_our_ref = self.wilco_project_id.name
-            self.wilco_analytic_account_id = self.wilco_project_id.analytic_account_id
+        self._wilco_set_project()
 
     @api.onchange('wilco_revision_no')
     def onchange_wilco_revision_no(self):
@@ -71,11 +69,31 @@ class PurchaseOrder(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        result = super().create(vals_list)
+        result = super(PurchaseOrder, self).create(vals_list)
 
         for order in result:
-            if not order._wilco_exist_external_identifier():
-                order._wilco_create_external_identifier(order.name)
+            if order.wilco_project_id.analytic_account_id and order.wilco_analytic_account_id != order.wilco_project_id.analytic_account_id:
+                order._wilco_set_project()
+
+            if order.wilco_revision_no > 0 and not order.wilco_revision_date:
+                order.wilco_revision_date = fields.datetime.today()
+
+            if order.name:
+                order._wilco_write_external_identifier(order.name)
+
+        return result
+
+    def write(self, values):
+        result = super(PurchaseOrder, self).write(values)
+
+        for order in self:
+            if 'wilco_revision_no' in values:
+                if order.wilco_revision_no > 0 and not order.wilco_revision_date:
+                    order.wilco_revision_date = fields.datetime.today()
+
+            if 'name' in values:
+                if order.name:
+                    order._wilco_write_external_identifier(order.name)
 
         return result
 
@@ -134,19 +152,25 @@ class PurchaseOrder(models.Model):
         else:
             self._wilco_create_external_identifier(external_identifier_name, module)
 
+    def _wilco_set_project(self):
+        if self.wilco_project_id:
+            self.wilco_our_ref = self.wilco_project_id.name
+            if self.wilco_project_id.analytic_account_id:
+                self.wilco_analytic_account_id = self.wilco_project_id.analytic_account_id
+
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
     def _prepare_account_move_line(self, move=False):
-        res = super(PurchaseOrderLine, self)._prepare_account_move_line(move)
+        result = super(PurchaseOrderLine, self)._prepare_account_move_line(move)
 
         analytic_account_id = self.order_id.wilco_analytic_account_id.id
         if analytic_account_id and not self.display_type:
             analytic_account_id = str(analytic_account_id)
-            if 'analytic_distribution' in res:
-                res['analytic_distribution'][analytic_account_id] = res['analytic_distribution'].get(analytic_account_id, 0) + 100
+            if 'analytic_distribution' in result:
+                result['analytic_distribution'][analytic_account_id] = result['analytic_distribution'].get(analytic_account_id, 0) + 100
             else:
-                res['analytic_distribution'] = {analytic_account_id: 100}
+                result['analytic_distribution'] = {analytic_account_id: 100}
 
-        return res
+        return result

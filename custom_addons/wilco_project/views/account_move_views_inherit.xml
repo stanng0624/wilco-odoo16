@@ -10,6 +10,9 @@
                 <field name="wilco_contact_info"/>
                 <field name="wilco_project_id"/>
             </xpath>
+            <xpath expr="//field[@name='amount_total_in_currency_signed']" position="after">
+                <field name="wilco_amount_settled_total_signed" string="Total Settled" sum="Total" decoration-bf="1" optional="show"/>
+            </xpath>
         </field>
     </record>
     <record id="wilco_view_account_invoice_filter_inherit" model="ir.ui.view">
