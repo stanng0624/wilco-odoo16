@@ -4,8 +4,8 @@ from odoo.tools import float_is_zero
 
 
 INVOICE_METHOD = [
-    ('invoice_per_line', 'Invoice Per Order Line'),
-    ('single_line', 'Singe Line')
+    ('invoice_by_line', 'Invoice By Order Line'),
+    ('invoice_by_order', 'Invoice By Order Total')
 ]
 
 class SaleOrder(models.Model):
@@ -24,7 +24,7 @@ class SaleOrder(models.Model):
     wilco_invoice_method = fields.Selection(
         selection=INVOICE_METHOD,
         string="Invoice Mehtod",
-        default='single_line',
+        default='invoice_by_order',
         store=True)
 
     wilco_amount_invoiced_total = fields.Monetary(string="Invoiced", compute='_wilco_compute_invoiced_amounts')
@@ -63,8 +63,8 @@ class SaleOrder(models.Model):
 
     def _wilco_compute_settle_amounts(self):
         for order in self:
-            invoices = order.invoice_ids.filtered(lambda invoice: invoice.move_type in ('out_invoice')
-                                                                  and not invoice._is_downpayment())
+            #No refund amount
+            invoices = order.invoice_ids.filtered(lambda invoice: invoice.move_type in ('out_invoice'))
             order.wilco_amount_settled_total = sum(invoices.mapped("wilco_amount_settled_total_signed"))
             order.wilco_amount_residual_total = sum(invoices.mapped("amount_residual_signed"))
 
@@ -238,13 +238,13 @@ class SaleOrder(models.Model):
     def _get_invoiceable_lines(self, final=False):
         result = super(SaleOrder, self)._get_invoiceable_lines(final)
 
-        if self.wilco_invoice_method == 'single_line':
-            result = self._wilco_get_invoiceable_lines_for_single_line(final)
+        if self.wilco_invoice_method == 'invoice_by_order':
+            result = self._wilco_get_invoiceable_lines_for_invoice_by_order(final)
 
         return result
 
 
-    def _wilco_get_invoiceable_lines_for_single_line(self, final=False):
+    def _wilco_get_invoiceable_lines_for_invoice_by_order(self, final=False):
         down_payment_line_ids = []
         invoiceable_line_ids = []
         precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
@@ -252,8 +252,6 @@ class SaleOrder(models.Model):
 
         for line in self.order_line:
             if line.display_type == 'line_section':
-                continue
-            if line.display_type != 'line_note' and float_is_zero(line.product_uom_qty, precision_digits=precision):
                 continue
             if line.is_downpayment:
                 if float_is_zero(line.qty_to_invoice, precision_digits=precision):
@@ -263,6 +261,8 @@ class SaleOrder(models.Model):
                     # at the end of the invoice, in a specific dedicated section.
                     down_payment_line_ids.append(line.id)
                     continue
+            if line.display_type != 'line_note' and float_is_zero(line.product_uom_qty, precision_digits=precision):
+                continue
             if line.product_uom_qty > 0 or (line.product_uom_qty < 0 and final):
                 if not is_invoice_line_added:
                     invoiceable_line_ids.append(line.id)
@@ -270,12 +270,13 @@ class SaleOrder(models.Model):
 
         return self.env['sale.order.line'].browse(invoiceable_line_ids + down_payment_line_ids)
 
-    @api.depends('state', 'order_line.invoice_status')
+    # @api.depends('state', 'order_line.invoice_status', 'order_line.invoice_lines')
+    @api.depends('state', 'order_line.invoice_status', 'order_line.invoice_lines.price_unit')
     def _compute_invoice_status(self):
 
         super(SaleOrder, self)._compute_invoice_status()
 
-        if self.wilco_invoice_method == 'single_line':
+        if self.wilco_invoice_method == 'invoice_by_order':
             unconfirmed_orders = self.filtered(lambda so: so.state not in ['sale', 'done'])
             unconfirmed_orders.invoice_status = 'no'
             confirmed_orders = self - unconfirmed_orders
@@ -300,6 +301,6 @@ class SaleOrder(models.Model):
                     order.invoice_status = 'invoiced'
                 # Not use for upselling and To-do if needed
                 # elif line_invoice_status and all(invoice_status in ('invoiced', 'upselling') for invoice_status in line_invoice_status):
-                #     order.invoice_status = 'upselling'
-                else:
-                    order.invoice_status = 'no'
+                #      order.invoice_status = 'upselling'
+                # else:
+                #     order.invoice_status = 'no'

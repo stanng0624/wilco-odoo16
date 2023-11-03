@@ -1,8 +1,8 @@
 from odoo import api, fields, models
 
 INVOICE_METHOD = [
-    ('invoice_per_line', 'Invoice Per Order Line'),
-    ('single_line', 'Singe Line')
+    ('invoice_by_line', 'Invoice By Order Line'),
+    ('invoice_by_order', 'Invoice By Order Total')
 ]
 
 class SaleAdvancePaymentInv(models.TransientModel):
@@ -11,7 +11,7 @@ class SaleAdvancePaymentInv(models.TransientModel):
     wilco_invoice_method = fields.Selection(
         selection=INVOICE_METHOD,
         string="Invoice Mehtod",
-        default='single_line')
+        default='invoice_by_order')
 
     def _create_invoices(self, sale_orders):
         self.ensure_one()
