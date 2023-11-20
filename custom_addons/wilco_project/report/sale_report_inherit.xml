@@ -30,5 +30,16 @@
             <div t-if="doc.wilco_revision_no">Rev <span t-field="doc.wilco_revision_no"/>: <span class="m-0" t-field="doc.wilco_revision_date" t-options='{"widget": "date"}'/></div>
             <div t-else="">Rev 0: <span class="m-0" t-field="doc.date_order" t-options='{"widget": "date"}'/></div>
         </xpath>
+        <xpath expr="//th[@name='th_taxes']" position="replace">
+            <!--<th name="th_taxes" class="text-end">Taxes X</th>-->
+        </xpath>
+        <xpath expr="//td[@name='td_taxes']" position="replace">
+            <!--<td name="td_taxes" class="text-end">
+                <span t-out="', '.join(map(lambda x: (x.description or x.name), line.tax_id))"/>
+            </td>-->
+        </xpath>
+        <xpath expr="//th[@name='th_description']" position="replace">
+            <th name="th_description" class="text-start" style="width:500px;">Description</th>
+        </xpath>
     </template>
 </odoo>
