@@ -7,4 +7,7 @@ logs/*
 .idea/
 **/.DS_Store
 
+#special modification to core odoo system
+!odoo/addons/account/views/report_invoice.xml
+
 !.gitignore
