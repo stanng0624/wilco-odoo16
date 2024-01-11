@@ -23,6 +23,7 @@ This module contains all the common features of Hospital management
         'views/analytic_account_views_inherit.xml',
         'views/account_analytic_account_views_inherit.xml',
         'wizard/sale_make_invoice_advance_views_inherit.xml',
+        'report/report_payment_receipt_template_inherit.xml',
     ],
     'demo': [],
     'application': True,
