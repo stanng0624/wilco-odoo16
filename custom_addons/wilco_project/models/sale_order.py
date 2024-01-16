@@ -33,6 +33,8 @@ class SaleOrder(models.Model):
     wilco_amount_downpayment_deducted = fields.Monetary(string="Down Payment Deducted", compute='_wilco_compute_invoiced_amounts')
     wilco_amount_settled_total = fields.Monetary(string="Amount Settled", compute='_wilco_compute_settle_amounts')
     wilco_amount_residual_total = fields.Monetary(string="Amount Due", compute='_wilco_compute_settle_amounts')
+    wilco_amount_budget_cost_total = fields.Monetary(string="Budget cost", compute='_wilco_compute_budget_amounts')
+    wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_budget_amounts')
 
     @api.depends('order_line.invoice_lines')
     def _wilco_compute_invoiced_amounts(self):
@@ -67,6 +69,19 @@ class SaleOrder(models.Model):
             invoices = order.invoice_ids.filtered(lambda invoice: invoice.move_type in ('out_invoice'))
             order.wilco_amount_settled_total = sum(invoices.mapped("wilco_amount_settled_total_signed"))
             order.wilco_amount_residual_total = sum(invoices.mapped("amount_residual_signed"))
+
+    @api.depends('order_line')
+    def _wilco_compute_budget_amounts(self):
+        for order in self:
+            order_lines = order.order_line.filtered(lambda line:
+                                                    not line.is_downpayment
+                                                    and not line.display_type
+                                                    )
+            order.wilco_amount_budget_cost_total = sum(order_lines.mapped("wilco_amount_budget_cost_total"))
+            if order.amount_total == 0:
+                order.wilco_gross_profit_percent = 0
+            else:
+                order.wilco_gross_profit_percent = (order.amount_total - order.wilco_amount_budget_cost_total) / order.amount_total
 
     @api.onchange('wilco_project_id')
     def onchange_wilco_project_id(self):

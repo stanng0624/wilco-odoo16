@@ -31,13 +31,23 @@
                 <field name="wilco_invoice_method"/>
             </xpath>
             <xpath expr="//group[@name='sale_total']" position="inside">
+                <field name="wilco_amount_budget_cost_total" widget="monetary" readonly="1"/>
+                <field name="wilco_gross_profit_percent" widget="percentage" readonly="1"/>
                 <field name="wilco_amount_downpayment" widget="monetary" readonly="1"/>
                 <field name="wilco_amount_downpayment_deducted" widget="monetary" readonly="1"/>
                 <field name="wilco_amount_invoiced_total" widget="monetary" readonly="1"/>
                 <field name="wilco_amount_invoice_remainder" widget="monetary" readonly="1"/>
                 <field name="wilco_amount_settled_total" widget="monetary" readonly="1"/>
                 <field name="wilco_amount_residual_total" widget="monetary" readonly="1"/>
-           </xpath>
+            </xpath>
+            <xpath expr="//tree/field[@name='product_template_id']" position="after">
+                <field name="wilco_line_ref"/>
+            </xpath>
+            <xpath expr="//tree/field[@name='price_total']" position="after">
+                <field name="wilco_budget_cost_unit"/>
+                <field name="wilco_amount_budget_cost_total"/>
+                <field name="wilco_gross_profit_percent" widget="percentage"/>
+            </xpath>
         </field>
     </record>
 
@@ -58,6 +68,8 @@
                 <field name="wilco_project_id"/>
             </xpath>
             <xpath expr="//field[@name='state']" position="after">
+                <field name="wilco_amount_budget_cost_total" widget="monetary" readonly="1"/>
+                <field name="wilco_gross_profit_percent" widget="percentage" readonly="1"/>
                 <field name="wilco_amount_downpayment" sum="Total" widget="monetary" optional="hide"/>
                 <field name="wilco_amount_downpayment_deducted" sum="Total" widget="monetary" optional="hide"/>
                 <field name="wilco_amount_invoiced_total" sum="Total" widget="monetary"/>
@@ -85,6 +97,8 @@
                 <field name="wilco_project_id"/>
             </xpath>
             <xpath expr="//field[@name='state']" position="after">
+                <field name="wilco_amount_budget_cost_total" widget="monetary" readonly="1"/>
+                <field name="wilco_gross_profit_percent" widget="percentage" readonly="1"/>
                 <field name="wilco_amount_downpayment" widget="monetary" optional="hide"/>
                 <field name="wilco_amount_downpayment_deducted" widget="monetary" optional="hide"/>
                 <field name="wilco_amount_invoiced_total" sum="Total" widget="monetary"/>

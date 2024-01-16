@@ -78,5 +78,11 @@
             <div t-if="o.wilco_revision_no">Rev <span t-field="o.wilco_revision_no"/>: <span class="m-0" t-field="o.wilco_revision_date" t-options='{"widget": "date","format": "yyyy-MM-dd"}'/></div>
             <div t-else="">Rev 0: <span class="m-0" t-field="o.invoice_date" t-options='{"widget": "date","format": "yyyy-MM-dd"}'/></div>
         </xpath>
+        <xpath expr="//th[@name='th_description']" position="before">
+            <th name="wilco_th_line_ref" class="text-start">Item</th>
+        </xpath>
+        <xpath expr="//td[@name='account_invoice_line_name']" position="before">
+            <td name="wilco_td_line_ref"><span t-field="line.wilco_line_ref"/></td>
+        </xpath>
     </template>
 </odoo>

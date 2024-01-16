@@ -3,6 +3,37 @@ from odoo import models, fields, api, _
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
+    wilco_line_ref = fields.Char(string='Line reference')
+    wilco_budget_cost_unit = fields.Monetary(string="Unit cost", stored=True)
+    wilco_amount_budget_cost_total = fields.Monetary(string="Sub-total cost", stored=True, compute='_wilco_compute_amount_budget_cost_total')
+    wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_gross_profit_percent')
+
+    @api.onchange('wilco_budget_cost_unit')
+    def onchange_wilco_budget_cost_unit(self):
+        if self.product_uom_qty != 0 and self.wilco_budget_cost_unit != 0:
+            self.wilco_amount_budget_cost_total = self.product_uom_qty * self.wilco_budget_cost_unit
+
+    @api.depends('product_uom_qty', 'wilco_budget_cost_unit')
+    def _wilco_compute_amount_budget_cost_total(self):
+        """
+        Compute the amounts of the budget cost amount.
+        """
+        for line in self:
+            amount_budget_cost_total = line.product_uom_qty * line.wilco_budget_cost_unit
+            line.wilco_amount_budget_cost_total = amount_budget_cost_total
+
+    @api.depends('product_uom_qty', 'price_subtotal', 'wilco_budget_cost_unit')
+    def _wilco_compute_gross_profit_percent(self):
+        """
+        Compute the amounts of the budget cost amount.
+        """
+        for line in self:
+            if line.price_subtotal > 0:
+                amount_budget_cost_total = line.product_uom_qty * line.wilco_budget_cost_unit
+                line.wilco_gross_profit_percent = (line.price_subtotal - amount_budget_cost_total) / line.price_subtotal
+            else:
+                line.wilco_gross_profit_percent = 0.0
+
     def _prepare_invoice_line(self, **optional_values):
 
         values = super(SaleOrderLine, self)._prepare_invoice_line(**optional_values)
@@ -23,7 +54,7 @@ class SaleOrderLine(models.Model):
 
         analytic_account_id = sale_order.analytic_account_id.id
         if analytic_account_id:
-            analytic_account_id = str(analytic_account_id)
-            values['analytic_distribution'] = {analytic_account_id: 100}
+            analytic_account_id_str = str(analytic_account_id)
+            values['analytic_distribution'] = {analytic_account_id_str: 100}
 
         return values

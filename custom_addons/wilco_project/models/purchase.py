@@ -162,6 +162,8 @@ class PurchaseOrder(models.Model):
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+    wilco_line_ref = fields.Char(string='Line reference')
+
     def _prepare_account_move_line(self, move=False):
         result = super(PurchaseOrderLine, self)._prepare_account_move_line(move)
 

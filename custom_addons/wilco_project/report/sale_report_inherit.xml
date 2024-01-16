@@ -41,5 +41,11 @@
         <xpath expr="//th[@name='th_description']" position="replace">
             <th name="th_description" class="text-start" style="width:500px;">Description</th>
         </xpath>
+        <xpath expr="//th[@name='th_description']" position="before">
+            <th name="wilco_th_line_ref" class="text-start">Item</th>
+        </xpath>
+        <xpath expr="//td[@name='td_name']" position="before">
+            <td name="wilco_td_line_ref"><span t-field="line.wilco_line_ref"/></td>
+        </xpath>
     </template>
 </odoo>
