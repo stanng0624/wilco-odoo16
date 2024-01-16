@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="wilco_product_template_form_view_inherit" model="ir.ui.view">
+        <field name="name">product.template.form.view.inherit.sale.inherited</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='sales']//group[@name='description']" position="inside">
+                <field name="wilco_sale_skip_update_name"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

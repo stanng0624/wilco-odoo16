@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 class ResPartner(models.Model):
@@ -13,15 +13,15 @@ class ResPartner(models.Model):
                 continue
 
             if ' ' in partner.ref:
-                raise UserError("Our reference cannot contain space.")
+                raise UserError(_("Our reference cannot contain space."))
 
-            partner_check_exist_ref = self.env['res.partner'].search([
+            partner_exist_ref = self.env['res.partner'].search([
                 ('ref', '=', partner.ref),
                 ('id', '!=', self.id),
             ], limit=1)
-            if partner_check_exist_ref:
-                raise UserError("Our reference '{}' has already been used by another company/individual (Name: {}).".format(
-                    partner.ref, partner_check_exist_ref.display_name))
+            if partner_exist_ref:
+                raise UserError(_("Our reference '{}' has already been used by another company/individual (Name: {}).").format(
+                    partner.ref, partner_exist_ref.display_name))
 
     @api.model_create_multi
     def create(self, vals_list):

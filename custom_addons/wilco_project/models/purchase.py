@@ -42,7 +42,7 @@ class PurchaseOrder(models.Model):
         for document in self:
             name = ""
             if document.wilco_revision_no > 0:
-                name = f"{document.name}-R{document.wilco_revision_no}"
+                name = "{}-R{}".format(document.name, document.wilco_revision_no)
             else:
                 name = document.name
             document.wilco_document_number = name
@@ -58,9 +58,9 @@ class PurchaseOrder(models.Model):
     def _wilco_validate_purchase_order_confirm(self):
         for order in self:
             if len(order.order_line) <= 0:
-                raise UserError(_(f"No order line is confirmed. (Order: {order.name})"))
+                raise UserError(_("No order line is confirmed. (Order: {})".format(order.name)))
             if not order.wilco_project_id:
-                raise UserError(_(f"Project must be specified. (Order: {order.name})"))
+                raise UserError(_("Project must be specified. (Order: {})".format(order.name)))
 
     def button_confirm(self):
         self._wilco_validate_purchase_order_confirm()

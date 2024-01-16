@@ -10,10 +10,10 @@ class AccountMoveLine(models.Model):
     def _unlink_except_linked_order_line(self):
         # Allow delete when it is delete from header, dynamic_unlink will be True if delete from header
         dynamic_unlink = self._context.get('dynamic_unlink')
-        if not dynamic_unlink and self.sale_line_ids:
+        if not dynamic_unlink and self.sale_line_ids and self.move_id.sale_order_count == 1:
             sale_order = self.sale_line_ids.order_id
             if sale_order.id and sale_order.wilco_invoice_method == 'invoice_by_order':
-                raise UserError(_("You can not remove the first order line once the sales order is invoice by total"))
+                raise UserError(_("You can not remove the first order line since it will affect the sales order linkage with invoice"))
 
     @api.onchange('product_id')
     def _wilco_onchange_product_id(self):

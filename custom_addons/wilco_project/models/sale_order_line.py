@@ -7,6 +7,18 @@ class SaleOrderLine(models.Model):
     wilco_budget_cost_unit = fields.Monetary(string="Unit cost", stored=True)
     wilco_amount_budget_cost_total = fields.Monetary(string="Sub-total cost", stored=True, compute='_wilco_compute_amount_budget_cost_total')
     wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_gross_profit_percent')
+    wilco_skip_update_name = fields.Boolean(string="Skip update name", compute="_wilco_compute_skip_update_name")
+
+    def _wilco_compute_skip_update_name(self):
+        for line in self:
+            line.wilco_skip_update_name = line.product_id.wilco_sale_skip_update_name
+
+    def _get_sale_order_line_multiline_description_sale(self):
+        #Since their input of description is too long, the change of product to revise name is not necessary
+        if self.name and self.wilco_skip_update_name:
+            return self.name
+
+        return super()._get_sale_order_line_multiline_description_sale()
 
     @api.onchange('wilco_budget_cost_unit')
     def onchange_wilco_budget_cost_unit(self):
