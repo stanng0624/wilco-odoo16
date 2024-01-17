@@ -8,6 +8,9 @@
             <xpath expr="//page[@name='sales']//group[@name='description']" position="inside">
                 <field name="wilco_sale_skip_update_name"/>
             </xpath>
+            <xpath expr="//page[@name='purchase']//field[@name='description_purchase']" position="after">
+                <field name="wilco_purchase_skip_update_name"/>
+            </xpath>
         </field>
     </record>
 </odoo>

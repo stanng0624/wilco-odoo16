@@ -163,6 +163,18 @@ class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
     wilco_line_ref = fields.Char(string='Line reference')
+    wilco_skip_update_name = fields.Boolean(string="Skip update name", compute="_wilco_compute_skip_update_name")
+
+    def _wilco_compute_skip_update_name(self):
+        for line in self:
+            line.wilco_skip_update_name = line.product_id.wilco_purchase_skip_update_name
+
+    def _get_product_purchase_description(self, product_lang):
+        #Since their input of description is too long, the change of product to revise name is not necessary
+        if self.name and self.wilco_skip_update_name:
+            return self.name
+
+        return super()._get_product_purchase_description(product_lang)
 
     def _prepare_account_move_line(self, move=False):
         result = super(PurchaseOrderLine, self)._prepare_account_move_line(move)

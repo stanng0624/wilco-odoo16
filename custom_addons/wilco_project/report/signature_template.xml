@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--Inherited the external layout template for adding signature-->
+    <template id="wilco_signature_template">
+        <div id="signature">
+            <table
+              cellpadding="0"
+              cellspacing="0"
+              class="row justify-content-end"
+              style="float:right; display:flex; margin: 10px 10px 10px 10px;border: none">
+                <tbody style="border: none;">
+                    <tr style="border: none;">
+                      <td style="border: none; width: 50%">
+                        <div>
+<!--
+                        <strong><span t-esc="doc.company_id.name"/></strong>
+-->
+                        <strong><span t-esc="company.name"/></strong>
+                        </div>
+                        <div style="height: 3.5cm">
+                            <t t-if="company.wilco_signature">
+                                <img t-att-src="image_data_uri(company.wilco_signature)"
+                                     style="max-height: 3.5cm; max-width: 3.5m; position: relative;left: 2.5cm;"/>
+                            </t>
+                        </div>
+                        <div>
+                            <div style="width: 8cm; border-top: 1px solid black;height: 10px;"/>
+                            <div style="font-weight: bold;">
+                                <span style="padding-bottom: 1px;height: 1.5cm">
+                                    Authorized by:
+                                </span>
+                                <div style="height: 10px"/>
+                                <br/>
+                                <span style="padding-bottom: 1px;">
+                                    Authorized on:
+                                </span>
+                            </div>
+                        </div>
+                      </td>
+                      <td style="border: none; width: 10cm">
+                        <div>
+                        <strong>Client:</strong>
+                        </div>
+                        <div style="height: 3.5cm">
+                        </div>
+                        <div style="width: 8cm;border-top: 1px solid black;height: 10px;"/>
+                        <div style="font-weight: bold;">
+                            <span style="padding-bottom: 1px;">Accepted by:</span>
+                            <div style="height: 10px"/>
+                            <br/>
+                            <span style="padding-bottom: 1px;">Accepted on:</span>
+                        </div>
+                      </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </template>
+</odoo>
