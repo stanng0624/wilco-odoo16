@@ -5,6 +5,7 @@
             <div class="col-6" t-if="o.payment_method_line_id">
                 Payment Method: <span t-field="o.payment_method_line_id.name"/>
             </div>
+            <t t-set="wilco_show_document_revision" t-value="1"/>
         </xpath>
     </template>
 </odoo>

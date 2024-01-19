@@ -4,8 +4,8 @@ class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
     wilco_line_ref = fields.Char(string='Line reference')
-    wilco_budget_cost_unit = fields.Monetary(string="Unit cost", stored=True)
-    wilco_amount_budget_cost_total = fields.Monetary(string="Sub-total cost", stored=True, compute='_wilco_compute_amount_budget_cost_total')
+    wilco_budget_cost_unit = fields.Monetary(string="Unit cost", store=True)
+    wilco_amount_budget_cost_total = fields.Monetary(string="Sub-total cost", store=True, compute='_wilco_compute_amount_budget_cost_total')
     wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_gross_profit_percent')
     wilco_skip_update_name = fields.Boolean(string="Skip update name", compute="_wilco_compute_skip_update_name")
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="wilco_view_project_project_filter_inherit" model="ir.ui.view">
-        <field name="name">project.project.select.inherited</field>
+        <field name="name">project.project.select.inherit.wilco_project</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.view_project_project_filter"/>
         <field name="arch" type="xml">
@@ -20,7 +20,7 @@
     </record>
 
     <record id="wilco_edit_project_inherit" model="ir.ui.view">
-        <field name="name">project.project.form.inherited</field>
+        <field name="name">project.project.form.inherit.wilco_project</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
@@ -44,7 +44,7 @@
     </record>
 
     <record id="wilco_project_project_view_form_simplified_inherit" model="ir.ui.view">
-        <field name="name">project.project.view.form.simplified.inherited</field>
+        <field name="name">project.project.view.form.simplified.inherit.wilco_project</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.project_project_view_form_simplified"/>
         <field name="arch" type="xml">
@@ -66,7 +66,7 @@
     </record>
 
     <record id="wilco_view_project_inherit" model="ir.ui.view">
-        <field name="name">project.project.tree.inherited</field>
+        <field name="name">project.project.tree.inherit.wilco_project</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.view_project"/>
         <field name="arch" type="xml">

@@ -1,0 +1,12 @@
+.wilco_report_information td {
+/*
+    font-size: 20px;
+*/
+    padding: 2px;
+    border: 0px;
+}
+.wilco_order_header {
+    font-size: 18px;
+    padding: 0px;
+    margin: 0px;
+}

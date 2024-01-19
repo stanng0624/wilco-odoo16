@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--Inherited the external layout template for adding signature and document revision-->
+    <template id="wilco_report_footer_inherited"
+              inherit_id="web.external_layout_boxed">
+<!--        <xpath expr="//div[hasclass('text-center')]" position="before">-->
+<!--            &lt;!&ndash;<div id="wilco_iso_image">-->
+<!--                <table-->
+<!--                  cellpadding="0"-->
+<!--                  cellspacing="0"-->
+<!--                  class="row justify-content-end"-->
+<!--                  style="float:right;display:flex;margin: 10px 10px 10px 10px;position: absolute; right: 0px;border: none;">-->
+<!--                  <tbody style="border: none;">-->
+<!--                    <tr style="border: none;">-->
+<!--                      <td style="border: none;">-->
+<!--                        <img t-att-src="'/wilco_project/static/iso_image/iso_image_1.png'"-->
+<!--                             style="max-height: 2cm; max-width: 2cm"/>-->
+<!--                      </td>-->
+<!--                      <td style="border: none;">-->
+<!--                        <img t-att-src="'/wilco_project/static/iso_image/iso_image_2.png'"-->
+<!--                             style="max-height: 2cm; max-width: 2cm"/>-->
+<!--                      </td>-->
+<!--                      <td style="border: none;">-->
+<!--                        <img t-att-src="'/wilco_project/static/iso_image/iso_image_3.png'"-->
+<!--                             style="max-height: 2cm; max-width: 2cm"/>-->
+<!--                      </td>-->
+<!--                    </tr>-->
+<!--                  </tbody>-->
+<!--                </table>-->
+<!--            </div>&ndash;&gt;-->
+<!--            <t t-call="wilco_project.wilco_iso_image"/>-->
+<!--            <div id="wilco_document_reference_footer"-->
+<!--                 style="float:left; diplay:flex;postion: absolute; left: 0px;margin-top: 10px">-->
+<!--                <t t-call="wilco_project.wilco_document_reference"/>-->
+<!--            </div>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass('text-center')]" position="attributes">-->
+<!--            <attribute name="style">position:absolute</attribute>-->
+<!--        </xpath>-->
+        <xpath expr="//div[hasclass('text-center')]" position="replace">
+                <!--<div id="wilco_document_reference_footer"
+                     style="float:left; diplay:flex;postion: absolute; left: 0px;margin-top: 10px">
+                    <t t-call="wilco_project.wilco_document_reference"/>
+                </div>-->
+            <div class="text-center">
+                <table class="table table-borderless" style="border: none;">
+                    <tr>
+                        <td class="col-2" style="text-align: left;">
+                            <t t-call="wilco_project.wilco_document_reference"/>
+                        </td>
+                        <td class="col-8">
+                            <div t-field="company.report_footer"/>
+                            <div t-if="report_type == 'pdf'">
+                                Page: <span class="page"/> / <span class="topage"/>
+                            </div>
+                            <div t-if="report_type == 'pdf' and display_name_in_footer" class="text-muted">
+                                <span t-field="o.name"/>
+                            </div>
+                        </td>
+                        <td class="col-2">
+                            <t t-call="wilco_project.wilco_iso_image"/>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </xpath>
+    </template>
+</odoo>

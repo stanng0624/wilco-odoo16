@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="wilco_view_invoice_tree_inherit" model="ir.ui.view">
-        <field name="name">account.invoice.tree.inherited</field>
+        <field name="name">account.invoice.tree.inherit.wilco_project</field>
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_invoice_tree"/>
         <field name="arch" type="xml">

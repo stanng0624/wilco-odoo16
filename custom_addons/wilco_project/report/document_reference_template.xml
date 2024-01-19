@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="wilco_iso_image">
+        <div id="wilco_iso_image">
+            <table
+              cellpadding="0"
+              cellspacing="0"
+              class="row justify-content-end"
+              style="float:right;display:flex;margin: 10px 10px 10px 10px;position: absolute; right: 0px;border: none;">
+              <tbody style="border: none;">
+                <tr style="border: none;">
+                  <td style="border: none;">
+                    <img t-att-src="'/wilco_project/static/iso_image/iso_image_1.png'"
+                         style="max-height: 2cm; max-width: 2cm"/>
+                  </td>
+                  <td style="border: none;">
+                    <img t-att-src="'/wilco_project/static/iso_image/iso_image_2.png'"
+                         style="max-height: 2cm; max-width: 2cm"/>
+                  </td>
+                  <td style="border: none;">
+                    <img t-att-src="'/wilco_project/static/iso_image/iso_image_3.png'"
+                         style="max-height: 2cm; max-width: 2cm"/>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+        </div>
+    </template>
+    <!--Inherited the external layout template for adding signature-->
+    <template id="wilco_document_reference">
+        <!--convert variable with prefix "wilco_" to local variable-->
+        <t t-if="wilco_show_document_revision" t-set="show_document_revision" t-value="wilco_show_document_revision"/>
+        <t t-if="wilco_revision_no" t-set="revision_no" t-value="wilco_revision_no"/>
+        <t t-if="wilco_revision_date" t-set="revision_date" t-value="wilco_revision_date"/>
+        <t t-if="wilco_document_number" t-set="document_number" t-value="wilco_document_number"/>
+
+        <!-- Auto set the variable if not set outside template to avoid error-->
+        <t t-if="not show_document_revision" t-set="show_document_revision" t-value="False"/>
+        <t t-if="not revision_no" t-set="revision_no" t-value="0"/>
+        <t t-if="not revision_date" t-set="revision_date" t-value="datetime.datetime.now()"/>
+
+        <t t-if="document_number">
+            <div is="wilco_document_number">Our Ref: <span t-esc="document_number"/></div>
+        </t>
+        <t t-if="show_document_revision">
+            <div id="wilco_document_revision">
+                <p>Rev <span t-esc="revision_no"/>: <span class="m-0" t-esc="revision_date" t-options='{"widget": "date"}'/></p>
+            </div>
+        </t>
+    </template>
+</odoo>

@@ -1,45 +1,161 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
-    <template id="wilco_report_saleorder_document_inherit" inherit_id="sale.report_saleorder_document">
-        <xpath expr="//div[@t-field='doc.partner_id']" position="after">
+    <template id="wilco_report_saleorder_document_inherit"
+              inherit_id="sale.report_saleorder_document">
+<!--
+        <xpath expr="//div[hasclass('page')]" position="attributes">
+            <attribute name="class" add="mt-0" separator=" "/>
+        </xpath>
+-->
+        <!--<xpath expr="//div[@t-field='doc.partner_id']" position="after">
             <div t-field="doc.partner_id"
                 t-options='{"widget": "contact", "fields": ["phone", "email"], "no_marker": True, "phone_icons": True}' />
             <div t-if="doc.wilco_contact_info">
                 <span>Attn: </span><span t-field="doc.wilco_contact_info"/>
             </div>
-        </xpath>
+        </xpath>-->
         <!--<xpath expr="//span[@t-field='doc.name']" position="replace">
             <t t-if="doc.wilco_document_number"><span t-field="doc.wilco_document_number"/></t>
             <t t-else=""><span t-field="doc.name"/></t>
         </xpath>-->
-        <xpath expr="//span[@t-field='doc.name']" position="replace">
-            <span t-field="doc.wilco_document_number"/>
+        <xpath expr="//t[@t-set='address']" position="attributes">
+            <attribute name="t-if">False</attribute>
         </xpath>
-        <xpath expr="//div[@id='informations']" position="before">
-            <h3 class="mt-4 text-center">
-                <span t-if="doc.wilco_order_header" t-field="doc.wilco_order_header"/>
-            </h3>
+        <xpath expr="//t[@t-set='information_block']" position="attributes">
+            <attribute name="t-if">False</attribute>
         </xpath>
+
+        <xpath expr="//h2" position="replace">
+            <t t-if="not wilco_doc_type">
+                <t t-if="env.context.get('proforma', False) or is_pro_forma" t-set="wilco_doc_type" t-value="'proforma_invoice'"/>
+                <t t-elif="doc.state in ['draft','sent']" t-set="wilco_doc_type" t-value="'quotation'"/>
+                <t t-else="else" t-set="wilco_doc_type" t-value="'order_confirmation'"/>
+            </t>
+            <t t-set="wilco_show_document_revision" t-value="True"/>
+            <t t-set="wilco_revision_no" t-value="doc.wilco_revision_no if doc.wilco_revision_no else 0"/>
+            <t t-set="wilco_revision_date" t-value="doc.wilco_revision_date if doc.wilco_revision_no else doc.date_order"/>
+            <t t-set="wilco_document_number" t-value="doc.wilco_document_number"/>
+
+            <h2 class="mt-0" style="font-weight: bold;">
+                <!--<t t-if="wilco_doc_type">
+                    <span t-if="wilco_doc_type in ['quotation']">Quotation: </span>
+                    <span t-elif="wilco_doc_type in ['order_confirmation']">Order confirmation: </span>
+                    <span t-elif="wilco_doc_type in ['proforma_invoice']">Pro-Forma Invoice: </span>
+                    <span t-else="">Order: </span>
+                </t>
+                <t t-else="else">
+                    <span t-if="env.context.get('proforma', False) or is_pro_forma">Pro-Forma Invoice: </span>
+                    <span t-elif="doc.state in ['draft','sent']">Quotation: </span>
+                    <span t-else="">Order confirmation: </span>
+                </t>-->
+                <span t-if="wilco_doc_type in ['quotation']">Quotation: </span>
+                <span t-elif="wilco_doc_type in ['order_confirmation']">Order confirmation: </span>
+                <span t-elif="wilco_doc_type in ['proforma_invoice']">Pro-Forma Invoice: </span>
+                <span t-else="">Order: </span>
+                <t t-if="doc.wilco_document_number"><span t-field="doc.wilco_document_number"/></t>
+                <t t-else=""><span t-field="doc.name"/></t>
+            </h2>
+        </xpath>
+<!--
         <xpath expr="//div[@name='informations_reference']" position="before">
             <div t-if="doc.wilco_our_ref" class="col-auto col-3 mw-100 mb-2" name="wilco_informations_reference">
                 <strong>Our Reference:</strong>
                 <p class="m-0" t-field="doc.wilco_our_ref"/>
             </div>
-        </xpath>å
-        <xpath expr="//p[@t-field='doc.note']" position="before">
-            <div t-if="doc.wilco_revision_no">Rev <span t-field="doc.wilco_revision_no"/>: <span class="m-0" t-field="doc.wilco_revision_date" t-options='{"widget": "date"}'/></div>
-            <div t-else="">Rev 0: <span class="m-0" t-field="doc.date_order" t-options='{"widget": "date"}'/></div>
         </xpath>
-        <xpath expr="//th[@name='th_taxes']" position="replace">
-            <!--<th name="th_taxes" class="text-end">Taxes X</th>-->
+-->
+        <xpath expr="//div[@id='informations']" position="replace">
+            <link rel="stylesheet" href="/wilco_project/static/src/css/sale_report.css"/>
+            <div class="row mt-0 mb-4 wilco_report_information" id="informations" style="padding: 0px">
+                <table
+                    cellpadding="0"
+                    cellspacing="0"
+                    class="table table-borderless"
+                    style="border: none">
+                    <tr>
+                        <th class="col-2"></th>
+                        <th class="col-5"></th>
+                        <th class="col-2"></th>
+                        <th class="col-3"></th>
+                    </tr>
+                    <tr>
+                        <td style="border: none;">
+                            <t t-if="wilco_doc_type in ['quotation']"><strong>Quotation Date:</strong></t>
+                            <t t-else="else"><strong>Order Date:</strong></t>
+                        </td>
+                        <td style="border: none;"><span class="m-0" t-field="doc.date_order" t-options='{"widget": "date"}'/></td>
+<!--                        <td style="border: none;"><t t-if="wilco_doc_type in ['quotation']" t-set="wilco_display_validity_date" t-value="True"><strong>Valid Date:</strong></t></td>-->
+<!--                        <td style="border: none;"><t t-if="wilco_display_validity_date"><span class="m-0" t-field="doc.validity_date" t-options='{"widget": "date"}'/></t></td>-->
+                        <td style="border: none;"><t t-if="wilco_doc_type in ['quotation']"><strong>Valid Date:</strong></t></td>
+                        <td style="border: none;"><t t-if="wilco_doc_type in ['quotation']"><span class="m-0" t-field="doc.validity_date" t-options='{"widget": "date"}'/></t></td>
+                    </tr>
+                    <tr>
+                        <td style="border: none;" class="text-left"><strong>To:</strong></td>
+                        <td style="border: none;"><span class="m-0" t-field="doc.partner_invoice_id.name"/></td>
+                        <td style="border: none;"><strong>From:</strong></td>
+                        <td style="border: none;"><span class="m-0" t-field="doc.company_id.name"/></td>
+                    </tr>
+                    <tr>
+                        <td style="border: none;"><strong>Attn:</strong></td>
+                        <td style="border: none;"><span class="m-0" t-field="doc.wilco_contact_info"/></td>
+                        <td style="border: none;"><strong>Attn:</strong></td>
+                        <td style="border: none;"><span class="m-0" t-field="doc.user_id"/></td>
+                    </tr>
+                    <tr>
+                        <td style="border: none;"><strong>Invoicing Address:</strong></td>
+                        <td style="border: none;">
+                            <div t-field="doc.partner_invoice_id"
+                                 t-options='{"widget": "contact", "fields": ["address", "phone"], "no_marker": True, "phone_icons": True}'/></td>
+                    </tr>
+                    <tr>
+                        <td style="border: none;"><strong>Your reference:</strong></td>
+                        <td style="border: none;"><span class="m-0" t-field="doc.client_order_ref"/></td>
+                        <td style="border: none;"><strong>Our reference:</strong></td>
+                        <td style="border: none;">
+                            <t t-if="doc.partner_invoice_id.ref">
+                                <span class="m-0" t-field="doc.partner_invoice_id.ref"/><span class="m-0" t-if="doc.wilco_our_ref">,</span>
+                            </t>
+                            <t t-if="doc.wilco_our_ref">
+                                <p class="m-0" t-field="doc.wilco_our_ref"/>
+                            </t>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="mt-0 text-center wilco_order_header">
+                <span t-if="doc.wilco_order_header" t-field="doc.wilco_order_header"/>
+            </div>
+            <div class="mt-4 mb-0 text-left col-12">
+                Thank you for your enquiry and our offer are provided as below for your consideration:
+            </div>
+        </xpath>
+        <!--<xpath expr="//div[@id='informations']" position="before">
+            <h3 class="mt-4 text-center">
+                <span t-if="doc.wilco_order_header" t-field="doc.wilco_order_header" style="font-size: 20px"/>
+            </h3>
+        </xpath>-->
+        <!--<xpath expr="//p[@t-field='doc.note']" position="before">
+            <t t-call="wilco_project.wilco_document_revision">
+                <t t-set="revision_no" t-value="doc.wilco_revision_no if doc.wilco_revision_no else 0"/>
+                <t t-set="revision_date" t-value="doc.wilco_revision_date if doc.wilco_revision_no else doc.date_order"/>
+            </t>
+        </xpath>-->
+        <!--<xpath expr="//th[@name='th_taxes']" position="replace">
+            <th name="th_taxes" t-if="False" class="text-end">Taxes</th>
         </xpath>
         <xpath expr="//td[@name='td_taxes']" position="replace">
-            <!--<td name="td_taxes" class="text-end">
+            <td name="td_taxes"  t-if="False"  class="text-end">
                 <span t-out="', '.join(map(lambda x: (x.description or x.name), line.tax_id))"/>
-            </td>-->
+            </td>
+        </xpath>-->
+        <xpath expr="//th[@name='th_taxes']" position="attributes">
+            <attribute name="t-if">False</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_taxes']" position="attributes">
+            <attribute name="t-if">False</attribute>
         </xpath>
         <xpath expr="//th[@name='th_description']" position="replace">
-            <th name="th_description" class="text-start" style="width:500px;">Description</th>
+            <th name="th_description" class="text-start" style="width:450px;">Description</th>
         </xpath>
         <xpath expr="//th[@name='th_description']" position="before">
             <th name="wilco_th_line_ref" class="text-start">Item</th>
@@ -47,10 +163,19 @@
         <xpath expr="//td[@name='td_name']" position="before">
             <td name="wilco_td_line_ref"><span t-field="line.wilco_line_ref"/></td>
         </xpath>
-        <xpath expr="//div[@class='page']" position="after">
+        <xpath expr="//div[@class='page']" position="inside">
             <t t-call="wilco_project.wilco_signature_template">
                 <t t-set="company" t-value="env.company"/>
             </t>
+        </xpath>
+        <xpath expr="//th[@name='th_priceunit']" position="replace">
+            <th name="th_priceunit" class="text-end"><span>Unit Price</span><br/>(<span t-field="doc.currency_id.name"/>)</th>
+        </xpath>
+        <xpath expr="//th[@name='th_subtotal']" position="replace">
+            <th name="th_subtotal" class="text-end">
+                <span groups="account.group_show_line_subtotals_tax_excluded"><span>Amount</span><br/>(<span t-field="doc.currency_id.name"/>)</span>
+                <span groups="account.group_show_line_subtotals_tax_included"><span>Total Price</span><br/>(<span t-field="doc.currency_id.name"/>)</span>
+            </th>
         </xpath>
     </template>
 </odoo>

@@ -4,5 +4,10 @@
         <xpath expr="//img[@t-if='company.logo']" position="replace">
             <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" alt="Logo" style="max-height: 5cm; max-width: 5cm"/>
         </xpath>
+<!--
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" href="/wilco_project/static/src/css/sale_report.css"/>
+        </xpath>
+-->
     </template>
 </odoo>

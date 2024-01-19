@@ -1,6 +1,7 @@
+from datetime import timedelta
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-from odoo.tools import float_is_zero
+from odoo.tools import float_is_zero, html_keep_url, is_html_empty
 
 
 INVOICE_METHOD = [
@@ -10,6 +11,8 @@ INVOICE_METHOD = [
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+
+    validity_date = fields.Date(string="Valid date")
 
     wilco_order_header = fields.Text(string='Quotation/Order header')
     wilco_our_ref = fields.Char(string='Our reference')
@@ -319,3 +322,33 @@ class SaleOrder(models.Model):
                 #      order.invoice_status = 'upselling'
                 # else:
                 #     order.invoice_status = 'no'
+
+    @api.depends('partner_id')
+    def _compute_note(self):
+        use_sale_terms = self.env['ir.config_parameter'].sudo().get_param('account.use_invoice_terms')
+        if not use_sale_terms:
+            return super()._compute_note() #Use standard invoice/order/quotations terms & condition if not setup
+        for order in self:
+            order = order.with_company(order.company_id)
+            if order.terms_type == 'html' and self.env.company.wilco_sale_terms_html:
+                baseurl = html_keep_url(order._get_note_url() + '/terms')
+                context = {'lang': order.partner_id.lang or self.env.user.lang}
+                order.note = _('Terms & Conditions: %s', baseurl)
+                del context
+            elif not is_html_empty(self.env.company.wilco_sale_terms):
+                order.note = order.with_context(lang=order.partner_id.lang).env.company.wilco_sale_terms
+
+    @api.depends('company_id','date_order')
+    def _compute_validity_date(self):
+        enabled_feature = bool(self.env['ir.config_parameter'].sudo().get_param('sale.use_quotation_validity_days'))
+        if not enabled_feature:
+            self.validity_date = False
+            return
+
+        super()._compute_validity_date()
+
+        for order in self:
+            if order.date_order:
+                days = order.company_id.quotation_validity_days
+                if days > 0:
+                    order.validity_date = order.date_order + timedelta(days)

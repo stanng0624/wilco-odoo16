@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="wilco_purchase_order_form_inherit" model="ir.ui.view">
-        <field name="name">purchase.order.form.inherited</field>
+        <field name="name">purchase.order.form.inherit.wilco_project</field>
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
@@ -31,7 +31,7 @@
     </record>
 
     <record id="wilco_purchase_order_tree_inherit" model="ir.ui.view">
-        <field name="name">purchase.order.tree.inherited</field>
+        <field name="name">purchase.order.tree.inherit.wilco_project</field>
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_tree"/>
         <field name="arch" type="xml">
@@ -51,7 +51,7 @@
 
 
     <record id="wilco_purchase_order_kpis_tree_inherit" model="ir.ui.view">
-        <field name="name">purchase.order.inherit.purchase.order.tree.inherited</field>
+        <field name="name">purchase.order.inherit.purchase.order.tree.inherit.wilco_project</field>
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
         <field name="arch" type="xml">
@@ -71,7 +71,7 @@
 
 
     <record id="wilco_view_purchase_order_filter_inherit" model="ir.ui.view">
-        <field name="name">request.quotation.select.inherited</field>
+        <field name="name">request.quotation.select.inherit.wilco_project</field>
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
         <field name="arch" type="xml">
@@ -88,7 +88,7 @@
     </record>
 
     <record id="wilco_purchase_order_view_search_inherit" model="ir.ui.view">
-        <field name="name">purchase.order.select.inherited</field>
+        <field name="name">purchase.order.select.inherit.wilco_project</field>
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
         <field name="arch" type="xml">
