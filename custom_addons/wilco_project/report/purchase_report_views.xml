@@ -8,7 +8,7 @@
             <field name="report_name">wilco_project.wilco_report_purchase_order</field>
             <field name="report_file">wilco_project.wilco_report_purchase_order</field>
             <field name="print_report_name">
-                'Purchase Order - %s' % (object.name)</field>
+                'Purchase Order - %s' % (object.wilco_document_number)</field>
             <field name="binding_model_id" ref="model_purchase_order"/>
             <field name="binding_type">report</field>
         </record>
