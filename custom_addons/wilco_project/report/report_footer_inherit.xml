@@ -43,13 +43,13 @@
                     <t t-call="wilco_project.wilco_document_reference"/>
                 </div>-->
             <div class="text-center">
-                <table class="table table-borderless" style="border: none;">
+                <table class="table table-borderless" style="border: 0;width:100%">
                     <tr>
-                        <td class="col-2" style="text-align: left;">
+                        <td style="width:200px; text-align: left;">
                             <t t-call="wilco_project.wilco_document_reference"/>
                         </td>
-                        <td class="col-8">
-                            <div t-field="company.report_footer"/>
+                        <td>
+                            <div t-if="not is_html_empty(company.report_footer)" t-field="company.report_footer"/>
                             <div t-if="report_type == 'pdf'">
                                 Page: <span class="page"/> / <span class="topage"/>
                             </div>
@@ -57,7 +57,7 @@
                                 <span t-field="o.name"/>
                             </div>
                         </td>
-                        <td class="col-2">
+                        <td style="width:200px">
                             <t t-call="wilco_project.wilco_iso_image"/>
                         </td>
                     </tr>

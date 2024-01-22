@@ -4,7 +4,6 @@
         <t t-call="web.html_container">
             <t t-set="wilco_doc_type" t-value="'quotation'"/>
             <t t-foreach="docs" t-as="doc">
-                <t t-set="doc" t-value="doc.with_context(state='draft')"/>
                 <t t-call="sale.report_saleorder_document" t-lang="doc.partner_id.lang"/>
             </t>
         </t>
@@ -14,7 +13,6 @@
         <t t-call="web.html_container">
             <t t-set="wilco_doc_type" t-value="'order_confirmation'"/>
             <t t-foreach="docs" t-as="doc">
-                <t t-set="doc" t-value="doc.with_context(state='sale')"/>
                 <t t-call="sale.report_saleorder_document" t-lang="doc.partner_id.lang"/>
             </t>
         </t>

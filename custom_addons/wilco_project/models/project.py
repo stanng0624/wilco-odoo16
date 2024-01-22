@@ -5,7 +5,7 @@ class Project(models.Model):
     _inherit = 'project.project'
 
     name = fields.Char(string='Project Number')
-    wilco_project_name = fields.Char(string='Project Name', translate=True)
+    wilco_project_name = fields.Char(string='Project Name', translate=True, index=True)
     wilco_date_award = fields.Date(string='Award Date')
 
     @api.constrains('name')

@@ -2,6 +2,7 @@
 <odoo>
     <template id="wilco_report_payment_receipt_document_inherit" inherit_id="account.report_payment_receipt_document">
         <xpath expr="//div[@t-if='o.payment_method_id']" position="replace">
+            <t t-set="wilco_document_number" t-value="o.name"/>
             <div class="col-6" t-if="o.payment_method_line_id">
                 Payment Method: <span t-field="o.payment_method_line_id.name"/>
             </div>

@@ -3,8 +3,17 @@
     <record id="wilco_view_order_form_inherit" model="ir.ui.view">
         <field name="name">sale.order.form.inherit.wilco_project</field>
         <field name="model">sale.order</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
+            <!-- BEGIN Remove base.group_no_one to show Quotation date-->
+            <xpath expr="//group[@name='order_details']/div[hasclass('o_td_label') and @groups='base.group_no_one']" position="attributes">
+                <attribute name="groups"/>
+            </xpath>
+            <xpath expr="//group[@name='order_details']/field[@name='date_order' and @groups='base.group_no_one']" position="attributes">
+                <attribute name="groups"/>
+            </xpath>
+            <!-- END Remove base.group_no_one to show Quotation date-->
             <xpath expr="//field[@name='partner_shipping_id']" position="after">
                 <field name="client_order_ref" id="wilco_client_order_ref"/>
                 <field name="wilco_order_header"/>
@@ -47,6 +56,40 @@
                 <field name="wilco_budget_cost_unit"/>
                 <field name="wilco_amount_budget_cost_total"/>
                 <field name="wilco_gross_profit_percent" widget="percentage"/>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']" position="attributes">
+                <!--Visible optional product of quotation even in sales order status-->
+                <attribute name="attrs"/>
+            </xpath>
+            <xpath expr="//tree/field[@name='price_unit']" position="attributes">
+                <attribute name="widget">monetary</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='tax_id']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']//form//field[@name='product_id']" position="after">
+                <field name="wilco_line_ref"/>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']//form//field[@name='discount']" position="after">
+                <field name="wilco_price_subtotal" widget="monetary"/>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']//kanban//field[@name='product_id']" position="after">
+                <field name="wilco_line_ref"/>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']//kanban//field[@name='price_unit']" position="after">
+                <field name="wilco_price_subtotal" widget="monetary"/>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']//tree//field[@name='product_id']" position="after">
+                <field name="wilco_line_ref"/>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']//tree//field[@name='price_unit']" position="attributes">
+                <attribute name="widget">monetary</attribute>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']//tree//field[@name='discount']" position="after">
+                <field name="wilco_price_subtotal" widget="monetary"/>
+            </xpath>
+            <xpath expr="//page[@name='optional_products']//tree//button[@name='button_add_to_order']" position="attributes">
+                <attribute name="string">Add to order lines</attribute>
             </xpath>
         </field>
     </record>

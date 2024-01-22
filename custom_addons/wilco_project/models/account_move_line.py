@@ -6,6 +6,8 @@ class AccountMoveLine(models.Model):
 
     wilco_line_ref = fields.Char(string='Line reference')
 
+    wilco_project_id = fields.Many2one(related='move_id.wilco_project_id')
+
     @api.ondelete(at_uninstall=False)
     def _unlink_except_linked_order_line(self):
         # Allow delete when it is delete from header, dynamic_unlink will be True if delete from header
@@ -20,9 +22,19 @@ class AccountMoveLine(models.Model):
         if not self.product_id:
             return
 
-        self._wilco_set_name_from_source_order()
+        if self.display_type == 'product':
+            self._wilco_set_name_from_source_order()
+            self._wilco_set_analytic_distribution_from_project()
 
-        self._wilco_set_analytic_distribution_from_project()
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+
+        for line in lines:
+            if line.move_id and line.display_type == 'payment_term' and not line.analytic_distribution:
+                line._wilco_set_analytic_distribution_from_project()
+
+        return lines
 
     def _wilco_set_name_from_source_order(self):
         self.ensure_one()
@@ -38,28 +50,16 @@ class AccountMoveLine(models.Model):
         if order_name != '':
             self.name = _("Bill To Order: {}").format(order_name)
 
-    def _wilco_set_analytic_distribution_from_project(self):
+    def _wilco_set_analytic_distribution_from_project(self, use_write=False):
         self.ensure_one()
 
         account_move = self.move_id
         if account_move.wilco_project_id:
             analytic_account_id = account_move.wilco_project_id.analytic_account_id.id
-            if analytic_account_id and self.display_type == 'product':
+            if analytic_account_id:
                 analytic_account_id_str = str(analytic_account_id)
-                self.analytic_distribution = {analytic_account_id_str: 100}
-
-
-    # @api.model_create_multi
-    # def create(self, vals_list):
-    #     lines = super().create(vals_list)
-    #
-    #     for line in lines:
-    #         if line.move_id:
-    #             account_move = line.move_id
-    #             if account_move.wilco_project_id and not line.analytic_distribution:
-    #                 analytic_account_id = account_move.wilco_project_id.analytic_account_id.id
-    #                 if analytic_account_id and line.display_type == 'product':
-    #                     analytic_account_id_str = str(analytic_account_id)
-    #                     line.write({'analytic_distribution': {analytic_account_id_str: 100}})
-    #
-    #     return lines
+                analytic_distribution = {analytic_account_id_str: 100}
+                if use_write:
+                    self.write({'analytic_distribution': analytic_distribution})
+                else:
+                    self.analytic_distribution = analytic_distribution

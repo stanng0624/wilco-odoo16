@@ -7,18 +7,28 @@ class SaleOrderLine(models.Model):
     wilco_budget_cost_unit = fields.Monetary(string="Unit cost", store=True)
     wilco_amount_budget_cost_total = fields.Monetary(string="Sub-total cost", store=True, compute='_wilco_compute_amount_budget_cost_total')
     wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_gross_profit_percent')
-    wilco_skip_update_name = fields.Boolean(string="Skip update name", compute="_wilco_compute_skip_update_name")
 
-    def _wilco_compute_skip_update_name(self):
-        for line in self:
-            line.wilco_skip_update_name = line.product_id.wilco_sale_skip_update_name
+    @api.depends('product_id')
+    def _compute_name(self):
+        # #Since their input of description is too long, the change of product to revise name is not necessary
+        skip_update_lines = self.filtered(lambda r: r._origin.id
+                                                    # and not r.display_type
+                                                    and r.product_id.wilco_sale_skip_update_name)
+        return super(SaleOrderLine, self - skip_update_lines)._compute_name()
 
-    def _get_sale_order_line_multiline_description_sale(self):
-        #Since their input of description is too long, the change of product to revise name is not necessary
-        if self.name and self.wilco_skip_update_name:
-            return self.name
+    @api.depends('product_id', 'product_uom', 'product_uom_qty')
+    def _compute_price_unit(self):
+        skip_update_lines = self.filtered(lambda r: r._origin.id
+                                                    and not r.display_type
+                                                    and r.product_id.wilco_sale_skip_update_price_unit)
+        return super(SaleOrderLine, self - skip_update_lines)._compute_price_unit()
 
-        return super()._get_sale_order_line_multiline_description_sale()
+    @api.depends('display_type', 'product_id', 'product_packaging_qty')
+    def _compute_product_uom_qty(self):
+        skip_update_lines = self.filtered(lambda r: r._origin.id
+                                                    and not r.display_type
+                                                    and r.product_id.wilco_sale_skip_update_qty)
+        return super(SaleOrderLine, self - skip_update_lines)._compute_product_uom_qty()
 
     @api.onchange('wilco_budget_cost_unit')
     def onchange_wilco_budget_cost_unit(self):

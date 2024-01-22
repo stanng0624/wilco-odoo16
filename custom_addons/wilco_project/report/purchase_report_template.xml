@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="wilco_report_purchase_quotation">
+        <t t-call="web.html_container">
+            <t t-set="wilco_doc_type" t-value="'request_for_quotation'"/>
+            <t t-foreach="docs" t-as="o">
+                <t t-call="purchase.report_purchaseorder_document" t-lang="o.partner_id.lang"/>
+            </t>
+        </t>
+    </template>
+
+    <template id="wilco_report_purchase_order">
+        <t t-call="web.html_container">
+            <t t-set="wilco_doc_type" t-value="'purchase_order'"/>
+            <t t-foreach="docs" t-as="o">
+                <t t-call="purchase.report_purchaseorder_document" t-lang="o.partner_id.lang"/>
+            </t>
+        </t>
+    </template>
+</odoo>

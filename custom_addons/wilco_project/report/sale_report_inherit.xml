@@ -1,31 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
     <template id="wilco_report_saleorder_document_inherit"
-              inherit_id="sale.report_saleorder_document">
-<!--
-        <xpath expr="//div[hasclass('page')]" position="attributes">
-            <attribute name="class" add="mt-0" separator=" "/>
-        </xpath>
--->
-        <!--<xpath expr="//div[@t-field='doc.partner_id']" position="after">
-            <div t-field="doc.partner_id"
-                t-options='{"widget": "contact", "fields": ["phone", "email"], "no_marker": True, "phone_icons": True}' />
-            <div t-if="doc.wilco_contact_info">
-                <span>Attn: </span><span t-field="doc.wilco_contact_info"/>
-            </div>
-        </xpath>-->
-        <!--<xpath expr="//span[@t-field='doc.name']" position="replace">
-            <t t-if="doc.wilco_document_number"><span t-field="doc.wilco_document_number"/></t>
-            <t t-else=""><span t-field="doc.name"/></t>
-        </xpath>-->
-        <xpath expr="//t[@t-set='address']" position="attributes">
-            <attribute name="t-if">False</attribute>
-        </xpath>
-        <xpath expr="//t[@t-set='information_block']" position="attributes">
-            <attribute name="t-if">False</attribute>
-        </xpath>
-
-        <xpath expr="//h2" position="replace">
+              inherit_id="sale.report_saleorder_document"
+              priority="100">
+        <xpath expr="//t[@t-set='doc']" position="after">
             <t t-if="not wilco_doc_type">
                 <t t-if="env.context.get('proforma', False) or is_pro_forma" t-set="wilco_doc_type" t-value="'proforma_invoice'"/>
                 <t t-elif="doc.state in ['draft','sent']" t-set="wilco_doc_type" t-value="'quotation'"/>
@@ -35,19 +13,16 @@
             <t t-set="wilco_revision_no" t-value="doc.wilco_revision_no if doc.wilco_revision_no else 0"/>
             <t t-set="wilco_revision_date" t-value="doc.wilco_revision_date if doc.wilco_revision_no else doc.date_order"/>
             <t t-set="wilco_document_number" t-value="doc.wilco_document_number"/>
+        </xpath>
+        <xpath expr="//t[@t-set='address']" position="attributes">
+            <attribute name="t-if">False</attribute>
+        </xpath>
+        <xpath expr="//t[@t-set='information_block']" position="attributes">
+            <attribute name="t-if">False</attribute>
+        </xpath>
 
+        <xpath expr="//h2" position="replace">
             <h2 class="mt-0" style="font-weight: bold;">
-                <!--<t t-if="wilco_doc_type">
-                    <span t-if="wilco_doc_type in ['quotation']">Quotation: </span>
-                    <span t-elif="wilco_doc_type in ['order_confirmation']">Order confirmation: </span>
-                    <span t-elif="wilco_doc_type in ['proforma_invoice']">Pro-Forma Invoice: </span>
-                    <span t-else="">Order: </span>
-                </t>
-                <t t-else="else">
-                    <span t-if="env.context.get('proforma', False) or is_pro_forma">Pro-Forma Invoice: </span>
-                    <span t-elif="doc.state in ['draft','sent']">Quotation: </span>
-                    <span t-else="">Order confirmation: </span>
-                </t>-->
                 <span t-if="wilco_doc_type in ['quotation']">Quotation: </span>
                 <span t-elif="wilco_doc_type in ['order_confirmation']">Order confirmation: </span>
                 <span t-elif="wilco_doc_type in ['proforma_invoice']">Pro-Forma Invoice: </span>
@@ -56,14 +31,6 @@
                 <t t-else=""><span t-field="doc.name"/></t>
             </h2>
         </xpath>
-<!--
-        <xpath expr="//div[@name='informations_reference']" position="before">
-            <div t-if="doc.wilco_our_ref" class="col-auto col-3 mw-100 mb-2" name="wilco_informations_reference">
-                <strong>Our Reference:</strong>
-                <p class="m-0" t-field="doc.wilco_our_ref"/>
-            </div>
-        </xpath>
--->
         <xpath expr="//div[@id='informations']" position="replace">
             <link rel="stylesheet" href="/wilco_project/static/src/css/sale_report.css"/>
             <div class="row mt-0 mb-4 wilco_report_information" id="informations" style="padding: 0px">
@@ -73,10 +40,10 @@
                     class="table table-borderless"
                     style="border: none">
                     <tr>
-                        <th class="col-2"></th>
-                        <th class="col-5"></th>
-                        <th class="col-2"></th>
-                        <th class="col-3"></th>
+                        <th class="col-2"/>
+                        <th class="col-5"/>
+                        <th class="col-2"/>
+                        <th class="col-3"/>
                     </tr>
                     <tr>
                         <td style="border: none;">
@@ -125,28 +92,16 @@
             <div class="mt-0 text-center wilco_order_header">
                 <span t-if="doc.wilco_order_header" t-field="doc.wilco_order_header"/>
             </div>
-            <div class="mt-4 mb-0 text-left col-12">
-                Thank you for your enquiry and our offer are provided as below for your consideration:
-            </div>
+            <t t-if="wilco_doc_type in ['quotation']">
+                <div class="mt-4 mb-0 text-left col-12">
+                    Thank you for your enquiry and our offer are provided as below for your consideration:
+                </div>
+            </t>
         </xpath>
         <!--<xpath expr="//div[@id='informations']" position="before">
             <h3 class="mt-4 text-center">
                 <span t-if="doc.wilco_order_header" t-field="doc.wilco_order_header" style="font-size: 20px"/>
             </h3>
-        </xpath>-->
-        <!--<xpath expr="//p[@t-field='doc.note']" position="before">
-            <t t-call="wilco_project.wilco_document_revision">
-                <t t-set="revision_no" t-value="doc.wilco_revision_no if doc.wilco_revision_no else 0"/>
-                <t t-set="revision_date" t-value="doc.wilco_revision_date if doc.wilco_revision_no else doc.date_order"/>
-            </t>
-        </xpath>-->
-        <!--<xpath expr="//th[@name='th_taxes']" position="replace">
-            <th name="th_taxes" t-if="False" class="text-end">Taxes</th>
-        </xpath>
-        <xpath expr="//td[@name='td_taxes']" position="replace">
-            <td name="td_taxes"  t-if="False"  class="text-end">
-                <span t-out="', '.join(map(lambda x: (x.description or x.name), line.tax_id))"/>
-            </td>
         </xpath>-->
         <xpath expr="//th[@name='th_taxes']" position="attributes">
             <attribute name="t-if">False</attribute>
@@ -158,7 +113,7 @@
             <th name="th_description" class="text-start" style="width:450px;">Description</th>
         </xpath>
         <xpath expr="//th[@name='th_description']" position="before">
-            <th name="wilco_th_line_ref" class="text-start">Item</th>
+            <th name="wilco_th_line_ref" class="text-start" style="width:1.5cm">Item</th>
         </xpath>
         <xpath expr="//td[@name='td_name']" position="before">
             <td name="wilco_td_line_ref"><span t-field="line.wilco_line_ref"/></td>
@@ -169,13 +124,116 @@
             </t>
         </xpath>
         <xpath expr="//th[@name='th_priceunit']" position="replace">
-            <th name="th_priceunit" class="text-end"><span>Unit Price</span><br/>(<span t-field="doc.currency_id.name"/>)</th>
+            <th name="th_priceunit" class="text-end" style="width:120px"><span>Unit Price</span><br/>(<span t-field="doc.currency_id.name"/>)</th>
+        </xpath>
+        <xpath expr="//span[@t-field='line.price_unit']" position="attributes">
+            <attribute name="t-options">{"widget": "monetary", "display_currency": doc.pricelist_id.currency_id}</attribute>
         </xpath>
         <xpath expr="//th[@name='th_subtotal']" position="replace">
-            <th name="th_subtotal" class="text-end">
+            <th name="th_subtotal" class="text-end" style="width:120px">
                 <span groups="account.group_show_line_subtotals_tax_excluded"><span>Amount</span><br/>(<span t-field="doc.currency_id.name"/>)</span>
                 <span groups="account.group_show_line_subtotals_tax_included"><span>Total Price</span><br/>(<span t-field="doc.currency_id.name"/>)</span>
             </th>
         </xpath>
+        <xpath expr="//p[contains(@t-if, 'not is_html_empty(doc.payment_term_id.note)')]" position="after">
+            <p t-if="doc.incoterm">Delivery Terms: <span t-field="doc.incoterm.name"/></p>
+        </xpath>
+        <xpath expr="//td[@name='td_section_line']" position="attributes">
+            <attribute name="style">background: #b8b8b8</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_section_line']/span[@t-field='line.name']" position="attributes">
+            <attribute name="style">color:black</attribute>
+        </xpath>
+        <xpath expr="//th[@name='th_quantity']" position="after">
+            <th name="wilco_th_product_uom" class="text-end">Unit</th>
+        </xpath>
+        <xpath expr="//td[@name='td_quantity']" position="after">
+            <td name="wilco_td_product_uom" class="text-end"><span t-field="line.product_uom"/></td>
+        </xpath>
+        <xpath expr="//td[@name='td_quantity']" position="replace">
+            <td name="td_quantity" class="text-end">
+                <span t-field="line.product_uom_qty"/>
+            </td>
+        </xpath>
+        <xpath expr="//td[@t-if='not line.is_downpayment']" position="after">
+            <td t-if="line.is_downpayment" name="td_subtotal" class="text-end o_price_total"/>
+        </xpath>
+        <!--Quotation Option layout START-->
+        <!--<xpath expr="//div[contains(@t-if, 'sale_order_option_ids')]" position="attributes">
+            <attribute name="t-if">doc.sale_order_option_ids and wilco_doc_type in ['quotation']</attribute>
+        </xpath>
+        <xpath expr="//th[@name='th_option_name']" position="attributes">
+            <attribute name="class">text-start col-8</attribute>
+        </xpath>
+        <xpath expr="//th[@name='th_option_name']" position="before">
+            <th name="wilco_th_option_line_ref" class="text-start" style="width:1.5cm">Item</th>
+        </xpath>
+        <xpath expr="//td[@name='td_option_name']" position="before">
+            <td name="wilco_td_line_ref"><span t-field="line.wilco_line_ref"/></td>
+        </xpath>
+        <xpath expr="//th[@name='th_option_price_unit']" position="replace">
+            <th name="th_option_price_unit" class="text-end" style="width:120px">Unit Price<br/>(<span t-field="doc.currency_id.name"/>)</th>
+        </xpath>
+        <xpath expr="//h4[@name='h_optional_products']" position="replace">
+            <h4 name="h_optional_products">
+&lt;!&ndash;                <span style="font-size:18px" class="">Options</span>&ndash;&gt;
+                <span class="wilco_order_headerx">Options</span>
+            </h4>
+        </xpath>-->
+        <xpath expr="//div[contains(@t-if, 'sale_order_option_ids')]" position="replace">
+            <!--Only show optional product that not present in quotaton-->
+            <t t-set="sale_order_option_ids" t-value="doc._wilco_get_sale_order_option_ids_not_selected()"/>
+            <div t-if="sale_order_option_ids and wilco_doc_type in ['quotation']">
+                <t t-set="has_option_discount" t-value="any(option.discount != 0.0 for option in sale_order_option_ids)" />
+                <h4 name="h_optional_products">
+                    <span>Options</span>
+                </h4>
+                <table name="table_optional_products" class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th name="wilco_th_option_line_ref" class="text-start" style="width:1.5cm">Item</th>
+                            <th name="th_option_name" class="text-start" style="width:450px;">Description</th>
+                            <th name="wilco_th_option_quantity" class="text-end">Quantity</th>
+                            <th name="wilco_th_option_uom" class="text-end">Unit</th>
+                            <th t-if="has_option_discount" name="th_option_discount" groups="product.group_discount_per_so_line" class="text-start">Disc.%</th>
+                            <th name="th_option_price_unit" class="text-end" style="width:120px">Unit Price<br/>(<span t-field="doc.currency_id.name"/>)</th>
+                            <th name="th_subtotal" class="text-end" style="width:120px">
+                                <span groups="account.group_show_line_subtotals_tax_excluded"><span>Amount</span><br/>(<span t-field="doc.currency_id.name"/>)</span>
+                                <span groups="account.group_show_line_subtotals_tax_included"><span>Total Price</span><br/>(<span t-field="doc.currency_id.name"/>)</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="sale_tbody">
+                        <tr t-foreach="sale_order_option_ids" t-as="option">
+                            <td name="wilco_td_line_ref"><span t-field="option.wilco_line_ref"/></td>
+                            <td name="td_option_name"><span t-field="option.name"/></td>
+                            <td name="td_quantity" class="text-end"><span t-field="option.quantity"/></td>
+                            <td name="wilco_td_product_uom" class="text-end"><span t-field="option.uom_id"/></td>
+                            <td t-if="has_option_discount" name="td_option_discount" groups="product.group_discount_per_so_line">
+                                <strong t-if="option.discount != 0.0" class="text-info">
+                                    <t t-out="((option.discount % 1) and '%s' or '%d') % option.discount"/>%
+                                </strong>
+                            </td>
+                            <td name="td_option_price_unit">
+                                <strong class="text-end">
+                                    <div t-field="option.price_unit"
+                                        t-options='{"widget": "monetary", "display_currency": doc.pricelist_id.currency_id}'
+                                        t-att-style="option.discount and 'text-decoration: line-through' or None"
+                                        t-att-class="option.discount and 'text-danger' or None"/>
+                                    <div t-if="option.discount">
+                                        <t t-out="'%.2f' % ((1-option.discount / 100.0) * option.price_unit)"/>
+                                    </div>
+                                </strong>
+                            </td>
+                            <td name="wilco_td_option_subtotal" class="text-end">
+                                <div t-field="option.wilco_price_subtotal"
+                                     t-options='{"widget": "monetary", "display_currency": doc.pricelist_id.currency_id}'/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </xpath>
+        <!--Quotation Option layout END-->
     </template>
 </odoo>

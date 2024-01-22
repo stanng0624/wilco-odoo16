@@ -40,7 +40,7 @@
         <t t-if="not revision_date" t-set="revision_date" t-value="datetime.datetime.now()"/>
 
         <t t-if="document_number">
-            <div is="wilco_document_number">Our Ref: <span t-esc="document_number"/></div>
+            <div is="wilco_document_number">Doc Ref: <span t-esc="document_number"/></div>
         </t>
         <t t-if="show_document_revision">
             <div id="wilco_document_revision">

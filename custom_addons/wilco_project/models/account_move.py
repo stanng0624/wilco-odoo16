@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.tools import is_html_empty
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -10,7 +11,8 @@ class AccountMove(models.Model):
     wilco_document_number = fields.Char(string='Document number', compute='_wilco_compute_document_name')
     wilco_project_id = fields.Many2one(
         'project.project', 'Project', readonly=True,
-        states={'draft': [('readonly', False)]})
+        states={'draft': [('readonly', False)]},
+        index=True)
     wilco_amount_settled_total = fields.Monetary(string="Amount Settled", compute='_wilco_compute_settled_amounts')
     wilco_amount_settled_total_signed = fields.Monetary(string="Amount Settled in Currency", compute='_wilco_compute_settled_amounts')
 
@@ -30,4 +32,6 @@ class AccountMove(models.Model):
     def onchange_wilco_project_id(self):
         if self.wilco_project_id:
             self.wilco_our_ref = self.wilco_project_id.name
-
+            lines = self.line_ids.filtered(lambda r: r.display_type in ['payment_term','product'])
+            for line in lines:
+                line._wilco_set_analytic_distribution_from_project(True)

@@ -10,6 +10,8 @@ READONLY_STATES = {
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
+    date_approve = fields.Datetime(readonly=0)
+
     wilco_order_header = fields.Text(string='Quotation/Order header')
     wilco_our_ref = fields.Char(string='Our reference')
     wilco_contact_info = fields.Text(string='Contact information')
@@ -19,7 +21,8 @@ class PurchaseOrder(models.Model):
     wilco_remark = fields.Text(string='Additional remarks')
     wilco_project_id = fields.Many2one(
         'project.project', 'Project', readonly=True,
-        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]})
+        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
+        index=True)
     wilco_analytic_account_id = fields.Many2one(
         comodel_name='account.analytic.account',
         string="Analytic Account",
@@ -163,15 +166,31 @@ class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
     wilco_line_ref = fields.Char(string='Line reference')
-    wilco_skip_update_name = fields.Boolean(string="Skip update name", compute="_wilco_compute_skip_update_name")
 
-    def _wilco_compute_skip_update_name(self):
-        for line in self:
-            line.wilco_skip_update_name = line.product_id.wilco_purchase_skip_update_name
+    @api.depends('product_qty', 'product_uom', 'company_id')
+    def _compute_price_unit_and_date_planned_and_name(self):
+        skip_update_lines = self.filtered(lambda r: r._origin.id
+                                                    and not r.display_type
+                                                    and r.product_id.wilco_purchase_skip_update_price_unit)
+        return super(PurchaseOrderLine, self - skip_update_lines)._compute_price_unit_and_date_planned_and_name()
+
+    @api.depends('product_packaging_qty')
+    def _compute_product_qty(self):
+        skip_update_lines = self.filtered(lambda r: r._origin.id
+                                                    and not r.display_type
+                                                    and r.product_id.wilco_purchase_skip_update_qty)
+        return super(PurchaseOrderLine, self - skip_update_lines)._compute_product_qty()
+
+    @api.depends('product_uom', 'product_qty', 'product_id.uom_id')
+    def _compute_product_uom_qty(self):
+        skip_update_lines = self.filtered(lambda r: r._origin.id
+                                                    and not r.display_type
+                                                    and r.product_id.wilco_purchase_skip_update_qty)
+        return super(PurchaseOrderLine, self - skip_update_lines)._compute_product_uom_qty()
 
     def _get_product_purchase_description(self, product_lang):
         #Since their input of description is too long, the change of product to revise name is not necessary
-        if self.name and self.wilco_skip_update_name:
+        if self._origin.id and self.name and self.product_id.wilco_purchase_skip_update_name:
             return self.name
 
         return super()._get_product_purchase_description(product_lang)

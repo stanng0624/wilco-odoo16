@@ -23,7 +23,8 @@ class SaleOrder(models.Model):
     wilco_remark = fields.Text(string='Additional remarks')
     wilco_project_id = fields.Many2one(
         'project.project', 'Project', readonly=True,
-        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]})
+        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
+        index=True)
     wilco_invoice_method = fields.Selection(
         selection=INVOICE_METHOD,
         string="Invoice Mehtod",
@@ -38,6 +39,10 @@ class SaleOrder(models.Model):
     wilco_amount_residual_total = fields.Monetary(string="Amount Due", compute='_wilco_compute_settle_amounts')
     wilco_amount_budget_cost_total = fields.Monetary(string="Budget cost", compute='_wilco_compute_budget_amounts')
     wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_budget_amounts')
+
+    def _wilco_get_sale_order_option_ids_not_selected(self):
+        sale_order_option_not_selected = self.sale_order_option_ids.filtered(lambda r: not r.is_present)
+        return sale_order_option_not_selected
 
     @api.depends('order_line.invoice_lines')
     def _wilco_compute_invoiced_amounts(self):
@@ -161,6 +166,12 @@ class SaleOrder(models.Model):
 
         invoice_vals['wilco_project_id'] = self.wilco_project_id.id
         invoice_vals['wilco_our_ref'] = self.wilco_our_ref
+
+        use_invoice_terms = self.env['ir.config_parameter'].sudo().get_param('account.use_invoice_terms')
+        use_sale_terms = self.env['ir.config_parameter'].sudo().get_param('account.wilco_use_sale_terms')
+        # Do not transfer terms and condition from SO to Invoice when enable both sales and invoice's terms & condition
+        if use_sale_terms and use_invoice_terms:
+            invoice_vals.pop('narration')
 
         return invoice_vals
 
@@ -325,7 +336,7 @@ class SaleOrder(models.Model):
 
     @api.depends('partner_id')
     def _compute_note(self):
-        use_sale_terms = self.env['ir.config_parameter'].sudo().get_param('account.use_invoice_terms')
+        use_sale_terms = self.env['ir.config_parameter'].sudo().get_param('account.wilco_use_sale_terms')
         if not use_sale_terms:
             return super()._compute_note() #Use standard invoice/order/quotations terms & condition if not setup
         for order in self:
