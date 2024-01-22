@@ -7,7 +7,7 @@
             <t t-set="wilco_show_document_revision" t-value="True"/>
             <t t-set="wilco_revision_no" t-value="o.wilco_revision_no if o.wilco_revision_no else 0"/>
             <t t-set="wilco_revision_date" t-value="o.wilco_revision_date if o.wilco_revision_no else o.invoice_date"/>
-            <t t-set="wilco_document_number" t-value="o.name"/>
+            <t t-set="wilco_document_number" t-value="o.wilco_document_number"/>
         </xpath>
         <xpath expr="//div[hasclass('row')]" position="attributes">
             <attribute name="t-if">False</attribute>

@@ -6,6 +6,7 @@
             <t t-if="not wilco_doc_type">
                 <t t-if="o.state in ['draft', 'sent', 'to approve']" t-set="wilco_doc_type" t-value="'request_for_quotation'"/>
                 <t t-elif="o.state in ['cancel']" t-set="wilco_doc_type" t-value="'cancelled_order'"/>
+                <t t-elif="o.state in ['purchase', 'done']" t-set="wilco_doc_type" t-value="'purchase_order'"/>
                 <t t-else="else" t-set="wilco_doc_type" t-value="'purchase_order'"/>
             </t>
             <t t-set="wilco_show_document_revision" t-value="True"/>
@@ -47,11 +48,11 @@
                     </tr>
                     <tr>
                         <td style="border: none;">
-                            <t t-if="wilco_doc_type in ['quotation']"><strong>Order Deadline:</strong></t>
+                            <t t-if="wilco_doc_type in ['request_for_quotation']"><strong>Order Deadline:</strong></t>
                             <t t-else="else"><strong>Order Date:</strong></t>
                         </td>
                         <td style="border: none;">
-                            <t t-if="wilco_doc_type in ['quotation']"><span class="m-0" t-field="o.date_order" t-options='{"widget": "date"}'/></t>
+                            <t t-if="wilco_doc_type in ['request_for_quotation']"><span class="m-0" t-field="o.date_order" t-options='{"widget": "date"}'/></t>
                             <t t-else="else"><span class="m-0" t-field="o.date_approve" t-options='{"widget": "date"}'/></t>
                         </td>
                         <td style="border: none;"/>
@@ -105,39 +106,6 @@
                 </table>
             </div>
         </xpath>
-        <!--<xpath expr="//th[@name='th_taxes']" position="attributes">
-            <attribute name="t-if">False</attribute>
-        </xpath>
-        <xpath expr="//td[@name='td_taxes']" position="attributes">
-            <attribute name="t-if">False</attribute>
-        </xpath>
-        <xpath expr="//th[@name='th_description']" position="replace">
-            <th name="th_description" style="width:450px;"><strong>Description</strong></th>
-        </xpath>
-        <xpath expr="//th[@name='th_description']" position="before">
-            <th name="wilco_th_line_ref" class="text-start" style="width:1.5cm;">Item</th>
-        </xpath>
-        <xpath expr="//td[@id='product']" position="before">
-            <td name="wilco_td_line_ref"><span t-field="line.wilco_line_ref"/></td>
-        </xpath>
-        <xpath expr="//th[@name='th_price_unit']" position="replace">
-            <th name="th_price_unit" class="text-end" style="width:120px;"><strong>Unit Price<br/>(<span t-field="o.currency_id.name"/>)</strong></th>
-        </xpath>
-        <xpath expr="//th[@name='th_amount']" position="replace">
-            <th name="th_amount" class="text-end" style="width:120px;"><strong>Amount<br/>(<span t-field="o.currency_id.name"/>)</strong></th>
-        </xpath>
-        <xpath expr="//th[@name='th_date_req']" position="replace">
-            <th name="th_date_req" class="text-center" style="width:120px"><strong>Date Req.</strong></th>
-        </xpath>
-        <xpath expr="//th[@name='th_quantity']" position="replace">
-            <th name="th_quantity" class="text-end"><strong>Quantity</strong></th>
-        </xpath>
-        <xpath expr="//th[@name='th_quantity']" position="after">
-            <th name="wilco_th_product_uom" class="text-end">Unit</th>
-        </xpath>
-        <xpath expr="//td[@name='td_quantity']" position="after">
-            <td name="wilco_td_product_uom" class="text-end"><span t-field="o.product_uom"/></td>
-        </xpath>-->
         <xpath expr="//thead" position="replace">
             <thead style="display: table-row-group">
                 <tr>

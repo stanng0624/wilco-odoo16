@@ -31,7 +31,10 @@
               <field name="wilco_date_award"/>
             </xpath>
             <xpath expr="//button[@name='project_update_all_action']" position="after">
-                <button class="oe_stat_button" type="object" name="wilco_action_view_analytic_account_entries" icon="fa-usd" attrs="{'invisible': [('analytic_account_id', '=', False)]}" groups="analytic.group_analytic_accounting">
+                <button class="oe_stat_button" type="object"
+                        name="wilco_action_view_analytic_account_entries"
+                        icon="fa-usd" attrs="{'invisible': [('analytic_account_id', '=', False)]}"
+                        groups="analytic.group_analytic_accounting">
                     <div class="o_form_field o_stat_info">
                         <span class="o_stat_value">
                             <field name="analytic_account_balance"/>

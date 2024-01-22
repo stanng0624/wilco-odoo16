@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="wilco_report_payment_receipt_document_inherit" inherit_id="account.report_payment_receipt_document">
-        <xpath expr="//div[@t-if='o.payment_method_id']" position="replace">
+        <xpath expr="//t[@t-set='o']" position="after">
             <t t-set="wilco_document_number" t-value="o.name"/>
+            <t t-set="wilco_show_document_revision" t-value="True"/>
+        </xpath>
+        <xpath expr="//div[@t-if='o.payment_method_id']" position="replace">
             <div class="col-6" t-if="o.payment_method_line_id">
                 Payment Method: <span t-field="o.payment_method_line_id.name"/>
             </div>
-            <t t-set="wilco_show_document_revision" t-value="1"/>
         </xpath>
     </template>
 </odoo>

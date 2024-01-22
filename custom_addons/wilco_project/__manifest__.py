@@ -32,7 +32,7 @@ This module contains all the common features of Hospital management
         'report/invoice_report_template.xml',
         'report/invoice_report_inherit.xml',
         'report/invoice_report_views.xml',
-        'report/report_payment_receipt_template_inherit.xml',
+        'report/payment_receipt_report_inherit.xml',
         'report/signature_template.xml',
         'report/document_reference_template.xml',
         'report/report_footer_inherit.xml',
