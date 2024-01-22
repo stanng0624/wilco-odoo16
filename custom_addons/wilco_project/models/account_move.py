@@ -28,6 +28,15 @@ class AccountMove(models.Model):
         else:
             self.wilco_revision_date = fields.datetime.today()
 
+    def _wilco_compute_document_name(self):
+        for document in self:
+            name = ""
+            if document.wilco_revision_no > 0:
+                name = "{}-R{}".format(document.name, document.wilco_revision_no)
+            else:
+                name = document.name
+            document.wilco_document_number = name
+
     @api.onchange('wilco_project_id')
     def onchange_wilco_project_id(self):
         if self.wilco_project_id:
