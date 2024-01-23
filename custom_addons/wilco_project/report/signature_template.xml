@@ -2,51 +2,41 @@
 <odoo>
     <!--Inherited the external layout template for adding signature-->
     <template id="wilco_signature_template">
+        <link rel="stylesheet" href="/wilco_project/static/src/css/signature.css"/>
         <div id="wilco_signature">
-            <div style="height: 100px"/>
+<!--            <div style="height: 100px"/>-->
             <table
               cellpadding="0"
               cellspacing="0"
-              class="table table-borderless"
+              class="table table-borderless signature_table"
               style="float:right; display:flex;border: none">
                 <tbody style="border: none;">
                     <tr>
                       <td class="col-6" style="border: none;">
-                        <div>
-                        <strong><span t-esc="company.name"/></strong>
-                        </div>
-                        <div style="height: 3.5cm">
+                        <div class="signature_name"><span t-esc="company.name"/></div>
+                        <div class="signature_section">
                             <t t-if="company.wilco_signature">
-                                <img t-att-src="image_data_uri(company.wilco_signature)"
-                                     style="max-height: 3.5cm; max-width: 3.5m; position: relative;left: 2.5cm;"/>
+                                <img id="company_signature_image"
+                                     t-att-src="image_data_uri(company.wilco_signature)"/>
                             </t>
                         </div>
                         <div>
-                            <div style="width: 8cm; border-top: 1px solid black;height: 10px;"/>
-                            <div style="font-weight: bold;">
-                                <span style="padding-bottom: 1px;height: 1.5cm">
-                                    Authorized by:
-                                </span>
-                                <div style="height: 10px"/>
+                            <div class="signature_line"/>
+                            <div>
+                                <span class="signed_by">Authorized by:</span>
                                 <br/>
-                                <span style="padding-bottom: 1px;">
-                                    Authorized on:
-                                </span>
+                                <span class="signed_on">Authorized on:</span>
                             </div>
                         </div>
                       </td>
                       <td class="col-6" style="border: none;">
+                        <div class="signature_name"><strong>Client:</strong></div>
+                        <div class="signature_section"/>
+                        <div class="signature_line"/>
                         <div>
-                        <strong>Client:</strong>
-                        </div>
-                        <div style="height: 3.5cm">
-                        </div>
-                        <div style="width: 8cm;border-top: 1px solid black;height: 10px;"/>
-                        <div style="font-weight: bold;">
-                            <span style="padding-bottom: 1px;">Accepted by:</span>
-                            <div style="height: 10px"/>
+                            <span class="signed_by">Accepted by:</span>
                             <br/>
-                            <span style="padding-bottom: 1px;">Accepted on:</span>
+                            <span class="signed_on">Accepted on:</span>
                         </div>
                       </td>
                     </tr>

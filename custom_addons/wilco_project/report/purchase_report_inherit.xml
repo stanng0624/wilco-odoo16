@@ -13,6 +13,7 @@
             <t t-set="wilco_revision_no" t-value="o.wilco_revision_no if o.wilco_revision_no else 0"/>
             <t t-set="wilco_revision_date" t-value="o.wilco_revision_date if o.wilco_revision_no else o.date_order"/>
             <t t-set="wilco_document_number" t-value="o.wilco_document_number"/>
+            <t t-set="wilco_hide_tax" t-value="True"/>
         </xpath>
         <xpath expr="//t[@t-set='address']" position="attributes">
             <attribute name="t-if">False</attribute>
@@ -55,8 +56,8 @@
                             <t t-if="wilco_doc_type in ['request_for_quotation']"><span class="m-0" t-field="o.date_order" t-options='{"widget": "date"}'/></t>
                             <t t-else="else"><span class="m-0" t-field="o.date_approve" t-options='{"widget": "date"}'/></t>
                         </td>
-                        <td style="border: none;"/>
-                        <td style="border: none;"/>
+                        <td style="border: none;"><strong>Expected Arrival</strong></td>
+                        <td style="border: none;"><span class="m-0" t-field="o.date_planned" t-options='{"widget": "date"}'/></td>
                     </tr>
                     <tr>
                         <td style="border: none;" class="text-left"><strong>From:</strong></td>
@@ -71,24 +72,18 @@
                         <td style="border: none;"><span class="m-0" t-field="o.user_id"/></td>
                     </tr>
                     <tr>
-                        <td style="border: none;"><strong>Supplier Address:</strong></td>
+                        <td style="border: none;"><strong>Vendor Address:</strong></td>
                         <td style="border: none;">
                             <div t-field="o.partner_id"
-                                 t-options='{"widget": "contact", "fields": ["address", "phone"], "no_marker": True, "phone_icons": True}'/></td>
+                                 t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/></td>
                         <td style="border: none;"><strong>Delivery Address:</strong></td>
                         <td style="border: none;">
                             <div t-if="o.dest_address_id">
                                 <div t-field="o.dest_address_id"
-                                    t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}' name="purchase_shipping_address"/>
+                                    t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}' name="purchase_shipping_address"/>
                             </div>
                             <div t-else="else" t-field="o.company_id.partner_id"
-                                 t-options='{"widget": "contact", "fields": ["address", "phone"], "no_marker": True, "phone_icons": True}'/></td>
-                    </tr>
-                    <tr>
-                        <td style="border: none;"><strong>Delivery Terms:</strong></td>
-                        <td style="border: none;"><span class="m-0" t-field="o.incoterm_id"/></td>
-                        <td style="border: none;"><strong>Expected Arrival</strong></td>
-                        <td style="border: none;"><span class="m-0" t-field="o.date_planned" t-options='{"widget": "date"}'/></td>
+                                 t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/></td>
                     </tr>
                     <tr>
                         <td style="border: none;"><strong>Your reference:</strong></td>
@@ -106,32 +101,26 @@
                 </table>
             </div>
         </xpath>
-        <xpath expr="//thead" position="replace">
-            <thead style="display: table-row-group">
-                <tr>
-                    <th name="wilco_th_line_ref" class="text-start" style="width:1.5cm;"><strong>Item</strong></th>
-                    <th name="th_description" style="width:300px;"><strong>Description</strong></th>
-                    <th name="th_taxes" t-if="False"><strong>Taxes</strong></th>
-                    <th name="th_date_req" class="text-center" style="width:120px;"><strong>Date Req.</strong></th>
-                    <th name="th_quantity" class="text-end"><strong>Quantity</strong></th>
-                    <th name="th_wilco_th_product_uom" class="text-end"><strong>Unit</strong></th>
-                    <th name="th_price_unit" class="text-end" style="width:120px;">
-                        <strong>Unit Price<br/>(<span t-field="o.currency_id.name"/>)</strong>
-                    </th>
-                    <th name="th_amount" class="text-end" style="width:120px;">
-                        <strong>Amount<br/>(<span t-field="o.currency_id.name"/>)</strong>
-                    </th>
-                </tr>
-            </thead>
+        <xpath expr="//thead/tr" position="replace">
+            <tr>
+                <!--<th name="wilco_th_line_ref" class="text-start" style="width:1.5cm;"><strong>Item</strong></th>-->
+                <th name="wilco_th_line_ref" class="text-start col-1">Item</th>
+                <th name="th_description">Description</th>
+                <th name="th_date_req" class="text-center col-1" t-if="False">Date Req.</th>
+                <th name="th_quantity" class="text-end col-1">Quantity</th>
+                <th name="th_wilco_th_product_uom" class="text-end col-1">Unit</th>
+                <th name="th_price_unit" class="text-end col-1">Unit Price<br/>(<span t-field="o.currency_id.name"/>)</th>
+                <th name="th_taxes"
+                    t-attf-class="text-start {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }} col-1"
+                    t-if="not wilco_hide_tax">Taxes</th>
+                <th name="th_amount" class="text-end col-1">Amount<br/>(<span t-field="o.currency_id.name"/>)</th>
+            </tr>
         </xpath>
         <xpath expr="//t[@t-if='not line.display_type']" position="replace">
             <t t-if="not line.display_type">
                 <td name="wilco_line_ref"><span t-field="line.wilco_line_ref"/></td>
                 <td id="product"><span t-field="line.name"/></td>
-                <td name="td_taxes" t-if="False">
-                    <span t-esc="', '.join(map(lambda x: x.description or x.name, line.taxes_id))"/>
-                </td>
-                <td name="date_planned" class="text-center">
+                <td name="date_planned" class="text-center" t-if="False">
                     <span t-field="line.date_planned" t-options='{"widget": "date"}'/>
                 </td>
                 <td name="product_qty" class="text-end"><span t-field="line.product_qty"/></td>
@@ -140,17 +129,37 @@
                     <span t-field="line.price_unit" widget="monetary"
                           t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
                 </td>
+                <td name="td_taxes" t-if="not wilco_hide_tax">
+                    <span t-esc="', '.join(map(lambda x: x.description or x.name, line.taxes_id))"/>
+                </td>
                 <td name="price_subtotal" class="text-end">
                     <span t-field="line.price_subtotal"
                           t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
                 </td>
             </t>
         </xpath>
-        <xpath expr="//td[@id='section']" position="attributes">
+        <!--<xpath expr="//td[@id='section']" position="attributes">
             <attribute name="style">background: #b8b8b8</attribute>
         </xpath>
         <xpath expr="//td[@id='section']/span[@t-field='line.name']" position="attributes">
             <attribute name="style">color:black</attribute>
+        </xpath>-->
+        <xpath expr="//t[contains(@t-if, 'line_section')]" position="replace">
+            <t t-if="line.display_type == 'line_section'">
+                <td colspan="99" id="section" style="background: #b8b8b8">
+                    <span t-field="line.name" style="color:black"/>
+                </td>
+                <t t-set="current_section" t-value="line"/>
+                <t t-set="current_subtotal" t-value="0"/>
+            </t>
         </xpath>
+        <!--Add Payment term and add delivery note before note START-->
+        <xpath expr="//p[@t-field='o.notes']" position="before">
+            <p t-if="o.incoterm_id">Delivery Terms: <span t-field="o.incoterm_id.code"/> - <span t-field="o.incoterm_id.name"/></p>
+            <p name="wilco_incoterm_term" t-if="not is_html_empty(o.payment_term_id.note)">
+                <span t-field="o.payment_term_id.note"/>
+            </p>
+        </xpath>
+        <!--Move Payment term and add delivery note before note END-->
     </template>
 </odoo>

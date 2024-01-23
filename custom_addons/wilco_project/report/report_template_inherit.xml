@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--Inherited the external layout template for adding signature and document revision-->
+    <template id="wilco_external_layout_boxed_inherited"
+              inherit_id="web.external_layout_boxed">
+        <xpath expr="//img[@t-if='company.logo']" position="replace">
+            <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" alt="Logo" style="max-height: 5cm; max-width: 5cm"/>
+        </xpath>
+        <xpath expr="//div[@t-field='company.report_header']" position="replace">
+            <div class="mt0 h4" t-field="company.report_header" t-if="not is_html_empty(company.report_header)"/>
+        </xpath>
+        <xpath expr="//div[hasclass('text-center')]" position="replace">
+                <!--<div id="wilco_document_reference_footer"
+                     style="float:left; diplay:flex;postion: absolute; left: 0px;margin-top: 10px">
+                    <t t-call="wilco_project.wilco_document_reference"/>
+                </div>-->
+            <div class="text-center">
+                <table class="table table-borderless" style="border: 0;width:100%">
+                    <tr>
+                        <td style="width:200px; text-align: left;">
+                            <t t-call="wilco_project.wilco_document_reference"/>
+                        </td>
+                        <td>
+                            <div t-if="not is_html_empty(company.report_footer)" t-field="company.report_footer"/>
+                            <div t-if="report_type == 'pdf'">
+                                Page: <span class="page"/> / <span class="topage"/>
+                            </div>
+                            <div t-if="report_type == 'pdf' and display_name_in_footer" class="text-muted">
+                                <span t-field="o.name"/>
+                            </div>
+                        </td>
+                        <td style="width:200px">
+                            <t t-call="wilco_project.wilco_iso_image"/>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="wilco_document_tax_totals"
+              inherit_id="account.document_tax_totals">
+        <!--Do not show tax START-->
+        <xpath expr="//t[@t-as='subtotal']" position="replace">
+            <t t-foreach="tax_totals['subtotals']" t-as="subtotal" t-if="not wilco_hide_tax">
+                <tr class="border-black o_subtotal">
+                    <td><strong t-esc="subtotal['name']"/></td>
+
+                    <td class="text-end">
+                        <span
+                            t-att-class="oe_subtotal_footer_separator"
+                            t-esc="subtotal['formatted_amount']"
+                        />
+                    </td>
+                </tr>
+
+                <t t-set="subtotal_to_show" t-value="subtotal['name']"/>
+                <t t-call="account.tax_groups_totals"/>
+            </t>
+        </xpath>
+        <!--Do not show tax END-->
+
+        <xpath expr="//tr[hasclass('border-black','o_total')]/td" position="replace">
+            <t t-if="not wilco_total_label" t-set="wilco_total_label" t-value="'Total'"/>
+            <td><strong><span t-esc="wilco_total_label"/></strong></td>
+        </xpath>
+    </template>
+</odoo>

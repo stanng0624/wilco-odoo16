@@ -1,0 +1,28 @@
+.signature_table {
+    margin-top: 100px
+}
+.signature_section {
+    height: 3cm;
+}
+.signature_section img{
+    max-height: 2.5cm;
+    max-width: 2.5m;
+    position: relative;
+    left: 3cm;
+    margin: 10px 00px 10px 0px;
+}
+.signature_line {
+    width: 8cm;
+    border-top: 1px solid black;
+    height: 10px;
+}
+.signature_name {
+}
+.signed_by {
+    display: block;
+    margin-bottom: 10px;
+}
+.signed_on {
+    display: block;
+    margin-bottom: 10px;
+}
