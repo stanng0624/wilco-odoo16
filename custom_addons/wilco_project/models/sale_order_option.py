@@ -19,7 +19,6 @@ class SaleOrderOption(models.Model):
             totals = list(tax_results['totals'].values())[0]
             amount_untaxed = totals['amount_untaxed']
             # amount_tax = totals['amount_tax']
-
             line.update({'wilco_price_subtotal': amount_untaxed})
 
     def _convert_to_tax_base_line_dict(self):

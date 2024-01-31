@@ -197,7 +197,7 @@
                             </td>
                             <td name="wilco_td_option_subtotal" class="text-end">
                                 <div t-field="option.wilco_price_subtotal"
-                                     t-options='{"widget": "monetary", "display_currency": doc.currency_id.name}'/>
+                                     t-options='{"widget": "monetary", "display_currency": doc.pricelist_id.currency_id}'/>
                             </td>
                         </tr>
                     </tbody>
