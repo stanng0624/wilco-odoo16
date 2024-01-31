@@ -211,11 +211,13 @@
         </xpath>
         <xpath expr="//p[@name='order_note']" position="before">
             <p t-if="doc.incoterm">Delivery Terms: <span t-field="doc.incoterm.code"/> - <span t-field="doc.incoterm.name"/></p>
+            <p t-if="not is_html_empty(doc.payment_term_id.note)"><span t-field="doc.payment_term_id.note"/></p>
         </xpath>
         <!--Move Payment term and add delivery note before note END-->
         <!--Quotation Option layout START-->
         <xpath expr="//div[@class='page']" position="inside">
-            <t t-call="wilco_project.wilco_signature_template" t-if="report_type == 'pdf'">
+            <t t-call="wilco_project.wilco_signature_template"
+               t-if="report_type == 'pdf' and wilco_doc_type in ['quotation']">
                 <t t-set="company" t-value="env.company"/>
             </t>
         </xpath>

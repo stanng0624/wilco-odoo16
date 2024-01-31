@@ -5,15 +5,23 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//page[@name='sales']//group[@name='description']" position="inside">
-                <field name="wilco_sale_skip_update_name"/>
-                <field name="wilco_sale_skip_update_price_unit"/>
-                <field name="wilco_sale_skip_update_qty"/>
+            <xpath expr="//page[@name='sales']" position="inside">
+                <group>
+                    <group string="Skip Update Sales Information" name="wilco_skip_update_sale_info">
+                        <field name="wilco_sale_skip_update_name"/>
+                        <field name="wilco_sale_skip_update_price_unit"/>
+                        <field name="wilco_sale_skip_update_qty"/>
+                    </group>
+                </group>
             </xpath>
-            <xpath expr="//page[@name='purchase']//field[@name='description_purchase']" position="after">
-                <field name="wilco_purchase_skip_update_name"/>
-                <field name="wilco_purchase_skip_update_price_unit"/>
-                <field name="wilco_purchase_skip_update_qty"/>
+            <xpath expr="//page[@name='purchase']" position="inside">
+                <group>
+                    <group string="Skip Update Purchase Information" name="wilco_skip_update_purchase_info">
+                        <field name="wilco_purchase_skip_update_name"/>
+                        <field name="wilco_purchase_skip_update_price_unit"/>
+                        <field name="wilco_purchase_skip_update_qty"/>
+                    </group>
+                </group>
             </xpath>
         </field>
     </record>

@@ -40,34 +40,22 @@
                         <td style="border: none;"><p name="due_date" class="m-0" t-field="o.invoice_date_due" t-if="show_due_date"/></td>
                     </tr>
                     <tr>
-                        <td style="border: none;"><strong>From:</strong></td>
+                        <td style="border: none;"><strong>Bill To:</strong></td>
                         <td style="border: none;"><span class="m-0" t-field="o.partner_id.name"/></td>
-                        <td style="border: none;" class="text-left"><strong>To:</strong></td>
-                        <td style="border: none;"><span class="m-0" t-field="o.company_id.name"/></td>
+                        <td style="border: none;"><strong>Order source</strong></td>
+                        <td style="border: none;"><span class="m-0" t-field="o.invoice_origin"/></td>
                     </tr>
                     <tr>
                         <td style="border: none;"><strong>Attn:</strong></td>
                         <td style="border: none;"><span class="m-0" t-field="o.wilco_contact_info"/></td>
-                        <td style="border: none;"><strong>Attn:</strong></td>
-                        <td style="border: none;"><span class="m-0" t-field="o.user_id"/></td>
+                        <td style="border: none;"><strong>Your reference:</strong></td>
+                        <td style="border: none;"><span class="m-0" t-field="o.ref"/></td>
                     </tr>
                     <tr>
                         <td style="border: none;"><strong>Invoicing Address:</strong></td>
                         <td style="border: none;">
                             <div t-field="o.partner_id"
                                  t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/></td>
-                        <td style="border: none;"/>
-                        <td style="border: none;"/>
-                    </tr>
-                    <tr>
-                        <td style="border: none;"><strong>Order source</strong></td>
-                        <td style="border: none;"><span class="m-0" t-field="o.invoice_origin"/></td>
-                        <td style="border: none;"/>
-                        <td style="border: none;"/>
-                    </tr>
-                    <tr>
-                        <td style="border: none;"><strong>Your reference:</strong></td>
-                        <td style="border: none;"><span class="m-0" t-field="o.ref"/></td>
                         <td style="border: none;"><strong>Our reference:</strong></td>
                         <td style="border: none;">
                             <t t-if="o.partner_id.ref">
@@ -130,12 +118,6 @@
                 <t t-set="current_subtotal" t-value="0"/>
             </t>
         </xpath>
-        <!--<xpath expr="//t[contains(@t-if, 'line_section')]/td" position="attributes">
-            <attribute name="style">background: #b8b8b8</attribute>
-        </xpath>
-        <xpath expr="//t[contains(@t-if, 'line_section')]/td/span[@t-field='line.name']" position="attributes">
-            <attribute name="style">color:black</attribute>
-        </xpath>-->
         <xpath expr="//p[@name='payment_communication']" position="before">
             <p t-if="o.invoice_incoterm_id">Delivery Terms: <span t-field="o.invoice_incoterm_id.code"/> - <span t-field="o.invoice_incoterm_id.name"/></p>
         </xpath>
