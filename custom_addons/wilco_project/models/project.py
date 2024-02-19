@@ -36,6 +36,15 @@ class Project(models.Model):
             result.append((project.id, name))
         return result
 
+    @api.model
+    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+        args = args or []
+        domain = []
+        if name:
+            domain = ['|', ('name', operator, name), ('wilco_project_name', operator, name)]
+        return self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
+        # return super()._name_search(name, args, operator, limit, name_get_uid)
+
     @api.model_create_multi
     def create(self, vals_list):
         result = super().create(vals_list)
@@ -96,7 +105,7 @@ class Project(models.Model):
 
     def _wilco_exist_external_identifier(self, module = '__import__'):
         self.ensure_one()
-        external_identifier = self.env['ir.model.data'].search([
+        external_identifier = self.env['ir.model.data'].sudo().search([
             ('module', '=', module),
             ('res_id', '=', self.id),
             ('model', '=', self._name),
@@ -129,7 +138,7 @@ class Project(models.Model):
         self.ensure_one()
         # Remove space, name is not allowed with space
         external_identifier_name = external_identifier_name.replace(" ","")
-        external_identifier = self.env['ir.model.data'].search([
+        external_identifier = self.env['ir.model.data'].sudo().search([
             ('module', '=', module),
             ('res_id', '=', self.id),
             ('model', '=', self._name),

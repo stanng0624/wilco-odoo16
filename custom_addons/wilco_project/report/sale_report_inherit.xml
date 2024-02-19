@@ -132,12 +132,6 @@
                 </td>
             </t>
         </xpath>
-        <!--<xpath expr="//td[@name='td_section_line']" position="attributes">
-            <attribute name="style">background: #b8b8b8</attribute>
-        </xpath>
-        <xpath expr="//td[@name='td_section_line']/span[@t-field='line.name']" position="attributes">
-            <attribute name="style">color:black</attribute>
-        </xpath>-->
         <xpath expr="//t[contains(@t-elif, 'line_section')]" position="replace">
             <t t-elif="line.display_type == 'line_section'">
                 <td name="td_section_line" colspan="99" style="background: #b8b8b8">
@@ -187,9 +181,9 @@
                             <td name="td_option_price_unit">
                                 <strong class="text-end">
                                     <div t-field="option.price_unit"
-                                        t-options='{"widget": "monetary", "display_currency": doc.pricelist_id.currency_id}'
-                                        t-att-style="option.discount and 'text-decoration: line-through' or None"
-                                        t-att-class="option.discount and 'text-danger' or None"/>
+                                         t-options='{"widget": "monetary", "display_currency": doc.pricelist_id.currency_id}'
+                                         t-att-style="option.discount and 'text-decoration: line-through' or None"
+                                         t-att-class="option.discount and 'text-danger' or None"/>
                                     <div t-if="option.discount">
                                         <t t-out="'%.2f' % ((1-option.discount / 100.0) * option.price_unit)"/>
                                     </div>

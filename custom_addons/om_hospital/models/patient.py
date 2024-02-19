@@ -24,6 +24,14 @@ class HospitalPatient(models.Model):
     def _compute_company_id(self):
         return self.env.company
 
+    @api.model
+    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+        args = args or []
+        domain = []
+        if name:
+            domain = ['|', ('name', operator, name), ('ref', operator, name)]
+        return self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
+
     @api.depends('date_of_birth')
     def _compute_age(self):
         print("self......{}".format(self))

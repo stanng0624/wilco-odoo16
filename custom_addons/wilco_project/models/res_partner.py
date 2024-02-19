@@ -48,7 +48,7 @@ class ResPartner(models.Model):
 
     def _wilco_exist_external_identifier(self, module = '__import__'):
         self.ensure_one()
-        external_identifier = self.env['ir.model.data'].search([
+        external_identifier = self.env['ir.model.data'].sudo().search([
             ('module', '=', module),
             ('model', '=', self._name),
             ('res_id', '=', self.id),
@@ -81,7 +81,7 @@ class ResPartner(models.Model):
         self.ensure_one()
         # Remove space, name is not allowed with space
         external_identifier_name = external_identifier_name.replace(" ","")
-        external_identifier = self.env['ir.model.data'].search([
+        external_identifier = self.env['ir.model.data'].sudo().search([
             ('module', '=', module),
             ('model', '=', self._name),
             ('res_id', '=', self.id),
@@ -105,7 +105,7 @@ class ResPartner(models.Model):
             self,
             module='__import__'):
         self.ensure_one()
-        external_identifier = self.env['ir.model.data'].search([
+        external_identifier = self.env['ir.model.data'].sudo().search([
             ('module', '=', module),
             ('model', '=', self._name),
             ('res_id', '=', self.id),

@@ -191,7 +191,7 @@ class SaleOrder(models.Model):
         # if external_identifier:
         #     return True
 
-        external_identifier = self.env['ir.model.data'].search([
+        external_identifier = self.env['ir.model.data'].sudo().search([
             ('module', '=', module),
             ('model', '=', self._name),
             ('res_id', '=', self.id),
@@ -235,7 +235,7 @@ class SaleOrder(models.Model):
         #     external_identifier.sudo().write({'res_id': self.id})
         #     return
 
-        external_identifier = self.env['ir.model.data'].search([
+        external_identifier = self.env['ir.model.data'].sudo().search([
             ('module', '=', module),
             ('model', '=', self._name),
             ('res_id', '=', self.id),
