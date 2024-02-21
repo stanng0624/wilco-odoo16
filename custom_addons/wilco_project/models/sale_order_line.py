@@ -7,6 +7,11 @@ class SaleOrderLine(models.Model):
     wilco_budget_cost_unit = fields.Monetary(string="Unit cost", store=True)
     wilco_amount_budget_cost_total = fields.Monetary(string="Sub-total cost", store=True, compute='_wilco_compute_amount_budget_cost_total')
     wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_gross_profit_percent')
+    wilco_report_display_zero_format = fields.Selection([
+        ('included', 'Included'),
+        ('excluded', 'Excluded'),
+        ('hyphen','-')
+    ], string='Display Zero In Report', default='included')
 
     @api.depends('product_id')
     def _compute_name(self):

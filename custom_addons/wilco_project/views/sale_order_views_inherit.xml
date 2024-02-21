@@ -53,6 +53,7 @@
                 <field name="wilco_line_ref"/>
             </xpath>
             <xpath expr="//tree/field[@name='price_total']" position="after">
+                <field name="wilco_report_display_zero_format"/>
                 <field name="wilco_budget_cost_unit"/>
                 <field name="wilco_amount_budget_cost_total"/>
                 <field name="wilco_gross_profit_percent" widget="percentage"/>

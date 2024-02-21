@@ -120,15 +120,23 @@
                 <td name="td_quantity" class="text-end"><span t-field="line.product_uom_qty"/></td>
                 <td name="wilco_td_product_uom" class="text-end"><span t-field="line.product_uom"/></td>
                 <td name="td_priceunit" class="text-end">
-                    <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": doc.pricelist_id.currency_id}'/>
+                    <t t-if="line.price_unit == 0">-</t>
+                    <t t-else="">
+                        <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": doc.pricelist_id.currency_id}'/>
+                    </t>
                 </td>
                 <td t-if="display_discount" class="text-end"><span t-field="line.discount"/></td>
                 <td name="td_taxes" class="text-start" t-if="not wilco_hide_tax">
                     <span t-out="', '.join(map(lambda x: (x.description or x.name), line.tax_id))"/>
                 </td>
                 <td t-if="not line.is_downpayment" name="td_subtotal" class="text-end o_price_total">
-                    <span t-field="line.price_subtotal" groups="account.group_show_line_subtotals_tax_excluded"/>
-                    <span t-field="line.price_total" groups="account.group_show_line_subtotals_tax_included"/>
+                    <t t-if="line.price_subtotal == 0">
+                        <span t-field="line.wilco_report_display_zero_format"/>
+                    </t>
+                    <t t-else="">
+                        <span t-field="line.price_subtotal" groups="account.group_show_line_subtotals_tax_excluded"/>
+                        <span t-field="line.price_total" groups="account.group_show_line_subtotals_tax_included"/>
+                    </t>
                 </td>
             </t>
         </xpath>
