@@ -8,6 +8,7 @@ from . import sale_order_option
 from . import purchase
 from . import account_move
 from . import account_move_line
+from . import account_payment
 from . import analytic_account
 from . import product_templete
 from . import res_company

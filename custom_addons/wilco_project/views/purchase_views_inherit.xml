@@ -57,6 +57,7 @@
     <record id="wilco_purchase_order_tree_inherit" model="ir.ui.view">
         <field name="name">purchase.order.tree.inherit.wilco_project</field>
         <field name="model">purchase.order</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="purchase.purchase_order_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">

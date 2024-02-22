@@ -3,6 +3,7 @@
     <record id="wilco_view_project_project_filter_inherit" model="ir.ui.view">
         <field name="name">project.project.select.inherit.wilco_project</field>
         <field name="model">project.project</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="project.view_project_project_filter"/>
         <field name="arch" type="xml">
             <!--<xpath expr="//field[@name='name']" position="after">
@@ -22,6 +23,7 @@
     <record id="wilco_edit_project_inherit" model="ir.ui.view">
         <field name="name">project.project.form.inherit.wilco_project</field>
         <field name="model">project.project</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='label_tasks']" position="before">
@@ -49,6 +51,7 @@
     <record id="wilco_project_project_view_form_simplified_inherit" model="ir.ui.view">
         <field name="name">project.project.view.form.simplified.inherit.wilco_project</field>
         <field name="model">project.project</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="project.project_project_view_form_simplified"/>
         <field name="arch" type="xml">
             <xpath expr="//label[@for='name']" position="replace">

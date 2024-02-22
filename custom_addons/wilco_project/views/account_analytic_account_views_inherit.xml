@@ -3,8 +3,8 @@
     <record id="wilco_view_account_analytic_account_form_inherit_budget_inherit" model="ir.ui.view">
         <field name="name">account.analytic.account.form.inherit.budget.inherit.wilco_project</field>
         <field name="model">account.analytic.account</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
-        <field name="priority" eval="100"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='percentage']" position='replace'>
                 <field name="percentage" widget="percentage"/>

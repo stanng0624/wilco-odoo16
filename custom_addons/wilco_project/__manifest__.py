@@ -18,6 +18,7 @@ This module contains all the common features of Hospital management
         'views/purchase_views_inherit.xml',
         'views/account_analytic_account_views_inherit.xml',
         'views/account_move_views_inherit.xml',
+        'views/account_payment_views_inherit.xml',
         'views/analytic_account_views_inherit.xml',
         'views/product_views_inherit.xml',
         'views/res_company_views_inherit.xml',

@@ -41,6 +41,7 @@ class AccountMove(models.Model):
     def onchange_wilco_project_id(self):
         if self.wilco_project_id:
             self.wilco_our_ref = self.wilco_project_id.name
-            lines = self.line_ids.filtered(lambda r: r.display_type in ['payment_term','product'])
+            # lines = self.line_ids.filtered(lambda r: r.display_type in ['payment_term','product'])
+            lines = self.line_ids
             for line in lines:
-                line._wilco_set_analytic_distribution_from_project(True)
+                line._wilco_set_analytic_distribution_from_project()

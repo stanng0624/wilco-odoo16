@@ -98,6 +98,7 @@
     <record id="wilco_view_quotation_tree_inherit" model="ir.ui.view">
         <field name="name">sale.order.inherit.wilco_project</field>
         <field name="model">sale.order</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="sale.view_quotation_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
@@ -156,6 +157,7 @@
      <record id="wilco_view_sales_order_filter_inherit" model="ir.ui.view">
         <field name="name">sale.order.list.select.inherit.wilco_project</field>
         <field name="model">sale.order</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="sale.view_sales_order_filter"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="replace">

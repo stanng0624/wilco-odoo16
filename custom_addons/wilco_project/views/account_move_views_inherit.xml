@@ -3,6 +3,7 @@
     <record id="wilco_view_invoice_tree_inherit" model="ir.ui.view">
         <field name="name">account.invoice.tree.inherit.wilco_project</field>
         <field name="model">account.move</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="account.view_invoice_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='payment_reference']" position="after">

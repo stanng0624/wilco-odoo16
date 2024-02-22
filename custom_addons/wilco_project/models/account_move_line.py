@@ -26,6 +26,15 @@ class AccountMoveLine(models.Model):
             self._wilco_set_name_from_source_order()
             self._wilco_set_analytic_distribution_from_project()
 
+    @api.onchange('account_id')
+    def _wilco_onchange_product_id(self):
+        if not self.account_id:
+            return
+
+        if self.display_type == 'product':
+            self._wilco_set_analytic_distribution_from_project()
+
+
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
@@ -50,16 +59,17 @@ class AccountMoveLine(models.Model):
         if order_name != '':
             self.name = _("Bill To Order: {}").format(order_name)
 
-    def _wilco_set_analytic_distribution_from_project(self, use_write=False):
+    def _wilco_set_analytic_distribution_from_project(self):
         self.ensure_one()
 
+        if self.display_type not in ['payment_term','product']:
+            return
+
         account_move = self.move_id
-        if account_move.wilco_project_id:
+        if account_move.wilco_project_id.analytic_account_id:
             analytic_account_id = account_move.wilco_project_id.analytic_account_id.id
             if analytic_account_id:
                 analytic_account_id_str = str(analytic_account_id)
                 analytic_distribution = {analytic_account_id_str: 100}
-                if use_write:
-                    self.write({'analytic_distribution': analytic_distribution})
-                else:
-                    self.analytic_distribution = analytic_distribution
+                #self.analytic_distribution = analytic_distribution
+                self.update({'analytic_distribution': analytic_distribution})

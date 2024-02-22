@@ -13,8 +13,6 @@
                     <field name="wilco_invoice_method" nolabel="1"/>
                 </div>
             </xpath>
-
         </field>
     </record>
-
 </odoo>
