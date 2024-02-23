@@ -219,7 +219,7 @@ class SaleOrder(models.Model):
 
     def _wilco_update_external_identifier(
             self,
-           external_identifier_name: str,
+            external_identifier_name: str,
             module='__import__'):
         self.ensure_one()
         # Remove space, name is not allowed with space

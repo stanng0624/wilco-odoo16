@@ -40,7 +40,7 @@ class AccountMoveLine(models.Model):
         lines = super().create(vals_list)
 
         for line in lines:
-            if line.move_id and line.display_type == 'payment_term' and not line.analytic_distribution:
+            if line.move_id and line.move_id.wilco_project_id.analytic_account_id:
                 line._wilco_set_analytic_distribution_from_project()
 
         return lines
@@ -71,5 +71,4 @@ class AccountMoveLine(models.Model):
             if analytic_account_id:
                 analytic_account_id_str = str(analytic_account_id)
                 analytic_distribution = {analytic_account_id_str: 100}
-                #self.analytic_distribution = analytic_distribution
-                self.update({'analytic_distribution': analytic_distribution})
+                self.analytic_distribution = analytic_distribution
