@@ -18,6 +18,7 @@
     <record id="wilco_view_partner_tree_inherit" model="ir.ui.view">
         <field name="name">res.partner.tree.inherit.wilco_project</field>
         <field name="model">res.partner</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="base.view_partner_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='display_name']" position="after">
@@ -29,6 +30,7 @@
     <record id="wilco_view_res_partner_filter_inherit" model="ir.ui.view">
         <field name="name">res.partner.select.inherit.wilco_project</field>
         <field name="model">res.partner</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="base.view_res_partner_filter"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="replace">

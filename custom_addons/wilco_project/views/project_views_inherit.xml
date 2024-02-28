@@ -74,6 +74,7 @@
     <record id="wilco_view_project_inherit" model="ir.ui.view">
         <field name="name">project.project.tree.inherit.wilco_project</field>
         <field name="model">project.project</field>
+        <field name="priority">100</field>
         <field name="inherit_id" ref="project.view_project"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='display_name']" position="replace">
