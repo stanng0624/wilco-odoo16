@@ -35,6 +35,13 @@ class SaleOrderLine(models.Model):
                                                     and r.product_id.wilco_sale_skip_update_qty)
         return super(SaleOrderLine, self - skip_update_lines)._compute_product_uom_qty()
 
+    @api.depends('product_id')
+    def _compute_product_uom(self):
+        skip_update_lines = self.filtered(lambda r: r._origin.id
+                                                    and not r.display_type
+                                                    and r.product_id.wilco_sale_skip_update_product_uom)
+        return super(SaleOrderLine, self - skip_update_lines)._compute_product_uom()
+
     @api.onchange('wilco_budget_cost_unit')
     def onchange_wilco_budget_cost_unit(self):
         if self.product_uom_qty != 0 and self.wilco_budget_cost_unit != 0:

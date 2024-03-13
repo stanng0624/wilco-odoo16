@@ -170,21 +170,21 @@ class PurchaseOrderLine(models.Model):
     @api.depends('product_qty', 'product_uom', 'company_id')
     def _compute_price_unit_and_date_planned_and_name(self):
         skip_update_lines = self.filtered(lambda r: r._origin.id
-                                                    and not r.display_type
+                                                    and r.display_type not in ('line_section', 'line_note')
                                                     and r.product_id.wilco_purchase_skip_update_price_unit)
         return super(PurchaseOrderLine, self - skip_update_lines)._compute_price_unit_and_date_planned_and_name()
 
     @api.depends('product_packaging_qty')
     def _compute_product_qty(self):
         skip_update_lines = self.filtered(lambda r: r._origin.id
-                                                    and not r.display_type
+                                                    and r.display_type not in ('line_section', 'line_note')
                                                     and r.product_id.wilco_purchase_skip_update_qty)
         return super(PurchaseOrderLine, self - skip_update_lines)._compute_product_qty()
 
     @api.depends('product_uom', 'product_qty', 'product_id.uom_id')
     def _compute_product_uom_qty(self):
         skip_update_lines = self.filtered(lambda r: r._origin.id
-                                                    and not r.display_type
+                                                    and r.display_type not in ('line_section', 'line_note')
                                                     and r.product_id.wilco_purchase_skip_update_qty)
         return super(PurchaseOrderLine, self - skip_update_lines)._compute_product_uom_qty()
 
@@ -207,3 +207,38 @@ class PurchaseOrderLine(models.Model):
                 result['analytic_distribution'] = {analytic_account_id: 100}
 
         return result
+
+    def _product_id_change(self):
+        super()._product_id_change()
+
+        for line in self:
+            line._reverse_origin_info_for_skip_update_purchase_info()
+
+    @api.onchange('product_id')
+    def onchange_product_id(self):
+        super().onchange_product_id()
+
+        self._reverse_origin_info_for_skip_update_purchase_info()
+
+    def _reverse_origin_info_for_skip_update_purchase_info(self):
+        self.ensure_one()
+
+        if not self._origin.id:
+            return
+
+        if self.display_type in ('line_section', 'line_note'):
+            return
+
+        product = self.product_id
+        if product.wilco_purchase_skip_update_product_uom and self.product_uom != self._origin.product_uom:
+            self.product_uom = self._origin.product_uom
+
+        if product.wilco_purchase_skip_update_qty:
+            if self.product_qty != self._origin.product_qty:
+                self.product_qty = self._origin.product_qty
+
+            if self.product_uom_qty != self._origin.product_uom_qty:
+                self.product_uom_qty = self._origin.product_uom_qty
+
+        if product.wilco_purchase_skip_update_price_unit and self.price_unit != self._origin.price_unit:
+            self.price_unit = self._origin.price_unit
