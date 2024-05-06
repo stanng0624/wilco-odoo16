@@ -60,9 +60,9 @@
                         <td style="border: none;"><span class="m-0" t-field="o.date_planned" t-options='{"widget": "date"}'/></td>
                     </tr>
                     <tr>
-                        <td style="border: none;" class="text-left"><strong>From:</strong></td>
+                        <td style="border: none;" class="text-left"><strong>Vendor:</strong></td>
                         <td style="border: none;"><span class="m-0" t-field="o.partner_id.name"/></td>
-                        <td style="border: none;"><strong>To:</strong></td>
+                        <td style="border: none;"><strong>Ship To:</strong></td>
                         <td style="border: none;"><span class="m-0" t-field="o.company_id.name"/></td>
                     </tr>
                     <tr>
@@ -86,9 +86,9 @@
                                  t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/></td>
                     </tr>
                     <tr>
-                        <td style="border: none;"><strong>Your reference:</strong></td>
+                        <td style="border: none;"><strong>Your Reference:</strong></td>
                         <td style="border: none;"><span class="m-0" t-field="o.partner_ref"/></td>
-                        <td style="border: none;"><strong>Our reference:</strong></td>
+                        <td style="border: none;"><strong>Our Reference:</strong></td>
                         <td style="border: none;">
                             <t t-if="o.partner_id.ref">
                                 <span class="m-0" t-field="o.partner_id.ref"/><span class="m-0" t-if="o.wilco_our_ref">,</span>
