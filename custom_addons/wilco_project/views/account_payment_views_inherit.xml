@@ -22,4 +22,24 @@
             </xpath>
         </field>
     </record>
+    <record id="wilco_view_account_payment_search_inherit" model="ir.ui.view">
+        <field name="name">account.payment.search.inherit.wilco_project</field>
+        <field name="model">account.payment</field>
+        <field name="priority">100</field>
+        <field name="inherit_id" ref="account.view_account_payment_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field string="Amount" name="amount"
+                    filter_domain="['|', ('amount_company_currency_signed' , 'ilike', self), ('amount', 'ilike', self)]"/>
+                <field name="ref"/>
+                <field name="payment_method_line_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='reconciled']" position="after">
+                <filter string="Unreconciled" name="wilco_unreconciled" domain="[('is_reconciled', '=', False)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='state_posted']" position="after">
+                <filter string="Cancelled" name="wilco_state_cancel" domain="[('state', '=', 'cancel')]"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
