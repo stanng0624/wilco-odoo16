@@ -8,15 +8,18 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='ref']" position="after">
                 <field name="wilco_our_ref"/>
-                <field name="wilco_contact_info"/>
                 <field name="wilco_project_id"/>
+                <field name="wilco_contact_info"/>
             </xpath>
-            <xpath expr="//field[@name='amount_total_in_currency_signed']" position="after">
-                <field name="wilco_amount_settled_total_signed" string="Total Settled" sum="Total" decoration-bf="1" optional="show"/>
+            <xpath expr="//field[@name='payment_reference']" position="replace">
+                <field name="payment_reference" invisible="context.get('default_move_type') in ('out_invoice', 'out_refund','out_receipt')"/>
             </xpath>
             <xpath expr="//field[@name='ref']" position="replace">
                 <field name="ref" invisible="context.get('default_move_type') not in ('in_invoice', 'in_refund','in_receipt')" string="Bill reference"/>
                 <field name="ref" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund','out_receipt')" string="Customer reference"/>
+            </xpath>
+            <xpath expr="//field[@name='amount_total_in_currency_signed']" position="after">
+                <field name="wilco_amount_settled_total_signed" string="Total Settled" sum="Total" decoration-bf="1" optional="show"/>
             </xpath>
         </field>
     </record>
