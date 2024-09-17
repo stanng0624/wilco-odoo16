@@ -17,7 +17,7 @@
                     </group>
 
                     <notebook>
-                        <page string="Prescription" name="prescription">
+                        <page string="Description" name="Description">
                             <group>
                                 <field name="gender"/>
                             </group>
