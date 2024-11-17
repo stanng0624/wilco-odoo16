@@ -5,15 +5,61 @@
         <field name="model">account.analytic.account</field>
         <field name="priority">100</field>
         <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
-        <field eval="10" name="priority"/>
         <field name="arch" type="xml">
-            <div name="button_box" position="inside">
+            <xpath expr="//span[text()='Gross Margin']" position="replace">
+                <span class="o_stat_text">G/L Balance</span>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="wilco_action_view_sale_orders"
-                    icon="fa-credit-card" attrs="{'invisible': [('wilco_sale_order_count', '=', 0)]}">
+                    icon="fa-file-text-o" attrs="{'invisible': [('wilco_sale_order_count', '=', 0)]}">
                     <field string="Sales Orders" name="wilco_sale_order_count" widget="statinfo"/>
                 </button>
-            </div>
+                <button class="oe_stat_button" type="object" name="wilco_action_view_analytic_lines" icon="fa-usd">
+                    <field string="Profit" name="wilco_amount_net_profit" widget="statinfo"/>
+                </button>
+                <button class="oe_stat_button" type="object" name="wilco_action_view_analytic_lines" icon="fa-usd">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Analytic</span>
+                        <span class="o_stat_text">Items</span>
+                    </div>
+                </button>
+            </xpath>
         </field>
     </record>
 
+    <record id="wilco_view_account_analytic_account_list" model="ir.ui.view">
+        <field name="name">account.analytic.account.list.inherit.wilco_project</field>
+        <field name="model">account.analytic.account</field>
+        <field name="priority">100</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='balance']" position="after">
+                <field name="wilco_sale_order_count" string="Sales Orders" sum="Sales Orders" optional="show"/>
+                <field name="invoice_count" string="Customer Invoices" sum="Customer Invoices" optional="show"/>
+                <field name="vendor_bill_count" string="Vendor Bills" sum="Vendor Bills" optional="show"/>
+                <field name="wilco_amount_revenue" sum="Revenue" optional="show"/>
+                <field name="wilco_amount_cost" sum="Cost" optional="show"/>
+                <field name="wilco_amount_gross_profit" sum="Gross Profit" optional="show"/>
+                <field name="wilco_amount_income" sum="Revenue" optional="show"/>
+                <field name="wilco_amount_expense" sum="Cost" optional="show"/>
+                <field name="wilco_amount_net_profit" sum="Net Profit" optional="show"/>
+                <field name="wilco_amount_receivable" sum="Receivable" optional="show"/>
+                <field name="wilco_amount_payable" sum="Payable" optional="show"/>
+                <field name="wilco_amount_payment" sum="Payment" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='plan_id']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='balance']" position="replace">
+<!--                <attribute name="label">GL Balance</attribute>-->
+                <field name="balance" string="G/L Balance" sum="G/L Balance"/>
+            </xpath>
+        </field>
+    </record>
+
+    <menuitem id="wilco_account_analytic_def_account"
+              action="analytic.action_account_analytic_account_form"
+              groups="analytic.group_analytic_accounting"
+              parent="account.menu_finance_entries_management"
+              sequence="10"/>
 </odoo>

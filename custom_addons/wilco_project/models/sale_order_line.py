@@ -1,17 +1,21 @@
 from odoo import models, fields, api, _
 
+REPORT_DISPLAY_ZERO_FORMAT = [
+    ('included', 'Included'),
+    ('excluded', 'Excluded'),
+    ('hyphen', '-')
+]
+
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
     wilco_line_ref = fields.Char(string='Line reference')
     wilco_budget_cost_unit = fields.Monetary(string="Unit cost", store=True)
-    wilco_amount_budget_cost_total = fields.Monetary(string="Sub-total cost", store=True, compute='_wilco_compute_amount_budget_cost_total')
+    wilco_amount_budget_cost_total = fields.Monetary(
+        string="Sub-total cost", store=True, compute='_wilco_compute_amount_budget_cost_total')
     wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_gross_profit_percent')
-    wilco_report_display_zero_format = fields.Selection([
-        ('included', 'Included'),
-        ('excluded', 'Excluded'),
-        ('hyphen','-')
-    ], string='Display Zero In Report', default='included')
+    wilco_report_display_zero_format = fields.Selection(
+        selection=REPORT_DISPLAY_ZERO_FORMAT, string='Display Zero In Report', default='included')
 
     @api.depends('product_id')
     def _compute_name(self):
@@ -72,7 +76,8 @@ class SaleOrderLine(models.Model):
 
         values = super(SaleOrderLine, self)._prepare_invoice_line(**optional_values)
 
-        if self.order_id.wilco_invoice_method == 'invoice_by_order' and not self.display_type and not self.is_downpayment:
+        if (self.order_id.wilco_invoice_method == 'invoice_by_order'
+        and not self.display_type and not self.is_downpayment):
             values = self._set_invoice_line_for_invoice_by_order(values)
 
         return values

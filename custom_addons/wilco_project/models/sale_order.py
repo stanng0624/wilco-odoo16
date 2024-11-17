@@ -363,3 +363,30 @@ class SaleOrder(models.Model):
                 days = order.company_id.quotation_validity_days
                 if days > 0:
                     order.validity_date = order.date_order + timedelta(days)
+
+    def wilco_action_view_analytic_lines(self):
+        self.ensure_one()
+        return {
+            'res_model': 'account.analytic.line',
+            'type': 'ir.actions.act_window',
+            'name': _("Analytic Items"),
+            'domain': [('account_id', '=', self.wilco_project_id.analytic_account_id.id)],
+            'views': [(self.env.ref('analytic.view_account_analytic_line_tree').id, 'list'),
+                      (self.env.ref('analytic.view_account_analytic_line_form').id, 'form'),
+                      (self.env.ref('analytic.view_account_analytic_line_graph').id, 'graph'),
+                      (self.env.ref('analytic.view_account_analytic_line_pivot').id, 'pivot')],
+            'view_mode': 'tree,form,graph,pivot',
+            # 'context': {'search_default_group_date': 1, 'default_account_id': self.wilco_project_id.analytic_account_id.id}
+            'context': {'search_default_partner': 1, 'default_account_id': self.wilco_project_id.analytic_account_id.id}
+        }
+        # analytic_lines = self.env['account.analytic.line'].search([
+        #     ('move_line_id.analytic_line_ids.account_id', '=', self.wilco_project_id.analytic_account_id.id)
+        # ])
+        # result = {
+        #     "type": "ir.actions.act_window",
+        #     "res_model": "account.analytic.line",
+        #     "domain": [['id', 'in', analytic_lines.ids]],
+        #     "name": _("Analytic Items"),
+        #     'view_mode': 'tree,form',
+        # }
+        # return result

@@ -10,6 +10,7 @@ from . import account_move
 from . import account_move_line
 from . import account_payment
 from . import analytic_account
+from . import analytic_account_line
 from . import product_templete
 from . import res_company
 from . import res_config_settings

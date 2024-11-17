@@ -34,14 +34,23 @@
             </xpath>
             <xpath expr="//button[@name='project_update_all_action']" position="after">
                 <button class="oe_stat_button" type="object"
-                        name="wilco_action_view_analytic_account_entries"
+                        name="wilco_action_view_analytic_lines"
                         icon="fa-usd" attrs="{'invisible': [('analytic_account_id', '=', False)]}"
                         groups="analytic.group_analytic_accounting">
                     <div class="o_form_field o_stat_info">
                         <span class="o_stat_value">
                             <field name="analytic_account_balance"/>
                         </span>
-                        <span class="o_stat_text">Gross Margin</span>
+                        <span class="o_stat_text">Profit</span>
+                    </div>
+                </button>
+                <button class="oe_stat_button" type="object"
+                        name="wilco_action_view_analytic_lines"
+                        icon="fa-usd" attrs="{'invisible': [('analytic_account_id', '=', False)]}"
+                        groups="analytic.group_analytic_accounting">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Analytic</span>
+                        <span class="o_stat_text">Items</span>
                     </div>
                 </button>
             </xpath>
