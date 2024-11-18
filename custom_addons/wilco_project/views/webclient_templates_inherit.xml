@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="wilco_login_layout" inherit_id="web.login_layout">
+        <!-- Override the footer to conditionally show the "Manage Databases" link -->
+        <xpath expr="//a[contains(@href, '/web/database/manager')]" position="replace">
+            <t t-if="request.params.get('show_db_manager') == 'true'">
+                <a class="border-end pe-2 me-1" href="/web/database/manager">Manage Databases</a>
+            </t>
+        </xpath>
+         <!-- Remove the "Powered by Odoo" link -->
+        <xpath expr="//a[contains(@href, 'https://www.odoo.com')]" position="replace">
+            <!-- Empty to remove the link -->
+        </xpath>
+    </template>
+</odoo>

@@ -78,82 +78,87 @@ class AccountAnalyticAccountLine(models.Model):
     @api.depends('amount', 'general_account_id')
     def _wilco_compute_amounts(self):
         for line in self:
-            line.wilco_is_payable = False
-            line.wilco_is_receivable = False
-            line.wilco_is_payment = False
-            line.wilco_is_revenue = False
-            line.wilco_is_income = False
-            line.wilco_is_cost = False
-            line.wilco_is_expense = False
+            line._wilco_set_amount_status_fields()
+            line._wilco_calc_amounts()
 
-            account_code_prefix = line.general_account_id.code[0:2]
-            # if account_code_prefix == '41':
-            #     test_info = account_code_prefix
+    def _wilco_set_amount_status_fields(self):
+        self.ensure_one()
 
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Accounts Receivable'):
-                line.wilco_is_receivable = True
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Accounts Payable'):
-                line.wilco_is_payable = True
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Other Payable'):
-                line.wilco_is_payable = True
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Bank'):
-                line.wilco_is_payment = True
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Cash'):
-                line.wilco_is_payment = True
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Revenue'):
-                line.wilco_is_revenue = True
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Costs'):
-                line.wilco_is_cost = True
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Income'):
-                line.wilco_is_income = True
-            if self._wilco_exist_in_account_groups(line.general_account_id, group_name='Expense'):
-                line.wilco_is_expense = True
+        # Dictionary mapping status fields to account groups or sets of groups
+        account_group_mapping = {
+            'wilco_is_receivable': 'Accounts Receivable',
+            'wilco_is_payable': {'Accounts Payable', 'Other Payable'},
+            'wilco_is_payment': {'Bank', 'Cash'},
+            'wilco_is_revenue': 'Revenue',
+            'wilco_is_income': 'Income',
+            'wilco_is_cost': 'Costs',
+            'wilco_is_expense': 'Expense',
+        }
 
-            line.wilco_amount_credit = 0
-            line.wilco_amount_debit = 0
-            line.wilco_amount_receivable = 0
-            line.wilco_amount_payable = 0
-            line.wilco_amount_payment = 0
-            line.wilco_amount_revenue = 0
-            line.wilco_amount_income = 0
-            line.wilco_amount_debit = 0
-            line.wilco_amount_cost = 0
-            line.wilco_amount_expense = 0
-            line.wilco_amount_gross_profit = 0
-            line.wilco_amount_net_profit = 0
+        # Reset all status fields to False at the initial stage
+        for field in account_group_mapping:
+            setattr(self, field, False)
 
-            # line.amount positive is Credit, negative is Debit
-            # Reverse sign to convert back to normal G/L entry amount
-            # G/L entry amount is Debit = Postive, Credit = Negative
-            #Asset account, Debit = Increase, Credit =  Decrease
-            gl_amount = -line.amount
+        # Iterate over the account group mapping and set fields based on group existence
+        for field, groups in account_group_mapping.items():
+            if isinstance(groups, str):
+                # Single group case
+                if self._wilco_exist_in_account_groups(self.general_account_id, group_name=groups):
+                    setattr(self, field, True)
+            elif isinstance(groups, set):
+                # Multiple groups case
+                if any(self._wilco_exist_in_account_groups(self.general_account_id, group_name=group) for group in
+                       groups):
+                    setattr(self, field, True)
 
-            if gl_amount > 0:
-                line.wilco_amount_debit = gl_amount
-            else:
-                line.wilco_amount_credit = -gl_amount
+    def _wilco_calc_amounts(self):
+        self.ensure_one()
 
-            if line.wilco_is_receivable:
-                line.wilco_amount_receivable = gl_amount
-            if line.wilco_is_payment:
-                line.wilco_amount_payment = gl_amount
-            # Liability account, Debit = Decrease, Credit =  Decrease
-            if line.wilco_is_payable:
-                line.wilco_amount_payable = -gl_amount
-            # Profit and lost account, Debit = Decrease, Credit =  Increase
-            if line.wilco_is_revenue:
-                line.wilco_amount_revenue = -gl_amount
-            if line.wilco_is_income:
-                line.wilco_amount_income = -gl_amount
-            if line.wilco_is_cost:
-                line.wilco_amount_cost = gl_amount
-            if line.wilco_is_expense:
-                line.wilco_amount_expense = gl_amount
+        self.wilco_amount_credit = 0
+        self.wilco_amount_debit = 0
+        self.wilco_amount_receivable = 0
+        self.wilco_amount_payable = 0
+        self.wilco_amount_payment = 0
+        self.wilco_amount_revenue = 0
+        self.wilco_amount_income = 0
+        self.wilco_amount_debit = 0
+        self.wilco_amount_cost = 0
+        self.wilco_amount_expense = 0
+        self.wilco_amount_gross_profit = 0
+        self.wilco_amount_net_profit = 0
 
-            line.wilco_amount_gross_profit = line.wilco_amount_revenue - line.wilco_amount_cost
-            line.wilco_amount_net_profit = line.wilco_amount_gross_profit \
-                                         + line.wilco_amount_income \
-                                         - line.wilco_amount_expense
+        # line.amount positive is Credit, negative is Debit
+        # Reverse sign to convert back to normal G/L entry amount
+        # G/L entry amount is Debit = Postive, Credit = Negative
+        #Asset account, Debit = Increase, Credit =  Decrease
+        gl_amount = -self.amount
+
+        if gl_amount > 0:
+            self.wilco_amount_debit = gl_amount
+        else:
+            self.wilco_amount_credit = -gl_amount
+
+        if self.wilco_is_receivable:
+            self.wilco_amount_receivable = gl_amount
+        if self.wilco_is_payment:
+            self.wilco_amount_payment = gl_amount
+        # Liability account, Debit = Decrease, Credit =  Decrease
+        if self.wilco_is_payable:
+            self.wilco_amount_payable = -gl_amount
+        # Profit and lost account, Debit = Decrease, Credit =  Increase
+        if self.wilco_is_revenue:
+            self.wilco_amount_revenue = -gl_amount
+        if self.wilco_is_income:
+            self.wilco_amount_income = -gl_amount
+        if self.wilco_is_cost:
+            self.wilco_amount_cost = gl_amount
+        if self.wilco_is_expense:
+            self.wilco_amount_expense = gl_amount
+
+        self.wilco_amount_gross_profit = self.wilco_amount_revenue - self.wilco_amount_cost
+        self.wilco_amount_net_profit = self.wilco_amount_gross_profit \
+                                     + self.wilco_amount_income \
+                                     - self.wilco_amount_expense
 
     def _wilco_exist_in_account_groups(self, account_id, group_name=''):
         if not group_name:

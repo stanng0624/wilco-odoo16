@@ -88,6 +88,18 @@
             <xpath expr="//notebook//form//field[@name='price_unit']" position="attributes">
                 <attribute name="widget">monetary</attribute>
             </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button"
+                        type="object"
+                        name="wilco_action_view_analytic_lines"
+                        icon="fa-usd"
+                        attrs="{'invisible': [('wilco_project_id', '=', 0)]}">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Analytic</span>
+                        <span class="o_stat_text">Items</span>
+                    </div>
+                </button>
+            </xpath>
         </field>
     </record>
 

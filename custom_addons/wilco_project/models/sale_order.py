@@ -387,6 +387,6 @@ class SaleOrder(models.Model):
         #     "res_model": "account.analytic.line",
         #     "domain": [['id', 'in', analytic_lines.ids]],
         #     "name": _("Analytic Items"),
-        #     'view_mode': 'tree,form',
+        #     'view_mo  de': 'tree,form',
         # }
         # return result

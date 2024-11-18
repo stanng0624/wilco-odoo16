@@ -45,3 +45,19 @@ class AccountMove(models.Model):
             lines = self.line_ids
             for line in lines:
                 line._wilco_set_analytic_distribution_from_project()
+
+    def wilco_action_view_analytic_lines(self):
+        self.ensure_one()
+        return {
+            'res_model': 'account.analytic.line',
+            'type': 'ir.actions.act_window',
+            'name': _("Analytic Items"),
+            'domain': [('account_id', '=', self.wilco_project_id.analytic_account_id.id)],
+            'views': [(self.env.ref('analytic.view_account_analytic_line_tree').id, 'list'),
+                      (self.env.ref('analytic.view_account_analytic_line_form').id, 'form'),
+                      (self.env.ref('analytic.view_account_analytic_line_graph').id, 'graph'),
+                      (self.env.ref('analytic.view_account_analytic_line_pivot').id, 'pivot')],
+            'view_mode': 'tree,form,graph,pivot',
+            # 'context': {'search_default_group_date': 1, 'default_account_id': self.wilco_project_id.analytic_account_id.id}
+            'context': {'search_default_partner': 1, 'default_account_id': self.wilco_project_id.analytic_account_id.id}
+        }
