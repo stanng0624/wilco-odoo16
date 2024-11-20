@@ -6,6 +6,14 @@ class AccountAnalyticAccount(models.Model):
 
     balance = fields.Monetary(string='G/L Balance') #Override the label
 
+    wilco_project_id = fields.Many2one(comodel_name='project.project', string="Related Project", compute='_wilco_compute_project_id')
+    wilco_project_stage_id = fields.Many2one(
+        comodel_name='project.project.stage',
+        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
+    wilco_project_last_update_status = fields.Selection(
+        related="wilco_project_id.last_update_status",
+        string="Project Status", readonly=True)
+
     wilco_sale_order_count = fields.Integer(string="Sales Order Count", compute='_wilco_compute_sale_order_count')
 
     wilco_amount_receivable = fields.Monetary(string='Receivable', compute='_wilco_compute_amounts')
@@ -17,6 +25,7 @@ class AccountAnalyticAccount(models.Model):
     wilco_amount_expense = fields.Monetary(string='Expense', compute='_wilco_compute_amounts')
     wilco_amount_gross_profit = fields.Monetary(string='Gross Profit', compute='_wilco_compute_amounts')
     wilco_amount_net_profit = fields.Monetary(string='Net Profit', compute='_wilco_compute_amounts')
+    # wilco_amount_budget_cost_total = fields.Monetary(string="Budget cost", compute='_wilco_compute_amounts')
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
@@ -53,7 +62,16 @@ class AccountAnalyticAccount(models.Model):
                 line['wilco_amount_gross_profit'] = sum(accounts.mapped('wilco_amount_gross_profit'))
             if 'wilco_amount_net_profit' in fields:
                 line['wilco_amount_net_profit'] = sum(accounts.mapped('wilco_amount_net_profit'))
+            if 'wilco_amount_budget_cost_total' in fields:
+                line['wilco_amount_budget_cost_total'] = sum(accounts.mapped('wilco_amount_budget_cost_total'))
+
         return res
+
+    def _wilco_compute_project_id(self):
+        for record in self:
+            # Search for the project where analytic_account_id matches the current analytic account
+            project = self.env['project.project'].search([('analytic_account_id', '=', record.id)], limit=1)
+            record.wilco_project_id = project.id
 
     @api.depends('line_ids')
     def _wilco_compute_amounts(self):
@@ -79,6 +97,10 @@ class AccountAnalyticAccount(models.Model):
             account.wilco_amount_expense = amount_expense
             account.wilco_amount_gross_profit = amount_gross_profit
             account.wilco_amount_net_profit = amount_net_profit
+
+            # sale_order_lines = self.env['sale.order.line'].search([('analytic_account_line.account_id', '=', account.id)])
+            # # Sum the total amount of each sale order line (price_total)
+            # account.wilco_amount_budget_cost_total = sum(line.wilco_amount_budget_cost_total for line in sale_order_lines)
 
     @api.depends('line_ids')
     def _wilco_compute_sale_order_count(self):

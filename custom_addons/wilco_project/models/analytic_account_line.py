@@ -6,11 +6,19 @@ from odoo import api, fields, models, _
 class AccountAnalyticAccountLine(models.Model):
     _inherit = 'account.analytic.line'
 
+    wilco_project_id = fields.Many2one(comodel_name='project.project', related='account_id.wilco_project_id')
+    wilco_project_stage_id = fields.Many2one(
+        comodel_name='project.project.stage',
+        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
+    wilco_project_last_update_status = fields.Selection(
+        related="wilco_project_id.last_update_status",
+        string="Project Status", readonly=True)
+
     wilco_amount_debit = fields.Monetary(string='Debit', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_credit = fields.Monetary(string='Credit', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_is_receivable = fields.Boolean(string='Receivable', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_is_payable = fields.Boolean(string='Is Payable', compute='_wilco_compute_amounts', store=True, readonly=True)
-    wilco_is_payment = fields.Boolean(nastringme='Is Payment', compute='_wilco_compute_amounts', store=True, readonly=True)
+    wilco_is_payment = fields.Boolean(string='Is Payment', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_is_revenue = fields.Boolean(string='Is Revenue', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_is_income = fields.Boolean(string='Is Income', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_is_cost = fields.Boolean(string='Is Cost', compute='_wilco_compute_amounts', store=True, readonly=True)
@@ -178,3 +186,4 @@ class AccountAnalyticAccountLine(models.Model):
         and account_group.code_prefix_end <= account_code_prefix:
             return True
         return False
+

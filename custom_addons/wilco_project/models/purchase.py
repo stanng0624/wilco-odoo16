@@ -19,10 +19,18 @@ class PurchaseOrder(models.Model):
     wilco_revision_date = fields.Date(string='Revision date')
     wilco_document_number = fields.Char(string='Document number', compute='_wilco_compute_document_name')
     wilco_remark = fields.Text(string='Additional remarks')
+
     wilco_project_id = fields.Many2one(
         'project.project', 'Project', readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
         index=True)
+    wilco_project_stage_id = fields.Many2one(
+        comodel_name='project.project.stage',
+        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
+    wilco_project_last_update_status = fields.Selection(
+        related="wilco_project_id.last_update_status",
+        string="Project Status", readonly=True)
+
     wilco_analytic_account_id = fields.Many2one(
         comodel_name='account.analytic.account',
         string="Analytic Account",

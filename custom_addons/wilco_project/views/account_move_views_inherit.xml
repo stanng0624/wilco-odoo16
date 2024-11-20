@@ -9,6 +9,8 @@
             <xpath expr="//field[@name='ref']" position="after">
                 <field name="wilco_our_ref"/>
                 <field name="wilco_project_id"/>
+                <field name="wilco_project_stage_id"/>
+                <field name="wilco_project_last_update_status"/>
                 <field name="wilco_contact_info"/>
             </xpath>
             <xpath expr="//field[@name='payment_reference']" position="replace">

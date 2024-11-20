@@ -9,10 +9,18 @@ class AccountMove(models.Model):
     wilco_revision_no = fields.Integer(string='Revision no.', default=0)
     wilco_revision_date = fields.Date(string='Revision date')
     wilco_document_number = fields.Char(string='Document number', compute='_wilco_compute_document_name')
+
     wilco_project_id = fields.Many2one(
-        'project.project', 'Project', readonly=True,
+        comodel_name='project.project', string='Project', readonly=True,
         states={'draft': [('readonly', False)]},
         index=True)
+    wilco_project_stage_id = fields.Many2one(
+        comodel_name='project.project.stage',
+        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
+    wilco_project_last_update_status = fields.Selection(
+        related="wilco_project_id.last_update_status",
+        string="Project Status", readonly=True)
+
     wilco_amount_settled_total = fields.Monetary(string="Amount Settled", compute='_wilco_compute_settled_amounts')
     wilco_amount_settled_total_signed = fields.Monetary(string="Amount Settled in Currency", compute='_wilco_compute_settled_amounts')
 

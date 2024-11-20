@@ -5,6 +5,16 @@ class Project(models.Model):
     _inherit = 'project.project'
 
     name = fields.Char(string='Project Number')
+    # Revise 'to_define' label from 'Set Status' to 'No Status'
+    last_update_status = fields.Selection(
+        selection=[
+            ('on_track', 'On Track'),
+            ('at_risk', 'At Risk'),
+            ('off_track', 'Off Track'),
+            ('on_hold', 'On Hold'),
+            ('to_define', 'No Status'),
+        ])
+
     wilco_project_name = fields.Char(string='Project Name', translate=True, index=True)
     wilco_date_award = fields.Date(string='Award Date')
 

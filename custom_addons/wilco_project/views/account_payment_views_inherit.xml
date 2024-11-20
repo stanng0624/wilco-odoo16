@@ -8,6 +8,8 @@
         <field name="arch" type="xml">
             <xpath expr="//label[@for='amount']" position="before">
                 <field name="wilco_project_id"/>
+                <field name="wilco_project_stage_id"/>
+                <field name="wilco_project_last_update_status"/>
             </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button"
@@ -31,6 +33,9 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='journal_id']" position="after">
                 <field name="ref"/>
+                <field name="wilco_project_id"/>
+                <field name="wilco_project_stage_id"/>
+                <field name="wilco_project_last_update_status"/>
             </xpath>
         </field>
     </record>

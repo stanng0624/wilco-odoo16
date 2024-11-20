@@ -33,7 +33,13 @@
         <field name="priority">100</field>
         <field name="inherit_id" ref="analytic.view_account_analytic_account_list"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="wilco_project_stage_id" optional="show"/>
+                <field name="wilco_project_last_update_status" optional="show"/>
+            </xpath>
             <xpath expr="//field[@name='balance']" position="after">
+                <field name="wilco_project_stage_id" optional="show"/>
+                <field name="wilco_project_last_update_status" optional="show"/>
                 <field name="wilco_sale_order_count" string="Sales Orders" sum="Sales Orders" optional="show"/>
                 <field name="invoice_count" string="Customer Invoices" sum="Customer Invoices" optional="show"/>
                 <field name="vendor_bill_count" string="Vendor Bills" sum="Vendor Bills" optional="show"/>
@@ -46,6 +52,7 @@
                 <field name="wilco_amount_receivable" sum="Receivable" optional="show"/>
                 <field name="wilco_amount_payable" sum="Payable" optional="show"/>
                 <field name="wilco_amount_payment" sum="Payment" optional="show"/>
+<!--                <field name="wilco_amount_budget_cost_total" sum="Budget Cost" optional="show"/>-->
             </xpath>
             <xpath expr="//field[@name='plan_id']" position="attributes">
                 <attribute name="optional">hide</attribute>

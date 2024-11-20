@@ -18,6 +18,8 @@
                 <field name="client_order_ref" id="wilco_client_order_ref"/>
                 <field name="wilco_order_header"/>
                 <field name="wilco_project_id"/>
+                <field name="wilco_project_stage_id"/>
+                <field name="wilco_project_last_update_status"/>
                 <label for="wilco_revision_no" string="Revision no"/>
                 <div name="wilco_revision_no_div" class="o_row">
                     <field name="wilco_revision_no"/>
@@ -123,6 +125,8 @@
                 <field name="wilco_order_header"/>
                 <field name="wilco_contact_info"/>
                 <field name="wilco_project_id"/>
+                <field name="wilco_project_stage_id"/>
+                <field name="wilco_project_last_update_status"/>
             </xpath>
             <xpath expr="//field[@name='state']" position="after">
                 <field name="wilco_amount_budget_cost_total" widget="monetary" readonly="1"/>
@@ -153,6 +157,8 @@
                 <field name="wilco_order_header"/>
                 <field name="wilco_contact_info"/>
                 <field name="wilco_project_id"/>
+                <field name="wilco_project_stage_id"/>
+                <field name="wilco_project_last_update_status"/>
             </xpath>
             <xpath expr="//field[@name='state']" position="after">
                 <field name="wilco_amount_budget_cost_total" widget="monetary" readonly="1"/>
@@ -186,6 +192,8 @@
                 <field name="wilco_order_header"/>
                 <field name="wilco_contact_info"/>
                 <field name="wilco_project_id"/>
+                <field name="wilco_project_stage_id"/>
+                <field name="wilco_project_last_update_status"/>
             </xpath>
         </field>
     </record>

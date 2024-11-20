@@ -3,7 +3,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from odoo.tools import float_is_zero, html_keep_url, is_html_empty
 
-
 INVOICE_METHOD = [
     ('invoice_by_line', 'Invoice By Order Line'),
     ('invoice_by_order', 'Invoice By Order Total')
@@ -21,13 +20,21 @@ class SaleOrder(models.Model):
     wilco_revision_date = fields.Date(string='Revision date')
     wilco_document_number = fields.Char(string='Document number', compute='_wilco_compute_document_name')
     wilco_remark = fields.Text(string='Additional remarks')
+
     wilco_project_id = fields.Many2one(
-        'project.project', 'Project', readonly=True,
+        comodel_name='project.project', string='Project', readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
         index=True)
+    wilco_project_stage_id = fields.Many2one(
+        comodel_name='project.project.stage',
+        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
+    wilco_project_last_update_status = fields.Selection(
+        related="wilco_project_id.last_update_status",
+        string="Project Status", readonly=True)
+
     wilco_invoice_method = fields.Selection(
         selection=INVOICE_METHOD,
-        string="Invoice Mehtod",
+        string="Invoice Method",
         default='invoice_by_order',
         store=True)
 
