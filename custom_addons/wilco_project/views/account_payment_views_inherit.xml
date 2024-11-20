@@ -41,6 +41,7 @@
         <field name="inherit_id" ref="account.view_account_payment_search"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="wilco_project_id"/>
                 <field string="Amount" name="amount"
                     filter_domain="['|', ('amount_company_currency_signed' , 'ilike', self), ('amount', 'ilike', self)]"/>
                 <field name="ref"/>

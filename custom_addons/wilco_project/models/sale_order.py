@@ -40,6 +40,41 @@ class SaleOrder(models.Model):
     wilco_amount_budget_cost_total = fields.Monetary(string="Budget cost", compute='_wilco_compute_budget_amounts')
     wilco_gross_profit_percent = fields.Float(string="GP%", compute='_wilco_compute_budget_amounts')
 
+    @api.model
+    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+        """
+            Override read_group to calculate the sum of the non-stored fields that depend on the user context
+        """
+        res = super(SaleOrder, self).read_group(domain, fields, groupby, offset=offset, limit=limit,
+                                                orderby=orderby, lazy=lazy)
+        orders = self.env['sale.order']
+        for order in res:
+            if '__domain' in order:
+                orders = self.search(order['__domain'])
+            if 'wilco_amount_invoiced_total' in fields:
+                order['wilco_amount_invoiced_total'] = sum(orders.mapped('wilco_amount_invoiced_total'))
+            if 'wilco_amount_invoice_remainder' in fields:
+                order['wilco_amount_invoice_remainder'] = sum(orders.mapped('wilco_amount_invoice_remainder'))
+            if 'wilco_amount_downpayment' in fields:
+                order['wilco_amount_downpayment'] = sum(orders.mapped('wilco_amount_downpayment'))
+            if 'wilco_amount_downpayment_deducted' in fields:
+                order['wilco_amount_downpayment_deducted'] = sum(orders.mapped('wilco_amount_downpayment_deducted'))
+            if 'wilco_amount_settled_total' in fields:
+                order['wilco_amount_settled_total'] = sum(orders.mapped('wilco_amount_settled_total'))
+            if 'wilco_amount_residual_total' in fields:
+                order['wilco_amount_residual_total'] = sum(orders.mapped('wilco_amount_residual_total'))
+            if 'wilco_amount_budget_cost_total' in fields:
+                order['wilco_amount_budget_cost_total'] = sum(orders.mapped('wilco_amount_budget_cost_total'))
+            if 'wilco_gross_profit_percent' in fields:
+                amount_total = sum(orders.mapped('amount_total'));
+                if amount_total == 0:
+                    order['wilco_gross_profit_percent'] = 0
+                else:
+                    amount_budget_cost_total = sum(orders.mapped('wilco_amount_budget_cost_total'))
+                    order['wilco_gross_profit_percent'] = (amount_total - amount_budget_cost_total) / amount_total
+
+        return res
+
     def _wilco_get_sale_order_option_ids_not_selected(self):
         sale_order_option_not_selected = self.sale_order_option_ids.filtered(lambda r: not r.is_present)
         return sale_order_option_not_selected

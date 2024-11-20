@@ -147,6 +147,11 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="wilco_project_id" optional="show" readonly="1"/>
+                <field string="Amount" name="amount_total"
+                    filter_domain="['|', '|',
+                                    ('amount_total' , 'ilike', self),
+                                    ('amount_total_signed', 'ilike', self),
+                                    ('amount_total_in_currency_signed', 'ilike', self)]"/>
             </xpath>
         </field>
     </record>

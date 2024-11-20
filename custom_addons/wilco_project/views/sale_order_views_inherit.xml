@@ -175,7 +175,12 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="replace">
                 <field name="name" string="Order"
-                    filter_domain="['|', '|', '|', ('name', 'ilike', self), ('client_order_ref', 'ilike', self), ('partner_id', 'child_of', self), ('wilco_our_ref', 'ilike', self)]"/>
+                    filter_domain="['|', '|', '|',
+                                    ('name', 'ilike', self),
+                                    ('client_order_ref', 'ilike', self),
+                                    ('partner_id', 'child_of', self),
+                                    ('wilco_our_ref', 'ilike', self)]"/>
+                <field name="amount_total" string="Amount"/>
             </xpath>
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="wilco_order_header"/>
