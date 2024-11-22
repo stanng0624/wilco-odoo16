@@ -58,7 +58,6 @@
                 <attribute name="optional">hide</attribute>
             </xpath>
             <xpath expr="//field[@name='balance']" position="replace">
-<!--                <attribute name="label">GL Balance</attribute>-->
                 <field name="balance" string="G/L Balance" sum="G/L Balance"/>
             </xpath>
         </field>

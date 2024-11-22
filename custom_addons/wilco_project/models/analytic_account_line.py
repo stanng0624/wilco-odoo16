@@ -6,7 +6,10 @@ from odoo import api, fields, models, _
 class AccountAnalyticAccountLine(models.Model):
     _inherit = 'account.analytic.line'
 
-    wilco_project_id = fields.Many2one(comodel_name='project.project', related='account_id.wilco_project_id')
+    wilco_project_id = fields.Many2one(
+        comodel_name='project.project',
+        string="Related Project",
+        compute='_wilco_compute_project_id')
     wilco_project_stage_id = fields.Many2one(
         comodel_name='project.project.stage',
         related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
@@ -32,56 +35,12 @@ class AccountAnalyticAccountLine(models.Model):
     wilco_amount_expense = fields.Monetary(string='Expense', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_gross_profit = fields.Monetary(string='Gross Profit', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_net_profit = fields.Monetary(string='Net Profit', compute='_wilco_compute_amounts', store=True, readonly=True)
-    # Performance issue if not using store field
-    # wilco_amount_debit = fields.Monetary(string='Debit', compute='_wilco_compute_amounts')
-    # wilco_amount_credit = fields.Monetary(string='Credit', compute='_wilco_compute_amounts')
-    # wilco_is_receivable = fields.Boolean(string='Receivable', compute='_wilco_compute_amounts')
-    # wilco_is_payable = fields.Boolean(string='Is Payable', compute='_wilco_compute_amounts')
-    # wilco_is_payment = fields.Boolean(nastringme='Is Payment', compute='_wilco_compute_amounts')
-    # wilco_is_revenue = fields.Boolean(string='Is Revenue', compute='_wilco_compute_amounts')
-    # wilco_is_income = fields.Boolean(string='Is Income', compute='_wilco_compute_amounts')
-    # wilco_is_cost = fields.Boolean(string='Is Cost', compute='_wilco_compute_amounts')
-    # wilco_is_expense = fields.Boolean(string='Is Expense', compute='_wilco_compute_amounts')
-    # wilco_amount_receivable = fields.Monetary(string='Receivable', compute='_wilco_compute_amounts')
-    # wilco_amount_payable = fields.Monetary(string='Payable', compute='_wilco_compute_amounts')
-    # wilco_amount_payment = fields.Monetary(string='Payment', compute='_wilco_compute_amounts')
-    # wilco_amount_revenue = fields.Monetary(string='Revenue', compute='_wilco_compute_amounts')
-    # wilco_amount_income = fields.Monetary(string='Income', compute='_wilco_compute_amounts')
-    # wilco_amount_cost = fields.Monetary(string='Cost', compute='_wilco_compute_amounts')
-    # wilco_amount_expense = fields.Monetary(string='Expense', compute='_wilco_compute_amounts')
-    # wilco_amount_gross_profit = fields.Monetary(string='Gross Profit', compute='_wilco_compute_amounts')
-    # wilco_amount_net_profit = fields.Monetary(string='Net Profit', compute='_wilco_compute_amounts')
-    #
-    # @api.model
-    # def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
-    #     """
-    #         Override read_group to calculate the sum of the non-stored fields that depend on the user context
-    #     """
-    #     res = super(AccountAnalyticAccountLine, self).read_group(domain, fields, groupby, offset=offset, limit=limit,
-    #                                                              orderby=orderby, lazy=lazy)
-    #     analytic_lines = self.env['account.analytic.line']
-    #     for line in res:
-    #         if '__domain' in line:
-    #             analytic_lines = self.search(line['__domain'])
-    #         if 'wilco_amount_receivable' in fields:
-    #             line['wilco_amount_receivable'] = sum(analytic_lines.mapped('wilco_amount_receivable'))
-    #         if 'wilco_amount_payable' in fields:
-    #             line['wilco_amount_payable'] = sum(analytic_lines.mapped('wilco_amount_payable'))
-    #         if 'wilco_amount_payment' in fields:
-    #             line['wilco_amount_payment'] = sum(analytic_lines.mapped('wilco_amount_payment'))
-    #         if 'wilco_amount_revenue' in fields:
-    #             line['wilco_amount_revenue'] = sum(analytic_lines.mapped('wilco_amount_revenue'))
-    #         if 'wilco_amount_revenue' in fields:
-    #             line['wilco_amount_income'] = sum(analytic_lines.mapped('wilco_amount_income'))
-    #         if 'wilco_amount_cost' in fields:
-    #             line['wilco_amount_cost'] = sum(analytic_lines.mapped('wilco_amount_cost'))
-    #         if 'wilco_amount_expense' in fields:
-    #             line['wilco_amount_expense'] = sum(analytic_lines.mapped('wilco_amount_expense'))
-    #         if 'wilco_amount_gross_profit' in fields:
-    #             line['wilco_amount_gross_profit'] = sum(analytic_lines.mapped('wilco_amount_gross_profit'))
-    #         if 'wilco_amount_net_profit' in fields:
-    #             line['wilco_amount_net_profit'] = sum(analytic_lines.mapped('wilco_amount_net_profit'))
-    #     return res
+
+    def _wilco_compute_project_id(self):
+        for record in self:
+            # Search for the project where analytic_account_id matches the current analytic account
+            project = self.env['project.project'].search([('analytic_account_id', '=', record.account_id.id)], limit=1)
+            record.wilco_project_id = project.id
 
     @api.depends('amount', 'general_account_id')
     def _wilco_compute_amounts(self):

@@ -57,6 +57,8 @@
                        nolabel="1"
                        attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund'))]}"/>
                 <field name="wilco_project_id"/>
+                <field name="wilco_project_stage_id"/>
+                <field name="wilco_project_last_update_status"/>
                 <field name="wilco_revision_no"/>
                 <field name="wilco_revision_date"/>
                 <field name="to_check" id="wilco_to_check"/>
@@ -113,6 +115,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="wilco_project_id" optional="show" readonly="1"/>
+                <field name="wilco_project_stage_id" optional="show"/>
+                <field name="wilco_project_last_update_status" optional="show"/>
             </xpath>
         </field>
     </record>

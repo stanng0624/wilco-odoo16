@@ -24,6 +24,7 @@ class SaleOrder(models.Model):
     wilco_project_id = fields.Many2one(
         comodel_name='project.project', string='Project', readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
+        tracking=True,
         index=True)
     wilco_project_stage_id = fields.Many2one(
         comodel_name='project.project.stage',
@@ -346,6 +347,12 @@ class SaleOrder(models.Model):
     def _compute_invoice_status(self):
 
         super(SaleOrder, self)._compute_invoice_status()
+
+        for order in self:
+            order._wilco_update_invoice_status()
+
+    def _wilco_update_invoice_status(self):
+        self.ensure_one()
 
         if self.wilco_invoice_method == 'invoice_by_order':
             unconfirmed_orders = self.filtered(lambda so: so.state not in ['sale', 'done'])

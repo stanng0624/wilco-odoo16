@@ -1,3 +1,30 @@
+# Python cache files
+*.pyc
+*.pyo
+__pycache__/
+
+# VS Code settings
+.vscode/
+
+# Ignore compiled files and temp files
+*.log
+*.tmp
+
+# Bytecode files
+*.pyo
+*.pyd
+*.pyc
+
+# MacOS specific
+.DS_Store
+
+# Odoo caches and temp files
+*.egg-info/
+
+# Ignore environment files (for virtualenv or pipenv)
+.env/
+.venv/
+
 # exclude official package
 odoo/*
 filestore/*

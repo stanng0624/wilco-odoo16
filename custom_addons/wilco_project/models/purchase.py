@@ -23,6 +23,7 @@ class PurchaseOrder(models.Model):
     wilco_project_id = fields.Many2one(
         'project.project', 'Project', readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
+        tracking=True,
         index=True)
     wilco_project_stage_id = fields.Many2one(
         comodel_name='project.project.stage',

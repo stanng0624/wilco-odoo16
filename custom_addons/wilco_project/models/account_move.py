@@ -13,6 +13,7 @@ class AccountMove(models.Model):
     wilco_project_id = fields.Many2one(
         comodel_name='project.project', string='Project', readonly=True,
         states={'draft': [('readonly', False)]},
+        tracking=True,
         index=True)
     wilco_project_stage_id = fields.Many2one(
         comodel_name='project.project.stage',
