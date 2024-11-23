@@ -39,17 +39,12 @@ class AccountAnalyticAccountLine(models.Model):
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
-        """
-            Override read_group to calculate the sum of the non-stored fields that depend on the user context
-        """
+
         res = super(AccountAnalyticAccountLine, self).read_group(
                     domain, fields, groupby, offset=offset, limit=limit,
                     orderby=orderby, lazy=lazy)
 
-        lines = self.env['account.analytic.account']
         for line in res:
-            if '__domain' in line:
-                lines = self.search(line['__domain'])
             if 'account_id' in line:
                 account_id = line['account_id']
 
