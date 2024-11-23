@@ -73,14 +73,15 @@ class AccountAnalyticAccount(models.Model):
 
     def _wilco_compute_project_info(self):
         for record in self:
-            project_model = self.env['project.project']
-            project = project_model.search([('analytic_account_id', '=', record.id)], limit=1)
+            if record.id:
+                project_model = self.env['project.project']
+                project = project_model.search([('analytic_account_id', '=', record.id)], limit=1)
 
-            record.wilco_project_id = project.id
-            record.wilco_project_stage_id = project.stage_id
+                record.wilco_project_id = project.id
+                record.wilco_project_stage_id = project.stage_id
 
-            last_update_status_label = dict(project_model._fields['last_update_status'].selection).get(project.last_update_status, False)
-            record.wilco_project_last_update_status = last_update_status_label
+                last_update_status_label = dict(project_model._fields['last_update_status'].selection).get(project.last_update_status, False)
+                record.wilco_project_last_update_status = last_update_status_label
 
     @api.depends('line_ids')
     def _wilco_compute_amounts(self):

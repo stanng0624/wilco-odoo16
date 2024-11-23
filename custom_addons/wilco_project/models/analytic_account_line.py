@@ -37,10 +37,39 @@ class AccountAnalyticAccountLine(models.Model):
     wilco_amount_gross_profit = fields.Monetary(string='Gross Profit', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_net_profit = fields.Monetary(string='Net Profit', compute='_wilco_compute_amounts', store=True, readonly=True)
 
+    @api.model
+    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+        """
+            Override read_group to calculate the sum of the non-stored fields that depend on the user context
+        """
+        res = super(AccountAnalyticAccountLine, self).read_group(
+                    domain, fields, groupby, offset=offset, limit=limit,
+                    orderby=orderby, lazy=lazy)
+
+        lines = self.env['account.analytic.account']
+        for line in res:
+            if '__domain' in line:
+                lines = self.search(line['__domain'])
+            if 'account_id' in line:
+                account_id = line['account_id']
+
+                project_model = self.env['project.project']
+                project = project_model.search([('analytic_account_id', '=', line['account_id'][0])], limit=1) 
+                if project:    
+                    last_update_status_label = dict(project_model._fields['last_update_status'].selection).get(project.last_update_status, False)
+                    line['account_id'] = (account_id[0], account_id[1] + f" ({project.stage_id.name}, {last_update_status_label})")
+
+        return res
+
     def _wilco_compute_project_info(self):
         for record in self:
-            project_model = self.env['project.project']
-            project = project_model.search([('analytic_account_id', '=', record.id)], limit=1)
+            # project_model = self.env['project.project']
+            # project = project_model.search([('analytic_account_id', '=', record.account_id.id)], limit=1)
+       
+            # record.wilco_project_id = project.id
+            # record.wilco_project_stage_id = project.stage_id
+            # last_update_status_label = dict(project_model._fields['last_update_status'].selection).get(project.last_update_status, False)
+            # record.wilco_project_last_update_status = last_update_status_label
             analytic_account = record.account_id
             record.wilco_project_id = analytic_account.wilco_project_id
             record.wilco_project_stage_id = analytic_account.wilco_project_stage_id
