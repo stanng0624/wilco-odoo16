@@ -14,6 +14,8 @@ class FixSalesOrderInvoiceLink(models.AbstractModel):
         offset = 0
         i = 0
         j = 0
+        k = 0
+
         # Only consider invoices with a wilco_project_id
         domain = [
             ('wilco_project_id', '!=', False),
@@ -68,6 +70,8 @@ class FixSalesOrderInvoiceLink(models.AbstractModel):
                     if first_invoice_line.sale_line_ids:
                         continue
 
+                    j = j + 1
+
                     if not test_run:
                         first_invoice_line.write({
                             'sale_line_ids': [Command.link(first_sales_line.id)]
@@ -76,17 +80,18 @@ class FixSalesOrderInvoiceLink(models.AbstractModel):
                         _logger.warning(
                             f"Invoice SO {invoice.name} {invoice.wilco_project_id.name} is linked to Sales Order {sales_order.name} {sales_order.wilco_project_id.name}."
                         )
-
-                        j = j + 1
+                        k = k + 1
 
                 elif not sales_order and invoice_sale_order:
                     _logger.warning(
                         f"Invoice SO {invoice.name} {invoice_sale_order.wilco_project_id.name} has SO {invoice_sale_order.name} and No Sales Order {invoice.wilco_project_id.name} exist."
                     )
+                    j = j + 1
                 else:
                     _logger.warning(
                         f"Invoice {invoice.name} {invoice.wilco_project_id.name} has no matching sales order and no linked SO"
                     )
+                    j = j + 1
                     continue
 
                 i = i + 1
@@ -95,6 +100,7 @@ class FixSalesOrderInvoiceLink(models.AbstractModel):
                 _logger.error(f"Error processing Invoice {invoice.name}: {str(e)}")
 
         _logger.warning(
-            f"No of record: {i}"
-            f"No of record fixed: {j}"
+            f"No of record(s): {i} "
+            f"No of record(s) exists issue: {j}"
+            f"No of record(s) is/are fixed: {k}"
         )

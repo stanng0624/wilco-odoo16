@@ -28,10 +28,11 @@ class SaleOrder(models.Model):
         index=True)
     wilco_project_stage_id = fields.Many2one(
         comodel_name='project.project.stage',
-        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
-    wilco_project_last_update_status = fields.Selection(
-        related="wilco_project_id.last_update_status",
-        string="Project Status", readonly=True)
+        string="Project Stage",
+        compute='_wilco_compute_project_info')
+    wilco_project_last_update_status = fields.Char(
+        string="Project Status",
+        compute='_wilco_compute_project_info')
 
     wilco_invoice_method = fields.Selection(
         selection=INVOICE_METHOD,
@@ -299,7 +300,6 @@ class SaleOrder(models.Model):
         else:
             self._wilco_create_external_identifier(external_identifier_name, module)
 
-
     def _wilco_set_project(self):
         if self.wilco_project_id:
             self.project_id = self.wilco_project_id
@@ -314,7 +314,6 @@ class SaleOrder(models.Model):
             result = self._wilco_get_invoiceable_lines_for_invoice_by_order(final)
 
         return result
-
 
     def _wilco_get_invoiceable_lines_for_invoice_by_order(self, final=False):
         down_payment_line_ids = []
@@ -350,6 +349,7 @@ class SaleOrder(models.Model):
 
         for order in self:
             order._wilco_update_invoice_status()
+
 
     def _wilco_update_invoice_status(self):
         self.ensure_one()
@@ -412,6 +412,13 @@ class SaleOrder(models.Model):
                 days = order.company_id.quotation_validity_days
                 if days > 0:
                     order.validity_date = order.date_order + timedelta(days)
+
+    def _wilco_compute_project_info(self):
+        for record in self:
+            record.wilco_project_stage_id = record.wilco_project_id.stage_id
+            project_model = self.env['project.project']
+            last_update_status_label = dict(project_model._fields['last_update_status'].selection).get(record.wilco_project_id.last_update_status, False)
+            record.wilco_project_last_update_status = last_update_status_label
 
     def wilco_action_view_analytic_lines(self):
         self.ensure_one()

@@ -9,13 +9,14 @@ class AccountAnalyticAccountLine(models.Model):
     wilco_project_id = fields.Many2one(
         comodel_name='project.project',
         string="Related Project",
-        compute='_wilco_compute_project_id')
+        compute='_wilco_compute_project_info')
     wilco_project_stage_id = fields.Many2one(
         comodel_name='project.project.stage',
-        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
-    wilco_project_last_update_status = fields.Selection(
-        related="wilco_project_id.last_update_status",
-        string="Project Status", readonly=True)
+        string="Project Stage",
+        compute='_wilco_compute_project_info')
+    wilco_project_last_update_status = fields.Char(
+        string="Project Status",
+        compute='_wilco_compute_project_info')
 
     wilco_amount_debit = fields.Monetary(string='Debit', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_credit = fields.Monetary(string='Credit', compute='_wilco_compute_amounts', store=True, readonly=True)
@@ -36,11 +37,14 @@ class AccountAnalyticAccountLine(models.Model):
     wilco_amount_gross_profit = fields.Monetary(string='Gross Profit', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_net_profit = fields.Monetary(string='Net Profit', compute='_wilco_compute_amounts', store=True, readonly=True)
 
-    def _wilco_compute_project_id(self):
+    def _wilco_compute_project_info(self):
         for record in self:
-            # Search for the project where analytic_account_id matches the current analytic account
-            project = self.env['project.project'].search([('analytic_account_id', '=', record.account_id.id)], limit=1)
-            record.wilco_project_id = project.id
+            project_model = self.env['project.project']
+            project = project_model.search([('analytic_account_id', '=', record.id)], limit=1)
+            analytic_account = record.account_id
+            record.wilco_project_id = analytic_account.wilco_project_id
+            record.wilco_project_stage_id = analytic_account.wilco_project_stage_id
+            record.wilco_project_last_update_status = analytic_account.wilco_project_last_update_status
 
     @api.depends('amount', 'general_account_id')
     def _wilco_compute_amounts(self):

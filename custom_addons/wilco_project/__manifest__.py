@@ -10,7 +10,7 @@
     'description': """
 This module contains all the common features of Hospital management
     """,
-    'depends': ['base','web','sale','project','purchase','account','om_account_budget'],
+    'depends': ['base','web','sale','sale_management','project','purchase','account','om_account_budget'],
     'data': [
         'views/res_partner_views_inherit.xml',
         'views/project_views_inherit.xml',

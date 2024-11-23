@@ -52,7 +52,7 @@
                 <field name="wilco_amount_receivable" sum="Receivable" optional="show"/>
                 <field name="wilco_amount_payable" sum="Payable" optional="show"/>
                 <field name="wilco_amount_payment" sum="Payment" optional="show"/>
-<!--                <field name="wilco_amount_budget_cost_total" sum="Budget Cost" optional="show"/>-->
+                <field name="wilco_amount_budget_cost_total" sum="Budget Cost" optional="show"/>
             </xpath>
             <xpath expr="//field[@name='plan_id']" position="attributes">
                 <attribute name="optional">hide</attribute>

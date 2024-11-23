@@ -27,10 +27,11 @@ class PurchaseOrder(models.Model):
         index=True)
     wilco_project_stage_id = fields.Many2one(
         comodel_name='project.project.stage',
-        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
-    wilco_project_last_update_status = fields.Selection(
-        related="wilco_project_id.last_update_status",
-        string="Project Status", readonly=True)
+        string="Project Stage",
+        compute='_wilco_compute_project_info')
+    wilco_project_last_update_status = fields.Char(
+        string="Project Status",
+        compute='_wilco_compute_project_info')
 
     wilco_analytic_account_id = fields.Many2one(
         comodel_name='account.analytic.account',
@@ -39,9 +40,17 @@ class PurchaseOrder(models.Model):
         states=READONLY_STATES,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
 
+
     @api.onchange('wilco_project_id')
     def onchange_wilco_project_id(self):
         self._wilco_set_project()
+
+    def _wilco_compute_project_info(self):
+        for record in self:
+            record.wilco_project_stage_id = record.wilco_project_id.stage_id
+            project_model = self.env['project.project']
+            last_update_status_label = dict(project_model._fields['last_update_status'].selection).get(record.wilco_project_id.last_update_status, False)
+            record.wilco_project_last_update_status = last_update_status_label
 
     @api.onchange('wilco_revision_no')
     def onchange_wilco_revision_no(self):

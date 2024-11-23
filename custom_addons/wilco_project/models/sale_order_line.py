@@ -97,3 +97,17 @@ class SaleOrderLine(models.Model):
             values['analytic_distribution'] = {analytic_account_id_str: 100}
 
         return values
+
+    def _wilco_set_analytic_distribution_from_project(self):
+        self.ensure_one()
+
+        if self.display_type:
+            return
+
+        sale_order = self.order_id
+        if sale_order.wilco_project_id.analytic_account_id:
+            analytic_account_id = sale_order.wilco_project_id.analytic_account_id.id
+            if analytic_account_id:
+                analytic_account_id_str = str(analytic_account_id)
+                analytic_distribution = {analytic_account_id_str: 100}
+                self.analytic_distribution = analytic_distribution

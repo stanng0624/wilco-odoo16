@@ -17,13 +17,19 @@ class AccountMove(models.Model):
         index=True)
     wilco_project_stage_id = fields.Many2one(
         comodel_name='project.project.stage',
-        related="wilco_project_id.stage_id", string="Project Stage", readonly=True)
-    wilco_project_last_update_status = fields.Selection(
-        related="wilco_project_id.last_update_status",
-        string="Project Status", readonly=True)
+        string="Project Stage",
+        compute='_wilco_compute_project_info')
+    wilco_project_last_update_status = fields.Char(
+        string="Project Status",
+        compute='_wilco_compute_project_info')
 
     wilco_amount_settled_total = fields.Monetary(string="Amount Settled", compute='_wilco_compute_settled_amounts')
     wilco_amount_settled_total_signed = fields.Monetary(string="Amount Settled in Currency", compute='_wilco_compute_settled_amounts')
+
+    def _wilco_compute_project_info(self):
+        for order in self:
+            order.wilco_project_stage_id = order.wilco_project_id.stage_id
+            order.wilco_project_last_update_status = order.wilco_project_id.last_update_status
 
     def _wilco_compute_settled_amounts(self):
         for order in self:
@@ -46,6 +52,7 @@ class AccountMove(models.Model):
                 name = document.name
             document.wilco_document_number = name
 
+
     @api.onchange('wilco_project_id')
     def onchange_wilco_project_id(self):
         if self.wilco_project_id:
@@ -54,6 +61,15 @@ class AccountMove(models.Model):
             lines = self.line_ids
             for line in lines:
                 line._wilco_set_analytic_distribution_from_project()
+
+
+    def _wilco_compute_project_info(self):
+        for record in self:
+            record.wilco_project_stage_id = record.wilco_project_id.stage_id
+            project_model = self.env['project.project']
+            last_update_status_label = dict(project_model._fields['last_update_status'].selection).get(record.wilco_project_id.last_update_status, False)
+            record.wilco_project_last_update_status = last_update_status_label
+
 
     def wilco_action_view_analytic_lines(self):
         self.ensure_one()
