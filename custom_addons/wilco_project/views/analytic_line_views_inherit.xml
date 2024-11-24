@@ -21,7 +21,9 @@
                 <field name="wilco_amount_net_profit" sum="Net Profit" optional="show"/>
                 <field name="wilco_amount_receivable" sum="Receivable" optional="show"/>
                 <field name="wilco_amount_payable" sum="Payable" optional="show"/>
-                <field name="wilco_amount_payment" sum="Payment" optional="show"/>
+                <field name="wilco_amount_payment_received" sum="Payment Received" optional="show"/>
+                <field name="wilco_amount_payment_issued" sum="Payment Issued" optional="show"/>
+                <field name="wilco_amount_payment" sum="Net Payment" optional="show"/>
             </xpath>
             <xpath expr="//field[@name='general_account_id']" position="attributes">
                 <attribute name="optional">show</attribute>

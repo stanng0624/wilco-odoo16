@@ -29,8 +29,10 @@ class AccountAnalyticAccountLine(models.Model):
     wilco_is_expense = fields.Boolean(string='Is Expense', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_receivable = fields.Monetary(string='Receivable', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_payable = fields.Monetary(string='Payable', compute='_wilco_compute_amounts', store=True, readonly=True)
-    wilco_amount_payment = fields.Monetary(string='Payment', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_revenue = fields.Monetary(string='Revenue', compute='_wilco_compute_amounts', store=True, readonly=True)
+    wilco_amount_payment_received = fields.Monetary(string='Payment Received', compute='_wilco_compute_amounts', store=True, readonly=True)
+    wilco_amount_payment_issued = fields.Monetary(string='Payment Issued', compute='_wilco_compute_amounts', store=True, readonly=True)
+    wilco_amount_payment = fields.Monetary(string='Net Payment', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_income = fields.Monetary(string='Income', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_cost = fields.Monetary(string='Cost', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_expense = fields.Monetary(string='Expense', compute='_wilco_compute_amounts', store=True, readonly=True)
@@ -90,21 +92,39 @@ class AccountAnalyticAccountLine(models.Model):
             'wilco_is_expense': 'Expense',
         }
 
-        # Reset all status fields to False at the initial stage
+        # Reset all status fields to False
         for field in account_group_mapping:
             setattr(self, field, False)
 
-        # Iterate over the account group mapping and set fields based on group existence
-        for field, groups in account_group_mapping.items():
-            if isinstance(groups, str):
+        # Get account groups and create ID mapping
+        account_group_model = self.env['account.group'].sudo()
+        group_id_mapping = {}
+        
+        for field, group_names in account_group_mapping.items():
+            if isinstance(group_names, str):
+                group = account_group_model.search([('name', '=', group_names)], limit=1)
+                group_id_mapping[field] = group.id if group else False
+            else:
+                groups = account_group_model.search([('name', 'in', list(group_names))])
+                group_id_mapping[field] = groups.ids if groups else []
+
+        # Check account groups and set fields
+        for field, group_ids in group_id_mapping.items():
+            if not group_ids:
+                continue
+            
+            if isinstance(group_ids, (int, bool)):
                 # Single group case
-                if self._wilco_exist_in_account_groups(self.general_account_id, group_name=groups):
+                if group_ids and account_group_model.browse(group_ids).wilco_exist_in_account_groups(
+                    self.general_account_id, group_ids):
                     setattr(self, field, True)
-            elif isinstance(groups, set):
+            else:
                 # Multiple groups case
-                if any(self._wilco_exist_in_account_groups(self.general_account_id, group_name=group) for group in
-                       groups):
-                    setattr(self, field, True)
+                for group_id in group_ids:
+                    if account_group_model.browse(group_id).wilco_exist_in_account_groups(
+                        self.general_account_id, group_id):
+                        setattr(self, field, True)
+                        break
 
     def _wilco_calc_amounts(self):
         self.ensure_one()
@@ -114,6 +134,8 @@ class AccountAnalyticAccountLine(models.Model):
         self.wilco_amount_receivable = 0
         self.wilco_amount_payable = 0
         self.wilco_amount_payment = 0
+        self.wilco_amount_payment_received = 0
+        self.wilco_amount_payment_issued = 0
         self.wilco_amount_revenue = 0
         self.wilco_amount_income = 0
         self.wilco_amount_debit = 0
@@ -137,6 +159,10 @@ class AccountAnalyticAccountLine(models.Model):
             self.wilco_amount_receivable = gl_amount
         if self.wilco_is_payment:
             self.wilco_amount_payment = gl_amount
+            if gl_amount > 0:
+                self.wilco_amount_payment_received = gl_amount
+            else:
+                self.wilco_amount_payment_issued = -gl_amount
         # Liability account, Debit = Decrease, Credit =  Decrease
         if self.wilco_is_payable:
             self.wilco_amount_payable = -gl_amount
@@ -154,23 +180,4 @@ class AccountAnalyticAccountLine(models.Model):
         self.wilco_amount_net_profit = self.wilco_amount_gross_profit \
                                      + self.wilco_amount_income \
                                      - self.wilco_amount_expense
-
-    def _wilco_exist_in_account_groups(self, account_id, group_name=''):
-        if not group_name:
-            return False
-        if not account_id:
-            return False
-
-        account_group = self.env['account.group'].sudo().search([
-            ('name', '=', group_name),
-        ], limit=1)
-
-        if not account_group.id:
-            return False
-
-        account_code_prefix = account_id.code[0:len(account_group.code_prefix_start)]
-        if account_group.code_prefix_start >= account_code_prefix\
-        and account_group.code_prefix_end <= account_code_prefix:
-            return True
-        return False
-
+                                     

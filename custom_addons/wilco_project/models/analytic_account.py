@@ -22,7 +22,9 @@ class AccountAnalyticAccount(models.Model):
 
     wilco_amount_receivable = fields.Monetary(string='Receivable', compute='_wilco_compute_amounts')
     wilco_amount_payable = fields.Monetary(string='Payable', compute='_wilco_compute_amounts')
-    wilco_amount_payment = fields.Monetary(string='Payment', compute='_wilco_compute_amounts')
+    wilco_amount_payment = fields.Monetary(string='Net Payment', compute='_wilco_compute_amounts')
+    wilco_amount_payment_received = fields.Monetary(string='Payment Received', compute='_wilco_compute_amounts')
+    wilco_amount_payment_issued = fields.Monetary(string='Payment Issued', compute='_wilco_compute_amounts')
     wilco_amount_revenue = fields.Monetary(string='Revenue', compute='_wilco_compute_amounts')
     wilco_amount_income = fields.Monetary(string='Income', compute='_wilco_compute_amounts')
     wilco_amount_cost = fields.Monetary(string='Cost', compute='_wilco_compute_amounts')
@@ -34,40 +36,39 @@ class AccountAnalyticAccount(models.Model):
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
         """
-            Override read_group to calculate the sum of the non-stored fields that depend on the user context
+        Override read_group to calculate the sum of the non-stored fields that depend on the user context
         """
         res = super(AccountAnalyticAccount, self).read_group(domain, fields, groupby, offset=offset, limit=limit,
-                                                             orderby=orderby, lazy=lazy)
+                                                           orderby=orderby, lazy=lazy)
+        
+        # Define fields to sum
+        sum_fields = [
+            'vendor_bill_count',
+            'invoice_count',
+            'wilco_sale_order_count',
+            'wilco_amount_receivable',
+            'wilco_amount_payable',
+            'wilco_amount_payment',
+            'wilco_amount_revenue',
+            'wilco_amount_income',
+            'wilco_amount_cost',
+            'wilco_amount_expense',
+            'wilco_amount_gross_profit',
+            'wilco_amount_net_profit',
+            'wilco_amount_budget_cost_total',
+            'wilco_amount_payment_received',
+            'wilco_amount_payment_issued',
+        ]
+
         accounts = self.env['account.analytic.account']
         for line in res:
             if '__domain' in line:
                 accounts = self.search(line['__domain'])
-            if 'vendor_bill_count' in fields:
-                line['vendor_bill_count'] = sum(accounts.mapped('vendor_bill_count'))
-            if 'invoice_count' in fields:
-                line['invoice_count'] = sum(accounts.mapped('invoice_count'))
-            if 'wilco_sale_order_count' in fields:
-                line['wilco_sale_order_count'] = sum(accounts.mapped('wilco_sale_order_count'))
-            if 'wilco_amount_receivable' in fields:
-                line['wilco_amount_receivable'] = sum(accounts.mapped('wilco_amount_receivable'))
-            if 'wilco_amount_payable' in fields:
-                line['wilco_amount_payable'] = sum(accounts.mapped('wilco_amount_payable'))
-            if 'wilco_amount_payment' in fields:
-                line['wilco_amount_payment'] = sum(accounts.mapped('wilco_amount_payment'))
-            if 'wilco_amount_revenue' in fields:
-                line['wilco_amount_revenue'] = sum(accounts.mapped('wilco_amount_revenue'))
-            if 'wilco_amount_income' in fields:
-                line['wilco_amount_income'] = sum(accounts.mapped('wilco_amount_income'))
-            if 'wilco_amount_cost' in fields:
-                line['wilco_amount_cost'] = sum(accounts.mapped('wilco_amount_cost'))
-            if 'wilco_amount_expense' in fields:
-                line['wilco_amount_expense'] = sum(accounts.mapped('wilco_amount_expense'))
-            if 'wilco_amount_gross_profit' in fields:
-                line['wilco_amount_gross_profit'] = sum(accounts.mapped('wilco_amount_gross_profit'))
-            if 'wilco_amount_net_profit' in fields:
-                line['wilco_amount_net_profit'] = sum(accounts.mapped('wilco_amount_net_profit'))
-            if 'wilco_amount_budget_cost_total' in fields:
-                line['wilco_amount_budget_cost_total'] = sum(accounts.mapped('wilco_amount_budget_cost_total'))
+            
+            # Sum all requested fields that are in our sum_fields list
+            for field in sum_fields:
+                if field in fields:
+                    line[field] = sum(accounts.mapped(field))
 
         return res
 
@@ -95,6 +96,8 @@ class AccountAnalyticAccount(models.Model):
             amount_expense = 0
             amount_gross_profit = 0
             amount_net_profit = 0
+            amount_payment_received = 0
+            amount_payment_issued = 0
 
             lines = account.line_ids
             if lines:
@@ -107,6 +110,8 @@ class AccountAnalyticAccount(models.Model):
                 amount_expense = sum(lines.mapped("wilco_amount_expense"))
                 amount_gross_profit = sum(lines.mapped("wilco_amount_gross_profit"))
                 amount_net_profit = sum(lines.mapped("wilco_amount_net_profit"))
+                amount_payment_received = sum(lines.mapped("wilco_amount_payment_received"))
+                amount_payment_issued = sum(lines.mapped("wilco_amount_payment_issued"))
 
             #Assume all are in same currency first
             account.wilco_amount_receivable = amount_receivable
@@ -118,6 +123,8 @@ class AccountAnalyticAccount(models.Model):
             account.wilco_amount_expense = amount_expense
             account.wilco_amount_gross_profit = amount_gross_profit
             account.wilco_amount_net_profit = amount_net_profit
+            account.wilco_amount_payment_received = amount_payment_received
+            account.wilco_amount_payment_issued = amount_payment_issued
 
             # No analytic account will be created from sales order
             # sale_order_lines = self.env[

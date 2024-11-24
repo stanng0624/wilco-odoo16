@@ -1,5 +1,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.addons.wilco_project.utils.external_identifier_util import ExternalIdentifierUtil
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
@@ -28,8 +29,8 @@ class ResPartner(models.Model):
         result = super().create(vals_list)
 
         for partner in result:
-            if partner.ref and not partner._wilco_exist_external_identifier():
-                partner._wilco_create_external_identifier(partner.ref)
+            if partner.ref and not partner._exist_external_identifier():
+                partner.write_external_identifier(partner.ref)
 
         return result
 
@@ -39,78 +40,31 @@ class ResPartner(models.Model):
         for partner in self:
             if 'ref' in values:
                 if partner.ref:
-                    partner._wilco_write_external_identifier(partner.ref)
+                    partner.write_external_identifier(partner.ref)
                 else:
-                    partner._wilco_delete_external_identifier()
+                    partner._delete_external_identifier()
 
         return result
 
+    def _exist_external_identifier(self):
+        return ExternalIdentifierUtil.exist_external_identifier(
+            self.env, 
+            self._name, 
+            self.id
+        )
 
-    def _wilco_exist_external_identifier(self, module = '__import__'):
-        self.ensure_one()
-        external_identifier = self.env['ir.model.data'].sudo().search([
-            ('module', '=', module),
+    def write_external_identifier(self, name):
+        return ExternalIdentifierUtil.write_external_identifier(
+            self.env, 
+            self._name, 
+            self.id, 
+            name
+        )
+
+    def _delete_external_identifier(self):
+        existing = self.env['ir.model.data'].search([
             ('model', '=', self._name),
-            ('res_id', '=', self.id),
+            ('res_id', '=', self.id)
         ], limit=1)
-
-        if external_identifier:
-            return True
-
-        return False
-
-    def _wilco_create_external_identifier(
-            self,
-            external_identifier_name: str,
-            module = '__import__'):
-        self.ensure_one()
-        # Remove space, name is not allowed with space
-        external_identifier_name = external_identifier_name.replace(" ","")
-        self.env['ir.model.data'].sudo().create({
-            'name': external_identifier_name,
-            'module': module,
-            'model': self._name,
-            'res_id': self.id,
-            'noupdate': False
-        })
-
-    def _wilco_update_external_identifier(
-            self,
-            external_identifier_name: str,
-            module='__import__'):
-        self.ensure_one()
-        # Remove space, name is not allowed with space
-        external_identifier_name = external_identifier_name.replace(" ","")
-        external_identifier = self.env['ir.model.data'].sudo().search([
-            ('module', '=', module),
-            ('model', '=', self._name),
-            ('res_id', '=', self.id),
-        ], limit=1)
-
-        if external_identifier and external_identifier.name != external_identifier_name:
-            external_identifier.sudo().write({'name': external_identifier_name})
-
-    def _wilco_write_external_identifier(
-            self,
-            external_identifier_name: str,
-            module='__import__',
-            override_existing_id = True):
-        self.ensure_one()
-        if override_existing_id and self._wilco_exist_external_identifier(module):
-            self._wilco_update_external_identifier(external_identifier_name, module)
-        else:
-            self._wilco_create_external_identifier(external_identifier_name, module)
-
-    def _wilco_delete_external_identifier(
-            self,
-            module='__import__'):
-        self.ensure_one()
-        external_identifier = self.env['ir.model.data'].sudo().search([
-            ('module', '=', module),
-            ('model', '=', self._name),
-            ('res_id', '=', self.id),
-        ], limit=1)
-
-        if external_identifier:
-            external_identifier.sudo().unlink()
-
+        if existing:
+            existing.unlink()

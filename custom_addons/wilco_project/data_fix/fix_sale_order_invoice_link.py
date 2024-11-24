@@ -5,12 +5,12 @@ from odoo.fields import Command
 
 _logger = logging.getLogger(__name__)
 
-class FixSalesOrderInvoiceLink(models.AbstractModel):
-    _name = 'data_fix.fix_sales_order_invoice_link'
+class FixSaleOrderInvoiceLink(models.TransientModel):
+    _name = 'wilco_project.fix_sale_order_invoice_link'
     _description = 'Fix Sales Order and Invoice Linkage'
 
     @api.model
-    def fix_sales_order_invoice_link(self, test_run=True):
+    def fix_sale_order_invoice_link(self, test_run=True):
         offset = 0
         i = 0
         j = 0

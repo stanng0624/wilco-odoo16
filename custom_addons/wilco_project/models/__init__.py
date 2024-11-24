@@ -14,3 +14,4 @@ from . import analytic_account_line
 from . import product_templete
 from . import res_company
 from . import res_config_settings
+from . import account_group
