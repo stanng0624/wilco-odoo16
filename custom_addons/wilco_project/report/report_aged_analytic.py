@@ -17,16 +17,17 @@ class ReportAgedAnalyticBalance(models.AbstractModel):
         start = datetime.strptime(str(date_from), "%Y-%m-%d")
         date_from = datetime.strptime(str(date_from), "%Y-%m-%d").date()
 
-        for i in range(5)[::-1]:
+        # Process periods in correct order (0-30, 30-60, etc.)
+        for i in range(5):
             stop = start - relativedelta(days=period_length)
-            period_name = str((5-(i+1)) * period_length) + '-' + str((5-i) * period_length)
+            period_name = str(i * period_length) + '-' + str((i + 1) * period_length)
             period_stop = (start - relativedelta(days=1)).strftime('%Y-%m-%d')
-            if i == 0:
+            if i == 4:
                 period_name = '+' + str(4 * period_length)
             periods[str(i)] = {
                 'name': period_name,
                 'stop': period_stop,
-                'start': (i!=0 and stop.strftime('%Y-%m-%d') or False),
+                'start': (i != 4 and stop.strftime('%Y-%m-%d') or False),
             }
             start = stop
 
@@ -81,7 +82,7 @@ class ReportAgedAnalyticBalance(models.AbstractModel):
                     analytic_lines[analytic_id]['total'] += amount
                     totals[period] += amount
 
-        # Convert periods dictionary to list for template rendering
+        # Convert periods dictionary to list in correct order
         periods_list = []
         for i in range(5):
             periods_list.append(periods[str(i)])
