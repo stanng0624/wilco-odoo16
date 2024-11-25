@@ -23,4 +23,16 @@
         <field name="doall" eval="False"/>
         <field name="active">False</field>
     </record>
+
+    <record id="wilco_ir_cron_set_reports_to_html" model="ir.cron">
+        <field name="name">Set Reports to HTML Format</field>
+        <field name="model_id" ref="model_ir_actions_report"/>
+        <field name="state">code</field>
+        <field name="code">model._set_reports_to_html()</field>
+        <field name="interval_type">days</field>
+        <field name="interval_number">1</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="active">False</field>
+    </record>
 </odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_aged_analytic_balance" model="ir.actions.report">
+        <field name="name">Aged Analytic Balance</field>
+        <field name="model">account.aged.analytic.balance</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">wilco_project.report_agedanalyticbalance</field>
+        <field name="report_file">wilco_project.report_agedanalyticbalance</field>
+    </record>
+</odoo> 

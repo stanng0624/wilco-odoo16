@@ -10,8 +10,9 @@
     'description': """
 This module contains all the common features of Hospital management
     """,
-    'depends': ['base','web','sale','sale_management','project','purchase','account','om_account_budget'],
+    'depends': ['base','web','sale','sale_management','project','purchase','account','om_account_budget','accounting_pdf_reports','analytic'],
     'data': [
+        'data/ir_cron_data.xml',
         'views/res_partner_views_inherit.xml',
         'views/project_views_inherit.xml',
         'views/sale_order_views_inherit.xml',
@@ -39,7 +40,10 @@ This module contains all the common features of Hospital management
         'report/report_template_inherit.xml',
         'wizard/account_payment_register_views_inherit.xml',
         'wizard/sale_make_invoice_advance_views_inherit.xml',
-        'data/ir_cron_data.xml'
+        'report/report_aged_analytic_template.xml',
+        'report/report_views.xml',
+        'wizard/aged_analytic_view.xml',
+        'security/ir.model.access.csv',
     ],
     'demo': [],
     'application': True,

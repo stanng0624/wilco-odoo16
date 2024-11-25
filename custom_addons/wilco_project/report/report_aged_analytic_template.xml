@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_agedanalyticbalance">
+        <t t-call="web.html_container">
+            <t t-call="web.internal_layout">
+                <div class="page">
+                    <h2>Aged Analytic Account Balance</h2>
+                    
+                    <div class="row mt32 mb32">
+                        <div class="col-3">
+                            <strong>Start Date:</strong>
+                            <p t-esc="data['date_from']"/>
+                        </div>
+                        <div class="col-3">
+                            <strong>Period Length (days):</strong>
+                            <p t-esc="data['period_length']"/>
+                        </div>
+                        <div class="col-3">
+                            <strong>Type:</strong>
+                            <p>
+                                <t t-if="result_selection == 'customer'">Receivable Accounts</t>
+                                <t t-if="result_selection == 'supplier'">Payable Accounts</t>
+                                <t t-if="result_selection == 'customer_supplier'">Receivable and Payable Accounts</t>
+                            </p>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Analytic Account</th>
+                                <th class="text-end">Not due</th>
+                                <th class="text-end" t-foreach="periods" t-as="period">
+                                    <span t-esc="period['name']"/>
+                                </th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="get_analytic_lines" t-as="line">
+                                <td><span t-esc="line['name']"/></td>
+                                <td class="text-end">
+                                    <span t-esc="line['lines'][6]" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                </td>
+                                <t t-foreach="range(5)" t-as="i">
+                                    <td class="text-end">
+                                        <span t-esc="line['lines'][i]" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                </t>
+                                <td class="text-end">
+                                    <span t-esc="line['total']" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo> 
