@@ -1,0 +1,78 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "odoo-dev-16.0",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/odoo/odoo-bin",
+            "console": "integratedTerminal",
+            "args": [
+                "-c","${workspaceFolder}/conf/odoo16-macos.conf",
+                "--limit-time-real", "99999",
+                // "-d", "odoo-dev-16.0"
+                "--dev", "all" // Enable developer mode
+            ],
+            "preLaunchTask": "Open Odoo in Browser",
+            // "postDebugTask": "Open Odoo in Browser"            
+        },
+        {
+            "name": "odoo-dev-16.0-install-addons",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/odoo/odoo-bin",
+            "console": "integratedTerminal",
+            "args": [
+                "-c","${workspaceFolder}/conf/odoo16-macos.conf",
+                "--limit-time-real", "99999",
+                "-d", "odoo-dev-16.0",
+                "-i","",
+                // "--stop-after-init"
+            ]
+        },
+        {
+            "name": "odoo-dev-16.0-update-addons",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/odoo/odoo-bin",
+            "console": "integratedTerminal",
+            "args": [
+                "-c","${workspaceFolder}/conf/odoo16-macos.conf",
+                "--limit-time-real", "99999",
+                // "-d", "odoo-dev-16.0",
+                "-u","",
+                "--stop-after-init"
+            ]
+        },
+        {
+            "name": "odoo-dev-16.0-repl",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/odoo/odoo-bin",
+            "console": "integratedTerminal",
+            "args": [
+                "shell",
+                "-c","${workspaceFolder}/conf/odoo16-macos.conf",
+                "--limit-time-real", "99999",
+                "--xmlrpc-port","8888",
+                "--longpolling-port","8899",
+                // "-d", "odoo-dev-16.0",
+                "--shell-interface", "ipython"
+            ]
+        },
+        {
+            "name": "odoo-dev-16.0-install-addons-wilco-project",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/odoo/odoo-bin",
+            "console": "integratedTerminal",
+            "args": [
+                "-c","${workspaceFolder}/conf/odoo16-macos.conf",
+                "--limit-time-real", "99999",
+                "-d", "wilco-odoo-dev",
+                "-i","",
+                // "--stop-after-init"
+            ]
+        },
+    ]
+  }

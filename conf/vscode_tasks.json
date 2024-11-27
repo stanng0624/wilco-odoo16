@@ -1,0 +1,18 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Open Odoo in Browser",
+            "type": "shell",
+            "command": "open",
+            "args": ["http://localhost:8069"],
+            "windows": {
+                "command": "cmd",
+                "args": ["/c", "start", "http://localhost:8069"]
+            },
+            "presentation": {
+                "reveal": "never"
+            }
+        }
+    ]
+}

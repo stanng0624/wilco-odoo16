@@ -8,7 +8,7 @@
     'sequence': -100,
     'summary': 'Wilco Project Management',
     'description': """
-This module contains all the common features of Hospital management
+This module contains all the common features of Wilco Project Management
     """,
     'depends': ['base','web','sale','sale_management','project','purchase','account','om_account_budget','accounting_pdf_reports','analytic'],
     'data': [
