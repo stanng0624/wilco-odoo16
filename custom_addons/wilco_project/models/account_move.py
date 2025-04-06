@@ -4,6 +4,7 @@ from odoo.tools import is_html_empty
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    wilco_payment_dates = fields.Char(string='Payment Date(s)', compute='_compute_wilco_payment_dates', store=True, help="Dates of payments made against this invoice")
     wilco_our_ref = fields.Char(string='Our reference')
     wilco_contact_info = fields.Text(string='Contact information')
     wilco_revision_no = fields.Integer(string='Revision no.', default=0)
@@ -26,10 +27,36 @@ class AccountMove(models.Model):
     wilco_amount_settled_total = fields.Monetary(string="Amount Settled", compute='_wilco_compute_settled_amounts')
     wilco_amount_settled_total_signed = fields.Monetary(string="Amount Settled in Currency", compute='_wilco_compute_settled_amounts')
 
-    def _wilco_compute_project_info(self):
-        for order in self:
-            order.wilco_project_stage_id = order.wilco_project_id.stage_id
-            order.wilco_project_last_update_status = order.wilco_project_id.last_update_status
+    @api.depends('payment_state', 'line_ids.matched_debit_ids', 'line_ids.matched_credit_ids')
+    def _compute_wilco_payment_dates(self):
+        for move in self:
+            if move.move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'):
+                move.wilco_payment_dates = False
+                continue
+
+            payment_dates = []
+            # Get all the payment moves linked to this invoice
+            for line in move.line_ids:
+                # For customer invoices, check matched_credit_ids
+                if move.move_type in ('out_invoice', 'out_refund'):
+                    for partial in line.matched_credit_ids:
+                        payment_move = partial.credit_move_id.move_id
+                        if payment_move.payment_id and payment_move.date:
+                            payment_dates.append(payment_move.date)
+                # For vendor bills, check matched_debit_ids
+                elif move.move_type in ('in_invoice', 'in_refund'):
+                    for partial in line.matched_debit_ids:
+                        payment_move = partial.debit_move_id.move_id
+                        if payment_move.payment_id and payment_move.date:
+                            payment_dates.append(payment_move.date)
+
+            # Sort dates and format them
+            if payment_dates:
+                payment_dates = sorted(set(payment_dates))
+                formatted_dates = [date.strftime('%Y-%m-%d') for date in payment_dates]
+                move.wilco_payment_dates = ','.join(formatted_dates)
+            else:
+                move.wilco_payment_dates = False
 
     def _wilco_compute_settled_amounts(self):
         for order in self:
@@ -39,9 +66,9 @@ class AccountMove(models.Model):
     @api.onchange('wilco_revision_no')
     def onchange_wilco_revision_no(self):
         if self.wilco_revision_no == 0:
-            self.wilco_revision_date = ""
+            self.wilco_revision_date = False
         else:
-            self.wilco_revision_date = fields.datetime.today()
+            self.wilco_revision_date = fields.Date.today()
 
     def _wilco_compute_document_name(self):
         for document in self:
@@ -67,8 +94,12 @@ class AccountMove(models.Model):
         for record in self:
             record.wilco_project_stage_id = record.wilco_project_id.stage_id
             project_model = self.env['project.project']
-            last_update_status_label = dict(project_model._fields['last_update_status'].selection).get(record.wilco_project_id.last_update_status, False)
-            record.wilco_project_last_update_status = last_update_status_label
+            if record.wilco_project_id and record.wilco_project_id.last_update_status:
+                selection_dict = dict(project_model._fields['last_update_status'].selection or [])
+                last_update_status_label = selection_dict.get(record.wilco_project_id.last_update_status, '')
+                record.wilco_project_last_update_status = last_update_status_label
+            else:
+                record.wilco_project_last_update_status = ''
 
 
     def wilco_action_view_analytic_lines(self):

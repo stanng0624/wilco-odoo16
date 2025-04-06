@@ -13,6 +13,9 @@
                 <field name="wilco_project_last_update_status"/>
                 <field name="wilco_contact_info"/>
             </xpath>
+            <xpath expr="//field[@name='invoice_date_due']" position="after">
+                <field name="wilco_payment_dates" optional="show"/>
+            </xpath>
             <xpath expr="//field[@name='payment_reference']" position="replace">
                 <field name="payment_reference" invisible="context.get('default_move_type') in ('out_invoice', 'out_refund','out_receipt')"/>
             </xpath>
