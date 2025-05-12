@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 class WilcoCustomerInvoiceSummary(models.Model):
     _name = 'wilco.customer.invoice.summary'
     _description = 'Customer Invoice Summary Report'
-    _order = 'is_opening desc, year asc, month asc'
+    _order = 'is_opening desc, year asc, month asc, is_breakdown asc, invoice_date asc, id asc'
 
     year = fields.Integer(string='Year', readonly=True)
     month = fields.Integer(string='Month', readonly=True)
@@ -18,11 +18,25 @@ class WilcoCustomerInvoiceSummary(models.Model):
     total_sales_amount = fields.Monetary(string='Total Sales', currency_field='company_currency_id', readonly=True, 
                                        help="Accumulated sales from previous periods including current period")
     settled_amount = fields.Monetary(string='Settled', currency_field='company_currency_id', readonly=True)
-    balance = fields.Monetary(string='Balance', currency_field='company_currency_id', readonly=True)
+    balance = fields.Monetary(string='Balance', currency_field='company_currency_id', readonly=True,
+                           help="Only used for invoice breakdowns: Sales - Settled for that invoice. For period records, it's always 0.")
+    period_balance = fields.Monetary(string='Period Balance', currency_field='company_currency_id', readonly=True,
+                               help="Running balance that includes all previous periods: previous period balance + current sales - current settled")
     is_opening = fields.Boolean(string='Is Opening Period', default=False, 
                               help="Indicates this is an opening period record with consolidated previous activity")
     description = fields.Char(string='Description', readonly=True,
                             help="Additional description for opening period records")
+    
+    # Fields for invoice breakdown
+    is_breakdown = fields.Boolean(string='Is Invoice Breakdown', default=False,
+                                help="Indicates this is an invoice breakdown record")
+    parent_period_id = fields.Many2one('wilco.customer.invoice.summary', string='Parent Period',
+                                     help="Reference to the parent period summary record")
+    invoice_id = fields.Many2one('account.move', string='Invoice', readonly=True)
+    invoice_date = fields.Date(string='Invoice Date', readonly=True)
+    invoice_number = fields.Char(string='Invoice Number', readonly=True)
+    settled_dates = fields.Char(string='Settled Date(s)', readonly=True,
+                              help="Dates when payments were applied to this invoice")
     
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
     company_currency_id = fields.Many2one('res.currency', related='company_id.currency_id')
@@ -67,18 +81,23 @@ class WilcoCustomerInvoiceSummary(models.Model):
         Format:
         - If customer exists: "[Month Year] Customer Name"
         - If no customer: "[Month Year] All Customers"
+        - For invoice breakdowns: "Invoice: [Number] ([Date])"
         """
         result = []
         for record in self:
-            # Get customer name if exists
-            customer_name = record.partner_id.name if record.partner_id else 'All Customers'
-            
-            # Create display name
-            if record.is_opening:
-                display_name = f"Opening Period {record.year} - {customer_name}"
+            if record.is_breakdown and record.invoice_number:
+                invoice_date = record.invoice_date.strftime('%Y-%m-%d') if record.invoice_date else ''
+                display_name = f"Invoice: {record.invoice_number} ({invoice_date})"
             else:
-                month_name = record.month_name or ''
-                display_name = f"{month_name} {record.year} - {customer_name}"
+                # Get customer name if exists
+                customer_name = record.partner_id.name if record.partner_id else 'All Customers'
+                
+                # Create display name
+                if record.is_opening:
+                    display_name = f"Opening Period {record.year} - {customer_name}"
+                else:
+                    month_name = record.month_name or ''
+                    display_name = f"{month_name} {record.year} - {customer_name}"
                 
             result.append((record.id, display_name))
         return result
@@ -135,7 +154,8 @@ class WilcoCustomerInvoiceSummary(models.Model):
         
         # Add partner filter if specified
         if self.partner_id:
-            domain.append(('partner_id', '=', self.partner_id.id))
+            # Fix: Convert id to string to satisfy type checker
+            domain.append(('partner_id', '=', str(self.partner_id.id)))
             
         return domain
     
@@ -228,7 +248,8 @@ class WilcoCustomerInvoiceSummary(models.Model):
         
         # Add partner filter if specified
         if self.partner_id:
-            domain.append(('partner_id', '=', self.partner_id.id))
+            # Fix: Convert id to string to satisfy type checker
+            domain.append(('partner_id', '=', str(self.partner_id.id)))
         
         # Get the action definition to open journal entries
         action = {
@@ -275,7 +296,8 @@ class WilcoCustomerInvoiceSummary(models.Model):
         
         # Add partner filter if specified
         if self.partner_id:
-            domain.append(('partner_id', '=', self.partner_id.id))
+            # Fix: Convert id to string to satisfy type checker
+            domain.append(('partner_id', '=', str(self.partner_id.id)))
         
         # Get the action definition to open journal items
         action = {
@@ -285,6 +307,110 @@ class WilcoCustomerInvoiceSummary(models.Model):
             'view_mode': 'tree,form',
             'views': [(False, 'tree'), (False, 'form')],
             'domain': domain,
+            'context': {'search_default_group_by_account': 1},
+        }
+        
+        return action
+        
+    def wilco_action_view_invoice(self):
+        """
+        Show the specific invoice for this breakdown record.
+        
+        :return: Action to open the invoice
+        """
+        self.ensure_one()
+        
+        # Check if this is a breakdown record with an invoice
+        if not self.is_breakdown or not self.invoice_id:
+            return {'type': 'ir.actions.act_window_close'}
+        
+        # Get the action definition to open the invoice
+        action = {
+            'name': f'Invoice {self.invoice_number}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'res_id': self.invoice_id.id,
+            'context': {'create': False},
+        }
+        
+        return action
+    
+    def wilco_action_view_invoice_lines(self):
+        """
+        Show invoice lines for the specific invoice in this breakdown record.
+        
+        :return: Action to open the invoice lines
+        """
+        self.ensure_one()
+        
+        # Check if this is a breakdown record with an invoice
+        if not self.is_breakdown or not self.invoice_id:
+            return {'type': 'ir.actions.act_window_close'}
+        
+        # Get the action definition to open invoice items
+        action = {
+            'name': f'Invoice Lines for {self.invoice_number}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move.line',
+            'view_mode': 'tree,form',
+            'views': [(False, 'tree'), (False, 'form')],
+            'domain': [
+                ('move_id', '=', self.invoice_id.id),
+                ('account_id.account_type', 'not in', ['asset_receivable', 'liability_payable']),
+                ('display_type', 'in', ['product', 'line_section', 'line_note', False]),
+            ],
+            'context': {'search_default_group_by_product': 1},
+        }
+        
+        return action
+    
+    def wilco_action_view_invoice_journal_entry(self):
+        """
+        Show the journal entry for the specific invoice in this breakdown record.
+        
+        :return: Action to open the journal entry
+        """
+        self.ensure_one()
+        
+        # Check if this is a breakdown record with an invoice
+        if not self.is_breakdown or not self.invoice_id:
+            return {'type': 'ir.actions.act_window_close'}
+        
+        # Get the action definition to open the invoice journal entry
+        action = {
+            'name': f'Journal Entry for Invoice {self.invoice_number}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'res_id': self.invoice_id.id,
+            'context': {'create': False},
+        }
+        
+        return action
+    
+    def wilco_action_view_invoice_journal_items(self):
+        """
+        Show journal items for the specific invoice in this breakdown record.
+        
+        :return: Action to open the invoice journal items
+        """
+        self.ensure_one()
+        
+        # Check if this is a breakdown record with an invoice
+        if not self.is_breakdown or not self.invoice_id:
+            return {'type': 'ir.actions.act_window_close'}
+        
+        # Get the action definition to open invoice journal items
+        action = {
+            'name': f'Journal Items for Invoice {self.invoice_number}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move.line',
+            'view_mode': 'tree,form',
+            'views': [(False, 'tree'), (False, 'form')],
+            'domain': [('move_id', '=', self.invoice_id.id)],
             'context': {'search_default_group_by_account': 1},
         }
         
