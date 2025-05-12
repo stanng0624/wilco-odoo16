@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard Form View -->
+    <record id="view_wilco_invoice_summary_wizard_form" model="ir.ui.view">
+        <field name="name">wilco.invoice.summary.wizard.form</field>
+        <field name="model">wilco.invoice.summary.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Invoice Summary">
+                <group>
+                    <group>
+                        <field name="as_of_date"/>
+                        <field name="partner_id"/>
+                    </group>
+                    <group>
+                        <field name="use_opening_period"/>
+                        <field name="opening_year" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
+                        <field name="opening_month" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="wilco_action_generate_report" string="Generate Report" type="object" class="oe_highlight"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Action -->
+    <record id="action_wilco_invoice_summary_wizard" model="ir.actions.act_window">
+        <field name="name">Customer Invoice Summary</field>
+        <field name="res_model">wilco.invoice.summary.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu Item - Updated to use the correct parent menu -->
+    <menuitem id="menu_wilco_customer_invoice_summary"
+              name="Customer Invoice Summary"
+              action="action_wilco_invoice_summary_wizard"
+              parent="accounting_pdf_reports.menu_finance_partner_reports"
+              sequence="202"/>
+</odoo>

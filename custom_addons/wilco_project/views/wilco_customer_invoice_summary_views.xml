@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View for Invoice Summary -->
+    <record id="view_wilco_customer_invoice_summary_tree" model="ir.ui.view">
+        <field name="name">wilco.customer.invoice.summary.tree</field>
+        <field name="model">wilco.customer.invoice.summary</field>
+        <field name="arch" type="xml">
+            <tree string="Customer Invoice Summary" editable="bottom">
+                <field name="month_name"/>
+                <field name="year" invisible="1"/>
+                <field name="month" invisible="1"/>
+                <field name="invoice_count"/>
+                <field name="sales_amount" sum="Total"/>
+                <field name="total_sales_amount"/>
+                <field name="settled_amount" sum="Total"/>
+                <field name="balance"/>
+                <field name="is_opening" invisible="1"/>
+                <field name="as_of_date" invisible="1"/>
+                <field name="partner_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View for Invoice Summary -->
+    <record id="view_wilco_customer_invoice_summary_form" model="ir.ui.view">
+        <field name="name">wilco.customer.invoice.summary.form</field>
+        <field name="model">wilco.customer.invoice.summary</field>
+        <field name="arch" type="xml">
+            <form string="Customer Invoice Summary">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="wilco_action_view_invoices" type="object"
+                            class="oe_stat_button" icon="fa-money">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value"><field name="invoice_count"/></span>
+                                <span class="o_stat_text">Invoices</span>
+                            </div>
+                        </button>
+                        
+                        <button name="wilco_action_view_invoice_items" type="object"
+                            class="oe_stat_button" icon="fa-list">
+                            <div class="o_stat_text">Invoice Items</div>
+                        </button>
+                        
+                        <button name="wilco_action_view_journal_entries" type="object"
+                            class="oe_stat_button" icon="fa-book">
+                            <div class="o_stat_text">Journal Entries</div>
+                        </button>
+                        
+                        <button name="wilco_action_view_journal_items" type="object"
+                            class="oe_stat_button" icon="fa-database">
+                            <div class="o_stat_text">Journal Items</div>
+                        </button>
+                        
+                        <button name="wilco_action_view_ledger_breakdown" type="object"
+                            class="oe_stat_button" icon="fa-pie-chart">
+                            <div class="o_stat_text">Ledger Breakdown</div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="month_name"/>
+                            <field name="year" class="oe_inline"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="month" invisible="1"/>
+                            <field name="invoice_count"/>
+                            <field name="sales_amount"/>
+                            <field name="settled_amount"/>
+                            <field name="balance"/>
+                        </group>
+                        <group>
+                            <field name="as_of_date"/>
+                            <field name="partner_id"/>
+                            <field name="is_opening"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Ledger Account Breakdown" name="ledger_breakdown">
+                            <field name="ledger_breakdown_ids" readonly="1">
+                                <tree>
+                                    <field name="account_code"/>
+                                    <field name="account_name"/>
+                                    <field name="amount" sum="Total"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Tree view for customer invoice ledger -->
+    <record id="view_wilco_customer_invoice_ledger_tree" model="ir.ui.view">
+        <field name="name">wilco.customer.invoice.ledger.tree</field>
+        <field name="model">wilco.customer.invoice.ledger</field>
+        <field name="arch" type="xml">
+            <tree string="Customer Invoice Ledger" editable="bottom">
+                <field name="month_name"/>
+                <field name="account_code"/>
+                <field name="account_name"/>
+                <field name="amount" sum="Total"/>
+                <field name="summary_id" invisible="1"/>
+                <field name="is_opening" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form view for customer invoice ledger -->
+    <record id="view_wilco_customer_invoice_ledger_form" model="ir.ui.view">
+        <field name="name">wilco.customer.invoice.ledger.form</field>
+        <field name="model">wilco.customer.invoice.ledger</field>
+        <field name="arch" type="xml">
+            <form string="Customer Invoice Ledger">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="summary_id"/>
+                            <field name="month_name" readonly="1"/>
+                            <field name="is_opening" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="account_id"/>
+                            <field name="account_code" readonly="1"/>
+                            <field name="account_name" readonly="1"/>
+                            <field name="amount"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Search view for customer invoice ledger -->
+    <record id="view_wilco_customer_invoice_ledger_search" model="ir.ui.view">
+        <field name="name">wilco.customer.invoice.ledger.search</field>
+        <field name="model">wilco.customer.invoice.ledger</field>
+        <field name="arch" type="xml">
+            <search string="Customer Invoice Ledger">
+                <field name="account_code"/>
+                <field name="account_name"/>
+                <field name="summary_id"/>
+                <field name="month_name"/>
+                <filter string="Opening Periods" name="is_opening" domain="[('is_opening', '=', True)]"/>
+                <filter string="Regular Periods" name="not_opening" domain="[('is_opening', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Period" name="group_by_summary" domain="[]" context="{'group_by': 'summary_id'}"/>
+                    <filter string="Account" name="group_by_account" domain="[]" context="{'group_by': 'account_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Wizard form view -->
+    <record id="view_wilco_invoice_summary_wizard_form" model="ir.ui.view">
+        <field name="name">wilco.invoice.summary.wizard.form</field>
+        <field name="model">wilco.invoice.summary.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Customer Invoice Summary">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="as_of_date"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group>
+                            <field name="use_opening_period"/>
+                            <field name="opening_year" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
+                            <field name="opening_month" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
+                            <field name="show_ledger_breakdown"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Generate" name="wilco_action_generate_report" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Customer Invoice Summary Wizard -->
+    <record id="action_wilco_invoice_summary_wizard" model="ir.actions.act_window">
+        <field name="name">Customer Invoice Summary</field>
+        <field name="res_model">wilco.invoice.summary.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu item for Customer Invoice Summary Wizard -->
+    <menuitem id="menu_wilco_invoice_summary_wizard"
+        name="Customer Invoice Summary"
+        action="action_wilco_invoice_summary_wizard"
+        parent="account.menu_finance_reports"
+        sequence="100"/>
+</odoo>

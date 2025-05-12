@@ -43,6 +43,8 @@ This module contains all the common features of Wilco Project Management
         'report/report_aged_analytic_template.xml',
         'report/report_views.xml',
         'wizard/aged_analytic_view.xml',
+        'views/wilco_customer_invoice_summary_views.xml',
+        'wizard/wilco_invoice_summary_wizard_views.xml',
         'security/ir.model.access.csv',
     ],
     'demo': [],

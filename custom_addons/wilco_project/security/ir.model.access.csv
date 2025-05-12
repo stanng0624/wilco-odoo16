@@ -1,2 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_account_aged_analytic_balance,access.account.aged.analytic.balance,model_account_aged_analytic_balance,account.group_account_user,1,1,1,1
+access_wilco_customer_invoice_summary,access.wilco.customer.invoice.summary,model_wilco_customer_invoice_summary,account.group_account_user,1,0,0,0
+access_wilco_customer_invoice_summary_manager,access.wilco.customer.invoice.summary.manager,model_wilco_customer_invoice_summary,account.group_account_manager,1,1,1,1
+access_wilco_invoice_summary_wizard,access.wilco.invoice.summary.wizard,model_wilco_invoice_summary_wizard,account.group_account_user,1,1,1,1
+access_wilco_customer_invoice_ledger,access.wilco.customer.invoice.ledger,model_wilco_customer_invoice_ledger,account.group_account_user,1,0,0,0
+access_wilco_customer_invoice_ledger_manager,access.wilco.customer.invoice.ledger.manager,model_wilco_customer_invoice_ledger,account.group_account_manager,1,1,1,1
