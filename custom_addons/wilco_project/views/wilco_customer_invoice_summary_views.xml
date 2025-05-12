@@ -10,6 +10,7 @@
                 <field name="month_name"/>
                 <field name="year"/>
                 <field name="partner_id"/>
+                <field name="sales_account_id"/>
                 <field name="invoice_number"/>
                 <field name="invoice_date"/>
                 <field name="settled_dates"/>
@@ -20,6 +21,7 @@
                 <group expand="0" string="Group By">
                     <filter string="Period" name="group_by_period" domain="[]" context="{'group_by': 'period'}"/>
                     <filter string="Customer" name="group_by_partner" domain="[]" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Sales Account" name="group_by_sales_account" domain="[]" context="{'group_by': 'sales_account_id'}"/>
                     <filter string="Year" name="group_by_year" domain="[]" context="{'group_by': 'year'}"/>
                     <filter string="Month" name="group_by_month" domain="[]" context="{'group_by': 'month'}"/>
                 </group>
@@ -38,15 +40,16 @@
                 <field name="month" invisible="1"/>
                 <field name="month_name" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
                 <field name="partner_id"/>
+                <field name="sales_account_id"/>
                 <field name="invoice_date" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                 <field name="invoice_number" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                 <field name="settled_dates" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                 <field name="invoice_count" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
                 <field name="sales_amount" sum="Total"/>
-                <field name="total_sales_amount" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
+                <field name="total_sales_amount" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
                 <field name="settled_amount" sum="Total"/>
                 <field name="balance" sum="Total" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
-                <field name="period_balance" sum="Total" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
+                <field name="period_balance" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
                 <field name="is_opening" invisible="1"/>
                 <field name="is_breakdown" invisible="1"/>
                 <field name="as_of_date" invisible="1"/>
@@ -156,6 +159,7 @@
                         <group>
                             <field name="as_of_date"/>
                             <field name="partner_id"/>
+                            <field name="sales_account_id"/>
                             <field name="settled_dates" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                             <field name="is_opening" invisible="1"/>
                             <field name="parent_period_id" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>

@@ -44,6 +44,7 @@ class WilcoCustomerInvoiceSummary(models.Model):
     # For filtering
     as_of_date = fields.Date(string='As Of Date')
     partner_id = fields.Many2one('res.partner', string='Customer')
+    sales_account_id = fields.Many2one('account.account', string='Sales Account')
     
     @api.depends('year', 'month', 'is_opening', 'description')
     def _compute_period(self):
@@ -127,7 +128,7 @@ class WilcoCustomerInvoiceSummary(models.Model):
         :return: Domain for filtering invoices for this period
         """
         domain = [
-            ('move_type', '=', 'out_invoice'),
+            ('move_type', 'in', ['out_invoice', 'out_refund']),
             ('state', '=', 'posted')
         ]
         
@@ -415,3 +416,77 @@ class WilcoCustomerInvoiceSummary(models.Model):
         }
         
         return action
+    
+    @api.model
+    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+        """
+        Override read_group to handle aggregated fields correctly.
+        Some fields like total_sales_amount and period_balance shouldn't be aggregated 
+        when grouping by any field because they represent running totals and balances.
+        
+        Also exclude historical opening records from group totals for invoice_count and sales_amount.
+        Also exclude invoice breakdown records from totals for sales_amount and settled_amount.
+        """
+        # Fields that don't make sense when grouped
+        invalid_group_fields = ['total_sales_amount', 'period_balance']
+        
+        # Fields that should exclude historical opening records from totals
+        exclude_historical_fields = ['invoice_count', 'sales_amount']
+        
+        # Fields that should exclude invoice breakdown records from totals
+        exclude_breakdown_fields = ['sales_amount', 'settled_amount']
+        
+        # Process all normal groups 
+        result = super(WilcoCustomerInvoiceSummary, self).read_group(
+            domain, fields, groupby, offset=offset, limit=limit,
+            orderby=orderby, lazy=lazy
+        )
+        
+        # If we're grouping by any field, adjust certain fields
+        if groupby and result:
+            # For each group, we need to find and subtract historical opening records
+            for group in result:
+                # Clear invalid fields in group results (fields that don't make sense when grouped)
+                for field in invalid_group_fields:
+                    if field in group:
+                        group[field] = 0.0  # Set to 0.0 instead of False for monetary fields
+                
+                # Get the domain for this group
+                group_domain = group.get('__domain', [])
+                
+                # 1. Exclude historical opening records
+                if any(field in exclude_historical_fields for field in fields):
+                    # Create a domain to find historical opening records within this group
+                    historical_domain = group_domain + [
+                        ('is_opening', '=', True),
+                        ('description', 'ilike', 'Historical')
+                    ]
+                    
+                    # Find the historical records in this group
+                    historical_records = self.search(historical_domain)
+                    
+                    if historical_records:
+                        # Adjust the count fields for each historical record found
+                        for field in exclude_historical_fields:
+                            if field in group:
+                                historical_total = sum(historical_records.mapped(field))
+                                group[field] -= historical_total
+                
+                # 2. Exclude invoice breakdown records
+                if any(field in exclude_breakdown_fields for field in fields):
+                    # Create a domain to find breakdown records within this group
+                    breakdown_domain = group_domain + [
+                        ('is_breakdown', '=', True)
+                    ]
+                    
+                    # Find the breakdown records in this group
+                    breakdown_records = self.search(breakdown_domain)
+                    
+                    if breakdown_records:
+                        # Adjust the fields for each breakdown record found
+                        for field in exclude_breakdown_fields:
+                            if field in group:
+                                breakdown_total = sum(breakdown_records.mapped(field))
+                                group[field] -= breakdown_total
+        
+        return result

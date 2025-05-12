@@ -129,7 +129,7 @@ class SaleOrder(models.Model):
     def _wilco_compute_invoiced_amounts(self):
         for order in self:
             invoices = order.invoice_ids.filtered(
-                lambda inv: inv.move_type in ('out_invoice') and not inv._is_downpayment()
+                lambda inv: inv.move_type in ('out_invoice', 'out_refund') and not inv._is_downpayment()
             )
             
             down_payment_deducted_lines = invoices.line_ids.filtered(
@@ -157,7 +157,7 @@ class SaleOrder(models.Model):
 
     def _wilco_compute_settle_amounts(self):
         for order in self:
-            invoices = order.invoice_ids.filtered(lambda inv: inv.move_type in ('out_invoice'))
+            invoices = order.invoice_ids.filtered(lambda inv: inv.move_type in ('out_invoice', 'out_refund'))
             order.wilco_amount_settled_total = sum(invoices.mapped("wilco_amount_settled_total_signed"))
             order.wilco_amount_residual_total = sum(invoices.mapped("amount_residual_signed"))
 

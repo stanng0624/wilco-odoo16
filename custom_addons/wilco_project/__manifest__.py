@@ -27,6 +27,7 @@ This module contains all the common features of Wilco Project Management
         'views/res_company_views_inherit.xml',
         'views/res_config_settings_views_inherit.xml',
         'views/webclient_templates_inherit.xml',
+        'views/wilco_customer_invoice_items_views.xml',
         'report/sale_report_template.xml',
         'report/sale_report_inherit.xml',
         'report/sale_report_views.xml',

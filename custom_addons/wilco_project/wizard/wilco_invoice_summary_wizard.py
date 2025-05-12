@@ -24,6 +24,10 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
     show_by_customer = fields.Boolean(string='Show by Customer', default=False,
                                       help="Group data by customer instead of just by period")
     
+    # Group by sales account option
+    show_by_sales_account = fields.Boolean(string='Show by Sales Account', default=False,
+                                          help="Group data by sales account and show account-specific amounts")
+    
     # Invoice breakdown option
     show_invoice_breakdown = fields.Boolean(string='Show Invoice Breakdown', default=False,
                                            help="Show individual invoice details within each period")
@@ -77,9 +81,12 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         if not self.show_invoice_breakdown:
             context['search_default_not_breakdown'] = 1
         
-        # If showing by customer, group by customer
-        if self.show_by_customer:
-            context['group_by'] = 'partner_id'
+        # Set grouping based on options - use search_default filters instead of forced group_by
+        # This allows users to ungroup the data if needed
+        if self.show_by_sales_account:
+            context['search_default_group_by_sales_account'] = 1
+        elif self.show_by_customer:
+            context['search_default_group_by_partner'] = 1
         
         action['context'] = context
         
@@ -94,15 +101,15 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         self.ensure_one()
         
         domain = [
-            ('move_type', '=', 'out_invoice'),
+            ('move_type', 'in', ['out_invoice', 'out_refund']),
             ('state', '=', 'posted'),
         ]
         
         # Add date filter to only get invoices up to as_of_date
         domain.append(('invoice_date', '<=', str(self.as_of_date)))
         
-        # Only filter by partner if not showing by customer and a partner is selected
-        if not self.show_by_customer and self.partner_id:
+        # Only filter by partner if not showing by customer/account and a partner is selected
+        if not (self.show_by_customer or self.show_by_sales_account) and self.partner_id:
             domain.append(('partner_id', '=', str(self.partner_id.id)))
         
         invoices = self.env['account.move'].search(domain)
@@ -110,8 +117,10 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         # Convert opening_month to integer for comparisons
         opening_month_int = int(self.opening_month) if self.use_opening_period and self.opening_month else 0
         
-        # Process invoices differently depending on whether we're showing by customer
-        if self.show_by_customer:
+        # Process invoices differently depending on the grouping option
+        if self.show_by_sales_account:
+            self._generate_by_sales_account(invoices, opening_month_int)
+        elif self.show_by_customer:
             self._generate_by_customer(invoices, opening_month_int)
         else:
             self._generate_by_period(invoices, opening_month_int)
@@ -677,12 +686,369 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                         'invoice_date': invoice.invoice_date,
                         'invoice_number': invoice.name,
                         'settled_dates': self._get_settlement_dates(invoice, self.as_of_date)
+                    })
+    
+    def _wilco_compute_line_settled_amount_as_of_date(self, invoice_line, as_of_date):
+        """
+        Calculate how much of an invoice line has been settled as of a specific date.
+        This considers the invoice line's proportion of the total invoice when distributing
+        settlement amounts.
+        
+        :param invoice_line: The invoice line record to calculate settlement for
+        :param as_of_date: The date to check settlement status
+        :return: Float amount that has been settled for this specific line
+        """
+        self.ensure_one()
+        
+        invoice = invoice_line.move_id
+        
+        # Get total invoice amount (sum of all line subtotals)
+        total_invoice_amount = sum(invoice.invoice_line_ids.filtered(
+            lambda l: l.display_type == 'product' and l.account_id and l.account_id.account_type == 'income'
+        ).mapped('price_subtotal'))
+        
+        if total_invoice_amount <= 0:
+            return 0.0
+            
+        # Calculate this line's proportion of the total invoice
+        line_amount = invoice_line.price_subtotal
+        proportion = line_amount / total_invoice_amount if total_invoice_amount else 0.0
+        
+        # Calculate total invoice settled amount and multiply by this line's proportion
+        total_settled = self._wilco_compute_settled_amount_as_of_date(invoice, as_of_date)
+        line_settled = proportion * total_settled
+        
+        return line_settled
+        
+    def _generate_by_sales_account(self, invoices, opening_month_int):
+        """Generate invoice summary by sales account and period"""
+        # Dictionary to store data: {(sales_account_id, year, month): data}
+        account_invoice_data = {}
+        account_opening_before = {}  # {sales_account_id: opening_data_before}
+        account_opening_during = {}  # {sales_account_id: opening_data_during}
+        
+        # For invoice breakdown
+        account_period_invoices = {}  # {(sales_account_id, year, month): [invoice_data]}
+        account_opening_invoices = {}  # {sales_account_id: [invoice_data]}
+        
+        # Calculate the opening period start date and day before
+        opening_start_date = date(self.opening_year, opening_month_int, 1)
+        day_before_opening = opening_start_date - timedelta(days=1)
+        
+        # Group by sales account, year, month
+        for invoice in invoices:
+            # Skip invoices without invoice_date
+            if not invoice.invoice_date:
+                continue
+            
+            # Filter by partner if specified
+            if self.partner_id and invoice.partner_id.id != self.partner_id.id:
+                continue
+                
+            year = invoice.invoice_date.year
+            month = invoice.invoice_date.month
+            
+            # Check if this invoice belongs to opening period
+            is_opening_period = False
+            if self.use_opening_period:
+                if (year < self.opening_year or 
+                    (year == self.opening_year and month < opening_month_int)):
+                    is_opening_period = True
+            
+            # Process each invoice line with income account
+            for line in invoice.invoice_line_ids.filtered(
+                lambda l: l.display_type == 'product' and l.account_id and l.account_id.account_type == 'income'
+            ):
+                account_id = line.account_id.id
+
+                account_amount = 0.0
+                line_total_settled = 0.0
+                line_before_settled = 0.0
+                line_during_settled = 0.0
+
+                if invoice.move_type == 'out_invoice':
+                    account_amount = line.price_subtotal
+                    # Calculate settled amount for this line
+                    line_total_settled = self._wilco_compute_line_settled_amount_as_of_date(line, self.as_of_date)
+                    line_before_settled = self._wilco_compute_line_settled_amount_as_of_date(line, day_before_opening) if is_opening_period else 0.0
+                    line_during_settled = line_total_settled - line_before_settled if is_opening_period else line_total_settled
+                elif invoice.move_type == 'out_refund':
+                    account_amount = -line.price_subtotal                
+                
+                if is_opening_period:
+                    # Initialize sales account opening data if not exists
+                    if account_id not in account_opening_before:
+                        account_opening_before[account_id] = {
+                            'year': self.opening_year if self.use_opening_period else 0,
+                            'month': opening_month_int,
+                            'invoice_count': 0,
+                            'sales_amount': 0.0,
+                            'settled_amount': 0.0,
+                            'is_opening': True,
+                            'is_historical': True,
+                            'partner_id': self.partner_id.id if self.partner_id else False,
+                            'sales_account_id': account_id,
+                        }
+                        
+                        account_opening_during[account_id] = {
+                            'year': self.opening_year if self.use_opening_period else 0,
+                            'month': opening_month_int,
+                            'invoice_count': 0,
+                            'sales_amount': 0.0,
+                            'settled_amount': 0.0,
+                            'is_opening': True,
+                            'is_historical': False,
+                            'partner_id': self.partner_id.id if self.partner_id else False,
+                            'sales_account_id': account_id,
+                        }
+                        
+                        if self.show_invoice_breakdown:
+                            account_opening_invoices[account_id] = []
+                    
+                    # Add to opening data counts and sales
+                    account_opening_before[account_id]['invoice_count'] += 1
+                    account_opening_before[account_id]['sales_amount'] += account_amount
+                    account_opening_during[account_id]['sales_amount'] += account_amount
+                    
+                    # Add line-specific settlement amounts
+                    account_opening_before[account_id]['settled_amount'] += line_before_settled
+                    account_opening_during[account_id]['settled_amount'] += line_during_settled
+                    
+                    # Store invoice for breakdown if needed
+                    if self.show_invoice_breakdown:
+                        account_opening_invoices[account_id].append({
+                            'invoice': invoice,
+                            'invoice_line': line,
+                            'before_amount': line_before_settled,
+                            'during_amount': line_during_settled,
+                            'total_settled': line_total_settled,
+                            'account_id': account_id,
+                            'account_amount': account_amount
+                        })
+                else:
+                    # Add to regular periods by sales account
+                    key = (account_id, year, month)
+                    
+                    if key not in account_invoice_data:
+                        account_invoice_data[key] = {
+                            'year': year,
+                            'month': month,
+                            'invoice_count': 0,
+                            'sales_amount': 0.0,
+                            'settled_amount': 0.0,
+                            'is_opening': False,
+                            'is_historical': False,
+                            'partner_id': self.partner_id.id if self.partner_id else False,
+                            'sales_account_id': account_id,
+                        }
+                        
+                        if self.show_invoice_breakdown:
+                            account_period_invoices[key] = []
+                    
+                    account_invoice_data[key]['invoice_count'] += 1
+                    account_invoice_data[key]['sales_amount'] += account_amount
+                    account_invoice_data[key]['settled_amount'] += line_total_settled
+                    
+                    # Store invoice for breakdown if needed
+                    if self.show_invoice_breakdown:
+                        account_period_invoices[key].append({
+                            'invoice': invoice,
+                            'invoice_line': line,
+                            'settled_amount': line_total_settled,
+                            'account_id': account_id,
+                            'account_amount': account_amount
+                        })
+        
+        # Store created periods for invoice breakdown linking
+        created_periods = {}  # {(account_id, year, month, is_historical): record_id}
+        
+        # Track period balance by sales account
+        account_period_balances = {}  # {account_id: current_period_balance}
+        
+        # Process sales account opening records
+        for account_id, opening_before in account_opening_before.items():
+            opening_during = account_opening_during[account_id]
+            
+            # Initialize period balance for this sales account
+            account_period_balances[account_id] = 0.0
+            
+            # First row: Historical row (before opening period)
+            historical_period_balance = opening_before['sales_amount'] - opening_before['settled_amount']
+            
+            historical_period = self.env['wilco.customer.invoice.summary'].create({
+                'year': opening_before['year'],
+                'month': opening_before['month'],
+                'invoice_count': opening_before['invoice_count'],
+                'sales_amount': opening_before['sales_amount'],  # Show actual sales
+                'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
+                'settled_amount': opening_before['settled_amount'],
+                'balance': 0.0,  # For period records, balance is always 0
+                'period_balance': historical_period_balance,  # Initial period balance
+                'as_of_date': self.as_of_date,
+                'partner_id': opening_before['partner_id'],
+                'sales_account_id': opening_before['sales_account_id'],
+                'is_opening': True,
+                'description': 'Historical - Settlement before opening',
+                'is_breakdown': False
+            })
+            
+            # Update running period balance for this sales account
+            account_period_balances[account_id] = historical_period_balance
+            
+            created_periods[(account_id, opening_before['year'], opening_before['month'], True)] = historical_period.id
+            
+            # Second row: Opening period (settlement during opening period)
+            opening_period_balance = account_period_balances[account_id] - opening_during['settled_amount']
+            
+            opening_period = self.env['wilco.customer.invoice.summary'].create({
+                'year': opening_during['year'],
+                'month': opening_during['month'],
+                'invoice_count': 0,  # Don't count invoices twice
+                'sales_amount': 0.0,  # Don't show sales twice
+                'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
+                'settled_amount': opening_during['settled_amount'],
+                'balance': 0.0,  # For period records, balance is always 0
+                'period_balance': opening_period_balance,  # Roll up from previous period
+                'as_of_date': self.as_of_date,
+                'partner_id': opening_during['partner_id'],
+                'sales_account_id': opening_during['sales_account_id'],
+                'is_opening': True,
+                'description': 'Opening - Settlement during period',
+                'is_breakdown': False
+            })
+            
+            # Update running period balance for this sales account
+            account_period_balances[account_id] = opening_period_balance
+            
+            created_periods[(account_id, opening_during['year'], opening_during['month'], False)] = opening_period.id
+            
+            # Add invoice breakdown for opening periods if needed
+            if self.show_invoice_breakdown and account_id in account_opening_invoices:
+                # Skip the historical period breakdowns
+                # Only create breakdowns for the regular opening period
+                for inv_data in account_opening_invoices[account_id]:
+                    invoice = inv_data['invoice']
+                    
+                    # Create opening breakdown (settlement during opening)
+                    if inv_data['during_amount'] > 0:
+                        # For invoice breakdowns, balance is simply invoice amount - settled amount
+                        # In this case, it's 0 (sales) - settled = -settled
+                        breakdown_balance = 0.0 - inv_data['during_amount']
+                        
+                        self.env['wilco.customer.invoice.summary'].create({
+                            'year': opening_during['year'],
+                            'month': opening_during['month'],
+                            'invoice_count': 0,
+                            'sales_amount': 0.0,  # Don't count sales twice
+                            'total_sales_amount': 0.0,
+                            'settled_amount': inv_data['during_amount'],
+                            'balance': breakdown_balance,  # For breakdowns: sales - settled
+                            'period_balance': 0.0,  # Not used for breakdowns
+                            'as_of_date': self.as_of_date,
+                            'partner_id': invoice.partner_id.id,
+                            'sales_account_id': inv_data['account_id'],
+                            'is_opening': True,
+                            'description': 'Opening Settlement Breakdown',
+                            'is_breakdown': True,
+                            'parent_period_id': opening_period.id,
+                            'invoice_id': invoice.id,
+                            'invoice_date': invoice.invoice_date,
+                            'invoice_number': invoice.name,
+                            'settled_dates': self._get_settlement_dates(invoice, self.as_of_date)
+                        })
+        
+        # Track sales account sales totals
+        account_sales_totals = {}  # {account_id: total_sales_excluding_opening}
+        
+        # Initialize sales account totals
+        for account_id in account_opening_before.keys():
+            account_sales_totals[account_id] = 0.0
+        
+        # Create summary records
+        sorted_keys = sorted(account_invoice_data.keys())
+        for key in sorted_keys:
+            account_id, year, month = key
+            
+            # Skip periods before the opening period if using opening period
+            if self.use_opening_period:
+                if (year < self.opening_year or 
+                    (year == self.opening_year and month < opening_month_int)):
+                    continue
+            
+            # Initialize tracking if not exists (for accounts without opening records)
+            if account_id not in account_period_balances:
+                account_period_balances[account_id] = 0.0
+                account_sales_totals[account_id] = 0.0
+            
+            # Current period calculation
+            current_data = account_invoice_data[key]
+            current_sales = current_data['sales_amount']
+            current_settled = current_data['settled_amount']
+            
+            # Update running totals for this sales account
+            account_sales_totals[account_id] += current_sales
+            
+            # Calculate period balance: previous period balance + current sales - current settled
+            new_period_balance = account_period_balances[account_id] + current_sales - current_settled
+            
+            # Create summary record
+            period_summary = self.env['wilco.customer.invoice.summary'].create({
+                'year': current_data['year'],
+                'month': current_data['month'],
+                'invoice_count': current_data['invoice_count'],
+                'sales_amount': current_data['sales_amount'],
+                'total_sales_amount': account_sales_totals[account_id],
+                'settled_amount': current_data['settled_amount'],
+                'balance': 0.0,  # For period records, balance is always 0
+                'period_balance': new_period_balance,  # Running period balance for this sales account
+                'as_of_date': self.as_of_date,
+                'partner_id': current_data['partner_id'],
+                'sales_account_id': current_data['sales_account_id'],
+                'is_opening': False,
+                'description': False,
+                'is_breakdown': False
+            })
+            
+            # Update running period balance for next period
+            account_period_balances[account_id] = new_period_balance
+            
+            created_periods[(account_id, year, month, False)] = period_summary.id
+            
+            # Create invoice breakdowns if needed
+            if self.show_invoice_breakdown and key in account_period_invoices:
+                for inv_data in account_period_invoices[key]:
+                    invoice = inv_data['invoice']
+                    account_amount = inv_data['account_amount']
+                    settled_amount = inv_data['settled_amount']
+                    
+                    # For invoice breakdowns, balance is account amount - settled amount
+                    breakdown_balance = account_amount - settled_amount
+                    
+                    self.env['wilco.customer.invoice.summary'].create({
+                        'year': year,
+                        'month': month,
+                        'invoice_count': 0,
+                        'sales_amount': account_amount,  # Only the amount for this account
+                        'total_sales_amount': 0.0,  # No total sales for individual invoices
+                        'settled_amount': settled_amount,
+                        'balance': breakdown_balance,  # For breakdowns: sales - settled
+                        'period_balance': 0.0,  # Not used for breakdowns
+                        'as_of_date': self.as_of_date,
+                        'partner_id': invoice.partner_id.id,
+                        'sales_account_id': inv_data['account_id'],
+                        'is_opening': False,
+                        'description': False,
+                        'is_breakdown': True,
+                        'parent_period_id': period_summary.id,
+                        'invoice_id': invoice.id,
+                        'invoice_date': invoice.invoice_date,
+                        'invoice_number': invoice.name,
+                        'settled_dates': self._get_settlement_dates(invoice, self.as_of_date)
                         })
     
     def _wilco_compute_settled_amount_as_of_date(self, invoice, as_of_date):
         """
         Calculate how much of an invoice has been settled as of a specific date.
-        Following naming conventions from PLANNING.md.
         
         :param invoice: The invoice record to calculate settlement for
         :param as_of_date: The date to check settlement status
