@@ -1,14 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Search View for Invoice Summary -->
+    <record id="view_wilco_customer_invoice_summary_search" model="ir.ui.view">
+        <field name="name">wilco.customer.invoice.summary.search</field>
+        <field name="model">wilco.customer.invoice.summary</field>
+        <field name="arch" type="xml">
+            <search string="Search Customer Invoice Summary">
+                <field name="period"/>
+                <field name="month_name"/>
+                <field name="year"/>
+                <field name="partner_id"/>
+                <filter string="Opening Periods" name="is_opening" domain="[('is_opening', '=', True)]"/>
+                <filter string="Regular Periods" name="not_opening" domain="[('is_opening', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Period" name="group_by_period" domain="[]" context="{'group_by': 'period'}"/>
+                    <filter string="Customer" name="group_by_partner" domain="[]" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Year" name="group_by_year" domain="[]" context="{'group_by': 'year'}"/>
+                    <filter string="Month" name="group_by_month" domain="[]" context="{'group_by': 'month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <!-- Tree View for Invoice Summary -->
     <record id="view_wilco_customer_invoice_summary_tree" model="ir.ui.view">
         <field name="name">wilco.customer.invoice.summary.tree</field>
         <field name="model">wilco.customer.invoice.summary</field>
         <field name="arch" type="xml">
             <tree string="Customer Invoice Summary">
+                <field name="period"/>
                 <field name="month_name"/>
                 <field name="year" invisible="1"/>
                 <field name="month" invisible="1"/>
+                <field name="partner_id"/>
                 <field name="invoice_count"/>
                 <field name="sales_amount" sum="Total"/>
                 <field name="total_sales_amount"/>
@@ -16,7 +40,6 @@
                 <field name="balance"/>
                 <field name="is_opening" invisible="1"/>
                 <field name="as_of_date" invisible="1"/>
-                <field name="partner_id" invisible="1"/>
             </tree>
         </field>
     </record>
@@ -63,6 +86,9 @@
                             <field name="month_name" class="text-primary"/>
                             <field name="year" class="oe_inline text-primary"/>
                         </h1>
+                        <h4 class="mt-0 text-muted">
+                            Period: <field name="period" class="oe_inline"/>
+                        </h4>
                         <h4 class="mt-0 text-muted" attrs="{'invisible': [('is_opening', '=', False)]}">
                             Opening Period
                         </h4>
@@ -86,33 +112,6 @@
         </field>
     </record>
     
-    <!-- Wizard form view -->
-    <record id="view_wilco_invoice_summary_wizard_form" model="ir.ui.view">
-        <field name="name">wilco.invoice.summary.wizard.form</field>
-        <field name="model">wilco.invoice.summary.wizard</field>
-        <field name="arch" type="xml">
-            <form string="Generate Customer Invoice Summary">
-                <sheet>
-                    <group>
-                        <group>
-                            <field name="as_of_date"/>
-                            <field name="partner_id"/>
-                        </group>
-                        <group>
-                            <field name="use_opening_period"/>
-                            <field name="opening_year" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
-                            <field name="opening_month" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
-                        </group>
-                    </group>
-                </sheet>
-                <footer>
-                    <button string="Generate" name="wilco_action_generate_report" type="object" class="btn-primary"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel"/>
-                </footer>
-            </form>
-        </field>
-    </record>
-
     <!-- Action for Customer Invoice Summary Wizard -->
     <record id="action_wilco_invoice_summary_wizard" model="ir.actions.act_window">
         <field name="name">Customer Invoice Summary</field>

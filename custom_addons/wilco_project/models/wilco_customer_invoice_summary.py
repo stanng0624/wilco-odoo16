@@ -11,6 +11,8 @@ class WilcoCustomerInvoiceSummary(models.Model):
     year = fields.Integer(string='Year', readonly=True)
     month = fields.Integer(string='Month', readonly=True)
     month_name = fields.Char(string='Month Name', compute='_wilco_compute_month_name', store=True)
+    period = fields.Char(string='Period', compute='_compute_period', store=True, 
+                       help="Period in YYYY-MM format for easy grouping")
     invoice_count = fields.Integer(string='No of Invoice', readonly=True)
     sales_amount = fields.Monetary(string='Sales', currency_field='company_currency_id', readonly=True)
     total_sales_amount = fields.Monetary(string='Total Sales', currency_field='company_currency_id', readonly=True, 
@@ -19,6 +21,8 @@ class WilcoCustomerInvoiceSummary(models.Model):
     balance = fields.Monetary(string='Balance', currency_field='company_currency_id', readonly=True)
     is_opening = fields.Boolean(string='Is Opening Period', default=False, 
                               help="Indicates this is an opening period record with consolidated previous activity")
+    description = fields.Char(string='Description', readonly=True,
+                            help="Additional description for opening period records")
     
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
     company_currency_id = fields.Many2one('res.currency', related='company_id.currency_id')
@@ -26,6 +30,35 @@ class WilcoCustomerInvoiceSummary(models.Model):
     # For filtering
     as_of_date = fields.Date(string='As Of Date')
     partner_id = fields.Many2one('res.partner', string='Customer')
+    
+    @api.depends('year', 'month', 'is_opening', 'description')
+    def _compute_period(self):
+        """
+        Compute the period in YYYY-MM format for easy grouping.
+        For opening periods:
+          - Historical opening: YYYY-MM (1: Historical)
+          - Regular opening: YYYY-MM (2: Opening)
+        For first regular period (January):
+          - YYYY-MM (3: First period)
+        For other regular periods:
+          - YYYY-MM
+        """
+        for record in self:
+            # Format as YYYY-MM for all records
+            period_string = f"{record.year}-{record.month:02d}"
+            
+            if record.is_opening:
+                # Check if this is a historical opening or regular opening record
+                if record.description and 'Historical' in record.description:
+                    record.period = f"{period_string} (1: Historical)"  # Historical opening
+                else:
+                    record.period = f"{period_string} (2: Opening)"  # Regular opening
+            else:
+                # First regular month (January) gets special naming
+                if record.month == 1 and not record.is_opening:
+                    record.period = f"{period_string} (3: First period)"
+                else:
+                    record.period = period_string
     
     def name_get(self):
         """
@@ -81,14 +114,10 @@ class WilcoCustomerInvoiceSummary(models.Model):
         
         # Add date range filter
         if self.is_opening:
-            # For opening periods, get all invoices before this year-month
-            domain.extend([
-                '|',
-                ('invoice_date', '<', f"{self.year}-{self.month:02d}-01"),  # Before this year-month
-                '&',
-                ('invoice_date', '>=', f"{self.year}-{self.month:02d}-01"),  # This year-month
-                ('invoice_date', '<', f"{self.year}-{self.month+1 if self.month < 12 else 1:02d}-01")  # Before next month
-            ])
+            # For opening periods, get all invoices BEFORE this year-month (strictly before)
+            # Convert to string for date comparison
+            opening_date = f"{self.year}-{self.month:02d}-01"
+            domain.append(('invoice_date', '<', opening_date))
         else:
             # For regular periods, get invoices for the specific year-month
             start_date = f"{self.year}-{self.month:02d}-01"

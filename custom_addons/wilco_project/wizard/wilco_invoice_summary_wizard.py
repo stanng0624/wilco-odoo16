@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from datetime import date
+from datetime import date, datetime, timedelta
 
 
 class WilcoInvoiceSummaryWizard(models.TransientModel):
@@ -19,6 +19,10 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         ('5', 'May'), ('6', 'June'), ('7', 'July'), ('8', 'August'),
         ('9', 'September'), ('10', 'October'), ('11', 'November'), ('12', 'December')
     ], string='Opening Month', default='1')
+    
+    # Group by customer option
+    show_by_customer = fields.Boolean(string='Show by Customer', default=False,
+                                      help="Group data by customer instead of just by period")
     
     @api.onchange('as_of_date')
     def _onchange_as_of_date(self):
@@ -43,7 +47,6 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         """
         Generate the invoice summary report based on the as_of_date
         and optional partner_id filter.
-        Following naming conventions from PLANNING.md.
         """
         self.ensure_one()
         
@@ -53,7 +56,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         # Generate data
         self._wilco_generate_invoice_summary_data()
         
-        # Return action to open the list view with proper grouping
+        # Return action to open the list view without any grouping
         action = {
             'name': 'Customer Invoice Summary',
             'type': 'ir.actions.act_window',
@@ -62,6 +65,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
             'target': 'current',
             'context': {},
         }
+        
         return action
         
     def _wilco_generate_invoice_summary_data(self):
@@ -80,7 +84,8 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         # Add date filter to only get invoices up to as_of_date
         domain.append(('invoice_date', '<=', self.as_of_date))
         
-        if self.partner_id:
+        # Only filter by partner if not showing by customer and a partner is selected
+        if not self.show_by_customer and self.partner_id:
             domain.append(('partner_id', '=', self.partner_id.id))
         
         invoices = self.env['account.move'].search(domain)
@@ -88,16 +93,41 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         # Convert opening_month to integer for comparisons
         opening_month_int = int(self.opening_month) if self.use_opening_period and self.opening_month else 0
         
+        # Process invoices differently depending on whether we're showing by customer
+        if self.show_by_customer:
+            self._generate_by_customer(invoices, opening_month_int)
+        else:
+            self._generate_by_period(invoices, opening_month_int)
+    
+    def _generate_by_period(self, invoices, opening_month_int):
+        """Generate invoice summary by period only (original method)"""
         # Group invoices by year and month
         invoice_data = {}
-        opening_data = {
+        opening_data_before = {
             'year': self.opening_year if self.use_opening_period else 0,
             'month': opening_month_int,  # Store as integer for the model
             'invoice_count': 0,
-            'sales_amount': 0.0,  # Will accumulate total sales for periods before opening (for internal calculation only)
-            'settled_amount': 0.0,
-            'is_opening': True
+            'sales_amount': 0.0,  # Sales amount for all invoices before opening period
+            'settled_amount': 0.0,  # Amount settled BEFORE opening period start
+            'is_opening': True,
+            'is_historical': True,  # Flag for historical opening row
+            'partner_id': self.partner_id.id if self.partner_id else False,
         }
+        
+        opening_data_during = {
+            'year': self.opening_year if self.use_opening_period else 0,
+            'month': opening_month_int,  # Store as integer for the model
+            'invoice_count': 0,
+            'sales_amount': 0.0,  # Same as opening_data_before sales amount
+            'settled_amount': 0.0,  # Amount settled DURING opening period to as-of-date
+            'is_opening': True,
+            'is_historical': False,  # Flag for regular opening row
+            'partner_id': self.partner_id.id if self.partner_id else False,
+        }
+        
+        # Calculate the opening period start date and day before
+        opening_start_date = date(self.opening_year, opening_month_int, 1)
+        day_before_opening = opening_start_date - timedelta(days=1)
         
         for invoice in invoices:
             # Skip invoices without invoice_date
@@ -115,14 +145,19 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     is_opening_period = True
             
             if is_opening_period:
-                # Add to opening data
-                opening_data['invoice_count'] += 1
-                # Accumulate sales amount for opening period (for internal balance calculation only)
-                opening_data['sales_amount'] += invoice.amount_total
+                # Add to opening data counts and total sales
+                opening_data_before['invoice_count'] += 1
+                opening_data_before['sales_amount'] += invoice.amount_total
+                opening_data_during['sales_amount'] += invoice.amount_total
                 
-                # Calculate settled amount based on as_of_date using proper reconciliation data
-                settled_amount = self._wilco_compute_settled_amount_as_of_date(invoice, self.as_of_date)
-                opening_data['settled_amount'] += settled_amount
+                # Calculate settlement BEFORE the opening period
+                before_amount = self._wilco_compute_settled_amount_as_of_date(invoice, day_before_opening)
+                opening_data_before['settled_amount'] += before_amount
+                
+                # Calculate settlement FROM opening period start TO as_of_date
+                total_settled = self._wilco_compute_settled_amount_as_of_date(invoice, self.as_of_date)
+                during_amount = total_settled - before_amount
+                opening_data_during['settled_amount'] += during_amount
             else:
                 # Add to regular periods
                 if key not in invoice_data:
@@ -132,7 +167,9 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                         'invoice_count': 0,
                         'sales_amount': 0.0,
                         'settled_amount': 0.0,
-                        'is_opening': False
+                        'is_opening': False,
+                        'is_historical': False,
+                        'partner_id': self.partner_id.id if self.partner_id else False,
                     }
                 
                 invoice_data[key]['invoice_count'] += 1
@@ -150,25 +187,47 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         balance = 0
         total_sales = 0
         
-        # First create opening record if needed
-        if self.use_opening_period and (opening_data['invoice_count'] > 0 or opening_data['settled_amount'] != 0):
-            # Calculate opening balance (sales minus settled)
-            # For internal calculation we use sales_amount to get the correct balance
-            balance = opening_data['sales_amount'] - opening_data['settled_amount']
+        # First create opening records if needed
+        if self.use_opening_period and opening_data_before['sales_amount'] > 0:
+            # First row: Historical row (before opening period)
+            balance_before = opening_data_before['sales_amount'] - opening_data_before['settled_amount']
             
-            # Create the opening record with sales_amount as 0 for display purposes
-            summary = self.env['wilco.customer.invoice.summary'].create({
-                'year': opening_data['year'],
-                'month': opening_data['month'],
-                'invoice_count': opening_data['invoice_count'],
-                'sales_amount': 0.0,  # Display as 0 per requirement
-                'total_sales_amount': 0.0,  # No total sales for opening
-                'settled_amount': opening_data['settled_amount'],
-                'balance': balance,
+            self.env['wilco.customer.invoice.summary'].create({
+                'year': opening_data_before['year'],
+                'month': opening_data_before['month'],
+                'invoice_count': opening_data_before['invoice_count'],
+                'sales_amount': opening_data_before['sales_amount'],  # Show actual sales amount
+                'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
+                'settled_amount': opening_data_before['settled_amount'],
+                'balance': balance_before,
                 'as_of_date': self.as_of_date,
-                'partner_id': self.partner_id.id if self.partner_id else False,
-                'is_opening': True
+                'partner_id': opening_data_before['partner_id'],
+                'is_opening': True,
+                'description': 'Historical - Settlement before opening'
             })
+            
+            # Second row: Opening period (settlement during opening period)
+            balance_during = opening_data_during['sales_amount'] - (opening_data_before['settled_amount'] + opening_data_during['settled_amount'])
+            
+            self.env['wilco.customer.invoice.summary'].create({
+                'year': opening_data_during['year'],
+                'month': opening_data_during['month'],
+                'invoice_count': 0,  # Don't count invoices twice
+                'sales_amount': 0.0,  # Don't show sales twice
+                'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
+                'settled_amount': opening_data_during['settled_amount'],
+                'balance': balance_during,
+                'as_of_date': self.as_of_date,
+                'partner_id': opening_data_during['partner_id'],
+                'is_opening': True,
+                'description': 'Opening - Settlement during period'
+            })
+            
+            # Set initial balance for regular periods
+            balance = balance_during
+            
+            # Do NOT include opening sales in total_sales for regular periods
+            total_sales = 0
         
         # Then create regular period records
         for key in sorted_keys:
@@ -196,8 +255,185 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'settled_amount': invoice_data[key]['settled_amount'],
                 'balance': balance,
                 'as_of_date': self.as_of_date,
-                'partner_id': self.partner_id.id if self.partner_id else False,
-                'is_opening': False
+                'partner_id': invoice_data[key]['partner_id'],
+                'is_opening': False,
+                'description': False
+            })
+    
+    def _generate_by_customer(self, invoices, opening_month_int):
+        """Generate invoice summary by customer and period"""
+        # Dictionary to store data: {(customer_id, year, month): data}
+        customer_invoice_data = {}
+        customer_opening_before = {}  # {customer_id: opening_data_before}
+        customer_opening_during = {}  # {customer_id: opening_data_during}
+        
+        # Calculate the opening period start date and day before
+        opening_start_date = date(self.opening_year, opening_month_int, 1)
+        day_before_opening = opening_start_date - timedelta(days=1)
+        
+        # Group by customer, year, month
+        for invoice in invoices:
+            # Skip invoices without invoice_date
+            if not invoice.invoice_date:
+                continue
+                
+            customer_id = invoice.partner_id.id
+            year = invoice.invoice_date.year
+            month = invoice.invoice_date.month
+            key = (customer_id, year, month)
+            
+            # Check if this invoice belongs to opening period
+            is_opening_period = False
+            if self.use_opening_period:
+                if (year < self.opening_year or 
+                    (year == self.opening_year and month < opening_month_int)):
+                    is_opening_period = True
+            
+            if is_opening_period:
+                # Initialize customer opening data if not exists
+                if customer_id not in customer_opening_before:
+                    customer_opening_before[customer_id] = {
+                        'year': self.opening_year if self.use_opening_period else 0,
+                        'month': opening_month_int,
+                        'invoice_count': 0,
+                        'sales_amount': 0.0,
+                        'settled_amount': 0.0,
+                        'is_opening': True,
+                        'is_historical': True,
+                        'partner_id': customer_id,
+                    }
+                    
+                    customer_opening_during[customer_id] = {
+                        'year': self.opening_year if self.use_opening_period else 0,
+                        'month': opening_month_int,
+                        'invoice_count': 0,
+                        'sales_amount': 0.0,
+                        'settled_amount': 0.0,
+                        'is_opening': True,
+                        'is_historical': False,
+                        'partner_id': customer_id,
+                    }
+                
+                # Add to opening data counts and sales
+                customer_opening_before[customer_id]['invoice_count'] += 1
+                customer_opening_before[customer_id]['sales_amount'] += invoice.amount_total
+                customer_opening_during[customer_id]['sales_amount'] += invoice.amount_total
+                
+                # Calculate settlement BEFORE opening period
+                before_amount = self._wilco_compute_settled_amount_as_of_date(invoice, day_before_opening)
+                customer_opening_before[customer_id]['settled_amount'] += before_amount
+                
+                # Calculate settlement DURING opening period to as-of-date
+                total_settled = self._wilco_compute_settled_amount_as_of_date(invoice, self.as_of_date)
+                during_amount = total_settled - before_amount
+                customer_opening_during[customer_id]['settled_amount'] += during_amount
+            else:
+                # Add to regular periods by customer
+                if key not in customer_invoice_data:
+                    customer_invoice_data[key] = {
+                        'year': year,
+                        'month': month,
+                        'invoice_count': 0,
+                        'sales_amount': 0.0,
+                        'settled_amount': 0.0,
+                        'is_opening': False,
+                        'is_historical': False,
+                        'partner_id': customer_id,
+                    }
+                
+                customer_invoice_data[key]['invoice_count'] += 1
+                customer_invoice_data[key]['sales_amount'] += invoice.amount_total
+                
+                # Calculate settled amount
+                settled_amount = self._wilco_compute_settled_amount_as_of_date(invoice, self.as_of_date)
+                customer_invoice_data[key]['settled_amount'] += settled_amount
+        
+        # Process customer opening records
+        for customer_id, opening_before in customer_opening_before.items():
+            opening_during = customer_opening_during[customer_id]
+            
+            # First row: Historical row (before opening period)
+            balance_before = opening_before['sales_amount'] - opening_before['settled_amount']
+            
+            self.env['wilco.customer.invoice.summary'].create({
+                'year': opening_before['year'],
+                'month': opening_before['month'],
+                'invoice_count': opening_before['invoice_count'],
+                'sales_amount': opening_before['sales_amount'],  # Show actual sales
+                'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
+                'settled_amount': opening_before['settled_amount'],
+                'balance': balance_before,
+                'as_of_date': self.as_of_date,
+                'partner_id': opening_before['partner_id'],
+                'is_opening': True,
+                'description': 'Historical - Settlement before opening'
+            })
+            
+            # Second row: Opening period (settlement during opening period)
+            balance_during = opening_during['sales_amount'] - (opening_before['settled_amount'] + opening_during['settled_amount'])
+            
+            self.env['wilco.customer.invoice.summary'].create({
+                'year': opening_during['year'],
+                'month': opening_during['month'],
+                'invoice_count': 0,  # Don't count invoices twice
+                'sales_amount': 0.0,  # Don't show sales twice
+                'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
+                'settled_amount': opening_during['settled_amount'],
+                'balance': balance_during,
+                'as_of_date': self.as_of_date,
+                'partner_id': opening_during['partner_id'],
+                'is_opening': True,
+                'description': 'Opening - Settlement during period'
+            })
+        
+        # Process customer regular records
+        # First sort by customer, then by year and month
+        customer_totals = {}  # {customer_id: {'total_sales': 0.0, 'balance': 0.0}}
+        
+        # Initialize customer totals with balance but not sales
+        for customer_id, opening_before in customer_opening_before.items():
+            opening_during = customer_opening_during[customer_id]
+            customer_totals[customer_id] = {
+                'total_sales': 0.0,  # Do NOT include opening sales in total
+                'balance': opening_before['sales_amount'] - (opening_before['settled_amount'] + opening_during['settled_amount'])
+            }
+        
+        # Create summary records
+        sorted_keys = sorted(customer_invoice_data.keys())
+        for key in sorted_keys:
+            customer_id, year, month = key
+            
+            # Skip periods before the opening period if using opening period
+            if self.use_opening_period:
+                if (year < self.opening_year or 
+                    (year == self.opening_year and month < opening_month_int)):
+                    continue
+            
+            # Initialize customer totals if not exists (for customers without opening records)
+            if customer_id not in customer_totals:
+                customer_totals[customer_id] = {
+                    'total_sales': 0.0,
+                    'balance': 0.0
+                }
+            
+            # Update customer running totals
+            current_data = customer_invoice_data[key]
+            customer_totals[customer_id]['total_sales'] += current_data['sales_amount']
+            customer_totals[customer_id]['balance'] += (current_data['sales_amount'] - current_data['settled_amount'])
+            
+            # Create summary record
+            self.env['wilco.customer.invoice.summary'].create({
+                'year': current_data['year'],
+                'month': current_data['month'],
+                'invoice_count': current_data['invoice_count'],
+                'sales_amount': current_data['sales_amount'],
+                'total_sales_amount': customer_totals[customer_id]['total_sales'],
+                'settled_amount': current_data['settled_amount'],
+                'balance': customer_totals[customer_id]['balance'],
+                'as_of_date': self.as_of_date,
+                'partner_id': current_data['partner_id'],
+                'is_opening': False,
+                'description': False
             })
     
     def _wilco_compute_settled_amount_as_of_date(self, invoice, as_of_date):

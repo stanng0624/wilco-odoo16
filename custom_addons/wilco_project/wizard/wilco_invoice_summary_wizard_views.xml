@@ -16,6 +16,9 @@
                         <field name="opening_year" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
                         <field name="opening_month" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
                     </group>
+                    <group>
+                        <field name="show_by_customer"/>
+                    </group>
                 </group>
                 <footer>
                     <button name="wilco_action_generate_report" string="Generate Report" type="object" class="oe_highlight"/>
