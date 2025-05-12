@@ -27,9 +27,28 @@ class WilcoCustomerInvoiceSummary(models.Model):
     as_of_date = fields.Date(string='As Of Date')
     partner_id = fields.Many2one('res.partner', string='Customer')
     
-    # Ledger account breakdown relation
-    ledger_breakdown_ids = fields.One2many('wilco.customer.invoice.ledger', 'summary_id', 
-                                        string='Ledger Account Breakdown')
+    def name_get(self):
+        """
+        Return a better display name for the customer invoice summary records.
+        
+        Format:
+        - If customer exists: "[Month Year] Customer Name"
+        - If no customer: "[Month Year] All Customers"
+        """
+        result = []
+        for record in self:
+            # Get customer name if exists
+            customer_name = record.partner_id.name if record.partner_id else 'All Customers'
+            
+            # Create display name
+            if record.is_opening:
+                display_name = f"Opening Period {record.year} - {customer_name}"
+            else:
+                month_name = record.month_name or ''
+                display_name = f"{month_name} {record.year} - {customer_name}"
+                
+            result.append((record.id, display_name))
+        return result
     
     @api.depends('month')
     def _wilco_compute_month_name(self):
@@ -241,49 +260,3 @@ class WilcoCustomerInvoiceSummary(models.Model):
         }
         
         return action
-    
-    def wilco_action_view_ledger_breakdown(self):
-        """
-        Show ledger account breakdown for this period.
-        Following naming conventions from PLANNING.md for action methods.
-        
-        :return: Action to open the list of ledger account details
-        """
-        self.ensure_one()
-        
-        # Get the action definition to open ledger breakdown
-        action = {
-            'name': f'Ledger Account Breakdown for {self.month_name} {self.year}',
-            'type': 'ir.actions.act_window',
-            'res_model': 'wilco.customer.invoice.ledger',
-            'view_mode': 'tree,form',
-            'views': [(False, 'tree'), (False, 'form')],
-            'domain': [('summary_id', '=', self.id)],
-            'context': {'search_default_group_by_account': 1},
-        }
-        
-        return action
-
-
-class WilcoCustomerInvoiceLedger(models.Model):
-    _name = 'wilco.customer.invoice.ledger'
-    _description = 'Customer Invoice Ledger Summary'
-    _order = 'summary_id, account_id'
-    
-    summary_id = fields.Many2one('wilco.customer.invoice.summary', string='Invoice Summary', 
-                                ondelete='cascade', required=True)
-    account_id = fields.Many2one('account.account', string='Ledger Account', required=True)
-    account_code = fields.Char(related='account_id.code', string='Account Code', store=True)
-    account_name = fields.Char(related='account_id.name', string='Account Name', store=True)
-    
-    # Summary amounts
-    amount = fields.Monetary(string='Amount', currency_field='company_currency_id', readonly=True)
-    
-    # Related fields from parent summary
-    year = fields.Integer(related='summary_id.year', string='Year', readonly=True, store=True)
-    month = fields.Integer(related='summary_id.month', string='Month', readonly=True, store=True)
-    month_name = fields.Char(related='summary_id.month_name', string='Month Name', readonly=True)
-    is_opening = fields.Boolean(related='summary_id.is_opening', string='Is Opening Period', readonly=True, store=True)
-    partner_id = fields.Many2one(related='summary_id.partner_id', string='Customer', readonly=True)
-    company_id = fields.Many2one(related='summary_id.company_id', string='Company', readonly=True)
-    company_currency_id = fields.Many2one(related='summary_id.company_currency_id', readonly=True)

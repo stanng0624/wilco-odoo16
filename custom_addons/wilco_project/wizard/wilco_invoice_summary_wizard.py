@@ -20,10 +20,6 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         ('9', 'September'), ('10', 'October'), ('11', 'November'), ('12', 'December')
     ], string='Opening Month', default='1')
     
-    # Ledger account breakdown option
-    show_ledger_breakdown = fields.Boolean(string='Show Ledger Account Breakdown', default=True,
-                                          help="Generate detailed breakdown by ledger account")
-    
     @api.onchange('as_of_date')
     def _onchange_as_of_date(self):
         """
@@ -100,8 +96,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
             'invoice_count': 0,
             'sales_amount': 0.0,  # Will accumulate total sales for periods before opening (for internal calculation only)
             'settled_amount': 0.0,
-            'is_opening': True,
-            'ledger_amounts': {}  # To store ledger account amounts for opening period
+            'is_opening': True
         }
         
         for invoice in invoices:
@@ -118,45 +113,6 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     (invoice.invoice_date.year == self.opening_year and 
                      invoice.invoice_date.month < opening_month_int)):
                     is_opening_period = True
-            
-            # Process invoice lines for ledger account breakdown if option is enabled
-            if self.show_ledger_breakdown:
-                # Get invoice lines that are not receivables/payables (only product lines)
-                invoice_lines = invoice.line_ids.filtered(
-                    lambda line: line.account_id.account_type not in ['asset_receivable', 'liability_payable'] and 
-                                line.display_type in ['product', False]
-                )
-                
-                # Group by ledger account
-                for line in invoice_lines:
-                    account = line.account_id
-                    amount = line.balance
-                    
-                    # Skip lines with zero amount
-                    if not account or abs(amount) < 0.01:
-                        continue
-                    
-                    if is_opening_period:
-                        # Add to opening ledger data
-                        if account.id not in opening_data['ledger_amounts']:
-                            opening_data['ledger_amounts'][account.id] = 0.0
-                        opening_data['ledger_amounts'][account.id] += abs(amount)  # Use abs to get positive values
-                    else:
-                        # Add to regular period ledger data
-                        if key not in invoice_data:
-                            invoice_data[key] = {
-                                'year': key[0],
-                                'month': key[1],
-                                'invoice_count': 0,
-                                'sales_amount': 0.0,
-                                'settled_amount': 0.0,
-                                'is_opening': False,
-                                'ledger_amounts': {}
-                            }
-                        
-                        if account.id not in invoice_data[key]['ledger_amounts']:
-                            invoice_data[key]['ledger_amounts'][account.id] = 0.0
-                        invoice_data[key]['ledger_amounts'][account.id] += abs(amount)  # Use abs to get positive values
             
             if is_opening_period:
                 # Add to opening data
@@ -176,8 +132,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                         'invoice_count': 0,
                         'sales_amount': 0.0,
                         'settled_amount': 0.0,
-                        'is_opening': False,
-                        'ledger_amounts': {}
+                        'is_opening': False
                     }
                 
                 invoice_data[key]['invoice_count'] += 1
@@ -214,16 +169,6 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'partner_id': self.partner_id.id if self.partner_id else False,
                 'is_opening': True
             })
-            
-            # Create ledger account breakdown records if enabled
-            if self.show_ledger_breakdown and opening_data['ledger_amounts']:
-                for account_id, amount in opening_data['ledger_amounts'].items():
-                    if amount > 0.01:  # Only create records for non-zero amounts
-                        self.env['wilco.customer.invoice.ledger'].create({
-                            'summary_id': summary.id,
-                            'account_id': account_id,
-                            'amount': amount,
-                        })
         
         # Then create regular period records
         for key in sorted_keys:
@@ -254,16 +199,6 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'partner_id': self.partner_id.id if self.partner_id else False,
                 'is_opening': False
             })
-            
-            # Create ledger account breakdown records if enabled
-            if self.show_ledger_breakdown and 'ledger_amounts' in invoice_data[key]:
-                for account_id, amount in invoice_data[key]['ledger_amounts'].items():
-                    if amount > 0.01:  # Only create records for non-zero amounts
-                        self.env['wilco.customer.invoice.ledger'].create({
-                            'summary_id': summary.id,
-                            'account_id': account_id,
-                            'amount': amount,
-                        })
     
     def _wilco_compute_settled_amount_as_of_date(self, invoice, as_of_date):
         """
