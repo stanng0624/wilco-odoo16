@@ -38,7 +38,7 @@
                 <field name="period"/>
                 <field name="year" invisible="1"/>
                 <field name="month" invisible="1"/>
-                <field name="month_name" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
+                <field name="month_name"/>
                 <field name="partner_id"/>
                 <field name="sales_account_id"/>
                 <field name="invoice_date" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
