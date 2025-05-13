@@ -225,10 +225,17 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 
                 # Store invoice for breakdown if needed
                 if self.show_invoice_breakdown:
-                    period_invoices[key].append({
-                        'invoice': invoice,
-                        'settled_amount': settled_amount
-                    })
+                    # Check if this invoice is already in the list
+                    existing_invoice = next((x for x in period_invoices[key] if x['invoice'] == invoice), None)
+                    if existing_invoice:
+                        # If invoice already exists, don't add it again
+                        pass
+                    else:
+                        # Add new invoice entry
+                        period_invoices[key].append({
+                            'invoice': invoice,
+                            'settled_amount': settled_amount
+                        })
         
         # Get all keys and sort them
         all_keys = list(invoice_data.keys())
@@ -467,12 +474,21 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 
                 # Store invoice for breakdown if needed
                 if self.show_invoice_breakdown:
-                    customer_opening_invoices[customer_id].append({
-                        'invoice': invoice,
-                        'before_amount': before_amount,
-                        'during_amount': during_amount,
-                        'total_settled': total_settled
-                    })
+                    # Check if this invoice is already in the list
+                    existing_invoice = next((x for x in customer_opening_invoices[customer_id] if x['invoice'] == invoice), None)
+                    if existing_invoice:
+                        # If invoice already exists, update the amounts
+                        existing_invoice['before_amount'] += before_amount
+                        existing_invoice['during_amount'] += during_amount
+                        existing_invoice['total_settled'] += total_settled
+                    else:
+                        # Add new invoice entry
+                        customer_opening_invoices[customer_id].append({
+                            'invoice': invoice,
+                            'before_amount': before_amount,
+                            'during_amount': during_amount,
+                            'total_settled': total_settled
+                        })
             else:
                 # Add to regular periods by customer
                 if key not in customer_invoice_data:
@@ -499,10 +515,17 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 
                 # Store invoice for breakdown if needed
                 if self.show_invoice_breakdown:
-                    customer_period_invoices[key].append({
-                        'invoice': invoice,
-                        'settled_amount': settled_amount
-                    })
+                    # Check if this invoice is already in the list
+                    existing_invoice = next((x for x in customer_period_invoices[key] if x['invoice'] == invoice), None)
+                    if existing_invoice:
+                        # If invoice already exists, don't add it again
+                        pass
+                    else:
+                        # Add new invoice entry
+                        customer_period_invoices[key].append({
+                            'invoice': invoice,
+                            'settled_amount': settled_amount
+                        })
         
         # Store created periods for invoice breakdown linking
         created_periods = {}  # {(customer_id, year, month, is_historical): record_id}
@@ -769,7 +792,11 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     line_before_settled = self._wilco_compute_line_settled_amount_as_of_date(line, day_before_opening) if is_opening_period else 0.0
                     line_during_settled = line_total_settled - line_before_settled if is_opening_period else line_total_settled
                 elif invoice.move_type == 'out_refund':
-                    account_amount = -line.price_subtotal                
+                    account_amount = -line.price_subtotal
+                    # Calculate settled amount for this line (negative for refunds)
+                    line_total_settled = -self._wilco_compute_line_settled_amount_as_of_date(line, self.as_of_date)
+                    line_before_settled = -self._wilco_compute_line_settled_amount_as_of_date(line, day_before_opening) if is_opening_period else 0.0
+                    line_during_settled = line_total_settled - line_before_settled if is_opening_period else line_total_settled
                 
                 if is_opening_period:
                     # Initialize sales account opening data if not exists
@@ -812,15 +839,31 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     
                     # Store invoice for breakdown if needed
                     if self.show_invoice_breakdown:
-                        account_opening_invoices[account_id].append({
-                            'invoice': invoice,
-                            'invoice_line': line,
-                            'before_amount': line_before_settled,
-                            'during_amount': line_during_settled,
-                            'total_settled': line_total_settled,
-                            'account_id': account_id,
-                            'account_amount': account_amount
-                        })
+                        # For grouped breakdown, create a dictionary keyed by invoice and account_id
+                        invoice_key = (invoice.id, account_id)
+                        
+                        # Check if we already have this invoice for this account in the list
+                        existing_entry = next((
+                            item for item in account_opening_invoices[account_id] 
+                            if item['invoice'] == invoice and item['account_id'] == account_id
+                        ), None)
+                        
+                        if existing_entry:
+                            # Update existing invoice entry
+                            existing_entry['before_amount'] += line_before_settled
+                            existing_entry['during_amount'] += line_during_settled
+                            existing_entry['total_settled'] += line_total_settled
+                            existing_entry['account_amount'] += account_amount
+                        else:
+                            # Add new invoice entry
+                            account_opening_invoices[account_id].append({
+                                'invoice': invoice,
+                                'before_amount': line_before_settled,
+                                'during_amount': line_during_settled,
+                                'total_settled': line_total_settled,
+                                'account_id': account_id,
+                                'account_amount': account_amount
+                            })
                 else:
                     # Add to regular periods by sales account
                     key = (account_id, year, month)
@@ -847,13 +890,24 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     
                     # Store invoice for breakdown if needed
                     if self.show_invoice_breakdown:
-                        account_period_invoices[key].append({
-                            'invoice': invoice,
-                            'invoice_line': line,
-                            'settled_amount': line_total_settled,
-                            'account_id': account_id,
-                            'account_amount': account_amount
-                        })
+                        # For grouped breakdown, check if invoice already exists for this account and period
+                        existing_entry = next((
+                            item for item in account_period_invoices[key] 
+                            if item['invoice'] == invoice and item['account_id'] == account_id
+                        ), None)
+                        
+                        if existing_entry:
+                            # Update existing invoice entry
+                            existing_entry['settled_amount'] += line_total_settled
+                            existing_entry['account_amount'] += account_amount
+                        else:
+                            # Add new invoice entry
+                            account_period_invoices[key].append({
+                                'invoice': invoice,
+                                'settled_amount': line_total_settled,
+                                'account_id': account_id,
+                                'account_amount': account_amount
+                            })
         
         # Store created periods for invoice breakdown linking
         created_periods = {}  # {(account_id, year, month, is_historical): record_id}
