@@ -108,9 +108,9 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         # Add date filter to only get invoices up to as_of_date
         domain.append(('invoice_date', '<=', str(self.as_of_date)))
         
-        # Only filter by partner if not showing by customer/account and a partner is selected
-        if not (self.show_by_customer or self.show_by_sales_account) and self.partner_id:
-            domain.append(('partner_id', '=', str(self.partner_id.id)))
+        # Filter by partner if a partner is selected (regardless of view option)
+        if self.partner_id:
+            domain.append(('partner_id', '=', self.partner_id.id))
         
         invoices = self.env['account.move'].search(domain)
         
@@ -739,10 +739,6 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         for invoice in invoices:
             # Skip invoices without invoice_date
             if not invoice.invoice_date:
-                continue
-            
-            # Filter by partner if specified
-            if self.partner_id and invoice.partner_id.id != self.partner_id.id:
                 continue
                 
             year = invoice.invoice_date.year
