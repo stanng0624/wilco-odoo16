@@ -1,55 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Search View for Customer Invoice Items -->
-    <record id="view_wilco_customer_invoice_items_search" model="ir.ui.view">
-        <field name="name">wilco.customer.invoice.items.search</field>
+    <!-- Search View for Vendor Bill Items -->
+    <record id="view_wilco_vendor_bill_items_search" model="ir.ui.view">
+        <field name="name">wilco.vendor.bill.items.search</field>
         <field name="model">account.move.line</field>
         <field name="arch" type="xml">
-            <search string="Search Customer Invoice Items">
-                <field name="move_id" string="Invoice"/>
-                <field name="partner_id" string="Customer"/>
+            <search string="Search Vendor Bill Items">
+                <field name="move_id" string="Bill"/>
+                <field name="partner_id" string="Vendor"/>
                 <field name="product_id" string="Product"/>
                 <field name="name" string="Description"/>
                 <field name="account_id" string="Account"/>
                 <field string="Amount" name="price_subtotal"
                        filter_domain="['|', '|', ('price_subtotal', 'ilike', self), ('price_total', 'ilike', self), ('price_unit', 'ilike', self)]"/>
                 <separator/>
-                <filter string="Customer Invoices" name="customer_invoices" domain="[('move_id.move_type', '=', 'out_invoice')]"/>
-                <filter string="Customer Credit Notes" name="customer_credit_notes" domain="[('move_id.move_type', '=', 'out_refund')]"/>
+                <filter string="Vendor Bills" name="vendor_bills" domain="[('move_id.move_type', '=', 'in_invoice')]"/>
+                <filter string="Vendor Credit Notes" name="vendor_credit_notes" domain="[('move_id.move_type', '=', 'in_refund')]"/>
                 <separator/>
                 <filter string="Draft" name="draft" domain="[('move_id.state', '=', 'draft')]"/>
                 <filter string="Posted" name="posted" domain="[('move_id.state', '=', 'posted')]"/>
                 <filter string="Cancelled" name="cancelled" domain="[('move_id.state', '=', 'cancel')]"/>
                 <group expand="0" string="Group By">
-                    <filter string="Customer" name="group_by_partner" domain="[]" context="{'group_by': 'partner_id'}"/>
-                    <filter string="Invoice" name="group_by_invoice" domain="[]" context="{'group_by': 'move_id'}"/>
+                    <filter string="Vendor" name="group_by_partner" domain="[]" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Bill" name="group_by_bill" domain="[]" context="{'group_by': 'move_id'}"/>
                     <filter string="Product" name="group_by_product" domain="[]" context="{'group_by': 'product_id'}"/>
                     <filter string="Account" name="group_by_account" domain="[]" context="{'group_by': 'account_id'}"/>
-                    <filter string="Invoice Date" name="group_by_date" domain="[]" context="{'group_by': 'date'}"/>
+                    <filter string="Bill Date" name="group_by_date" domain="[]" context="{'group_by': 'date'}"/>
                 </group>
             </search>
         </field>
     </record>
 
-    <!-- Tree View for Customer Invoice Items -->
-    <record id="view_wilco_customer_invoice_items_tree" model="ir.ui.view">
-        <field name="name">wilco.customer.invoice.items.tree</field>
+    <!-- Tree View for Vendor Bill Items -->
+    <record id="view_wilco_vendor_bill_items_tree" model="ir.ui.view">
+        <field name="name">wilco.vendor.bill.items.tree</field>
         <field name="model">account.move.line</field>
         <field name="arch" type="xml">
-            <tree string="Customer Invoice Items" create="false" default_order="date desc, move_id, id">
-                <field name="move_id" string="Invoice"/>
-                <field name="move_name" string="Invoice Number"/>
+            <tree string="Vendor Bill Items" create="false" default_order="date desc, move_id, id">
+                <field name="move_id" string="Bill"/>
+                <field name="move_name" string="Bill Number"/>
                 <field name="move_type" invisible="1"/>
                 <field name="parent_state" invisible="1"/>
-                <field name="date" string="Invoice Date"/>
-                <field name="partner_id" string="Customer"/>
+                <field name="date" string="Bill Date"/>
+                <field name="partner_id" string="Vendor"/>
                 <field name="product_id" string="Product"/>
+                <field name="wilco_line_ref" string="Reference"/>
                 <field name="name" string="Description"/>
                 <field name="account_id" string="Account"/>
                 <field name="analytic_distribution" widget="analytic_distribution" optional="show"/>
+                <field name="wilco_project_id" optional="show"/>
                 <field name="quantity" string="Quantity" sum="Total Quantity"/>
-                <field name="price_unit" string="Unit Price"/>
-                <field name="discount" string="Discount (%)"/>
+                <field name="price_unit" string="Unit Price" widget="monetary"/>
+                <field name="discount" string="Discount (%)" optional="show"/>
                 <field name="price_subtotal" string="Subtotal" sum="Total"/>
                 <field name="price_total" string="Total" sum="Total"/>
                 <field name="currency_id" invisible="1"/>
@@ -57,35 +59,35 @@
         </field>
     </record>
 
-    <!-- Action for Customer Invoice Items -->
-    <record id="action_wilco_customer_invoice_items" model="ir.actions.act_window">
-        <field name="name">Invoice Items</field>
+    <!-- Action for Vendor Bill Items -->
+    <record id="action_wilco_vendor_bill_items" model="ir.actions.act_window">
+        <field name="name">Bill Items</field>
         <field name="res_model">account.move.line</field>
         <field name="view_mode">tree</field>
-        <field name="view_id" ref="view_wilco_customer_invoice_items_tree"/>
-        <field name="search_view_id" ref="view_wilco_customer_invoice_items_search"/>
+        <field name="view_id" ref="view_wilco_vendor_bill_items_tree"/>
+        <field name="search_view_id" ref="view_wilco_vendor_bill_items_search"/>
         <field name="domain">[
-            ('move_id.move_type', 'in', ['out_invoice', 'out_refund']),
+            ('move_id.move_type', 'in', ['in_invoice', 'in_refund']),
             ('display_type', 'in', ['product', False])
         ]</field>
         <field name="context">{
             'search_default_posted': 1,
-            'search_default_customer_invoices': 1
+            'search_default_vendor_bills': 1
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No customer invoice items found
+                No vendor bill items found
             </p>
             <p>
-                This view displays all invoice line items from customer invoices.
+                This view displays all bill line items from vendor bills.
             </p>
         </field>
     </record>
 
-    <!-- Menu Item for Customer Invoice Items -->
-    <menuitem id="menu_wilco_customer_invoice_items"
-              name="Invoice Items"
-              action="action_wilco_customer_invoice_items"
-              parent="account.menu_finance_receivables"
+    <!-- Menu Item for Vendor Bill Items -->
+    <menuitem id="menu_wilco_vendor_bill_items"
+              name="Bill Items"
+              action="action_wilco_vendor_bill_items"
+              parent="account.menu_finance_payables"
               sequence="2"/>
 </odoo> 
