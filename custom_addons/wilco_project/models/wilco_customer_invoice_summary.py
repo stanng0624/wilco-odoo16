@@ -434,7 +434,7 @@ class WilcoCustomerInvoiceSummary(models.Model):
         exclude_historical_fields = ['invoice_count', 'sales_amount']
         
         # Fields that should exclude invoice breakdown records from totals
-        exclude_breakdown_fields = ['sales_amount', 'settled_amount']
+        exclude_breakdown_fields = ['sales_amount', 'settled_amount', 'balance']
         
         # Process all normal groups 
         result = super(WilcoCustomerInvoiceSummary, self).read_group(

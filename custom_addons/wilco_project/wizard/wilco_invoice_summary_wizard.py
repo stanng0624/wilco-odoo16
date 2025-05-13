@@ -250,7 +250,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': opening_data_before['sales_amount'],  # Show actual sales amount
                 'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
                 'settled_amount': opening_data_before['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': opening_data_before['sales_amount'] - opening_data_before['settled_amount'],  # Update: Show sales - settled
                 'period_balance': historical_period_balance,  # Initial period balance
                 'as_of_date': self.as_of_date,
                 'partner_id': opening_data_before['partner_id'],
@@ -273,7 +273,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': 0.0,  # Don't show sales twice
                 'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
                 'settled_amount': opening_data_during['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': 0.0 - opening_data_during['settled_amount'],  # Update: For opening period, this would be 0 (sales) - settled
                 'period_balance': opening_period_balance,  # Roll up from previous period
                 'as_of_date': self.as_of_date,
                 'partner_id': opening_data_during['partner_id'],
@@ -351,7 +351,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': invoice_data[key]['sales_amount'],
                 'total_sales_amount': total_sales,
                 'settled_amount': invoice_data[key]['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': invoice_data[key]['sales_amount'] - invoice_data[key]['settled_amount'],  # Update: Show sales - settled for the period
                 'period_balance': period_balance,  # Running balance from previous periods
                 'as_of_date': self.as_of_date,
                 'partner_id': invoice_data[key]['partner_id'],
@@ -527,7 +527,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': opening_before['sales_amount'],  # Show actual sales
                 'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
                 'settled_amount': opening_before['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': opening_before['sales_amount'] - opening_before['settled_amount'],  # Update: Show sales - settled
                 'period_balance': historical_period_balance,  # Initial period balance
                 'as_of_date': self.as_of_date,
                 'partner_id': opening_before['partner_id'],
@@ -551,7 +551,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': 0.0,  # Don't show sales twice
                 'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
                 'settled_amount': opening_during['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': 0.0 - opening_during['settled_amount'],  # Update: For opening period, this would be 0 (sales) - settled
                 'period_balance': opening_period_balance,  # Roll up from previous period
                 'as_of_date': self.as_of_date,
                 'partner_id': opening_during['partner_id'],
@@ -644,7 +644,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': current_data['sales_amount'],
                 'total_sales_amount': customer_sales_totals[customer_id],
                 'settled_amount': current_data['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': current_data['sales_amount'] - current_data['settled_amount'],  # Update: Show sales - settled for the period
                 'period_balance': new_period_balance,  # Running period balance for this customer
                 'as_of_date': self.as_of_date,
                 'partner_id': current_data['partner_id'],
@@ -878,7 +878,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': opening_before['sales_amount'],  # Show actual sales
                 'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
                 'settled_amount': opening_before['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': opening_before['sales_amount'] - opening_before['settled_amount'],  # Update: Show sales - settled
                 'period_balance': historical_period_balance,  # Initial period balance
                 'as_of_date': self.as_of_date,
                 'partner_id': opening_before['partner_id'],
@@ -903,7 +903,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': 0.0,  # Don't show sales twice
                 'total_sales_amount': 0.0,  # For opening period, total_sales MUST be zero
                 'settled_amount': opening_during['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': 0.0 - opening_during['settled_amount'],  # Update: For opening period, this would be 0 (sales) - settled
                 'period_balance': opening_period_balance,  # Roll up from previous period
                 'as_of_date': self.as_of_date,
                 'partner_id': opening_during['partner_id'],
@@ -995,7 +995,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 'sales_amount': current_data['sales_amount'],
                 'total_sales_amount': account_sales_totals[account_id],
                 'settled_amount': current_data['settled_amount'],
-                'balance': 0.0,  # For period records, balance is always 0
+                'balance': current_data['sales_amount'] - current_data['settled_amount'],  # Update: Show sales - settled for the period
                 'period_balance': new_period_balance,  # Running period balance for this sales account
                 'as_of_date': self.as_of_date,
                 'partner_id': current_data['partner_id'],

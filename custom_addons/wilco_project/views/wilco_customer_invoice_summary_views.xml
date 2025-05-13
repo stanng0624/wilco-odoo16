@@ -44,11 +44,11 @@
                 <field name="invoice_date" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                 <field name="invoice_number" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                 <field name="settled_dates" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
-                <field name="invoice_count" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
+                <field name="invoice_count" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum="Total"/>
                 <field name="sales_amount" sum="Total"/>
                 <field name="total_sales_amount" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
                 <field name="settled_amount" sum="Total"/>
-                <field name="balance" sum="Total" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
+                <field name="balance" sum="Total"/>
                 <field name="period_balance" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
                 <field name="is_opening" invisible="1"/>
                 <field name="is_breakdown" invisible="1"/>
