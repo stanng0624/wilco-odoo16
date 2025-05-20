@@ -74,8 +74,14 @@ class WilcoCustomerInvoiceSummary(models.Model):
                 else:
                     record.period = f"{period_string} (2: Opening)"  # Regular opening
             else:
-                # First regular month (January) gets special naming
-                if record.month == 1 and not record.is_opening:
+                # First regular month (January) gets special naming only when opening periods are used
+                # We check for opening periods by checking if any opening period exists in the system
+                opening_period_exists = self.env['wilco.customer.invoice.summary'].search_count([
+                    ('is_opening', '=', True),
+                    ('year', '=', record.year)
+                ], limit=1)
+                
+                if record.month == 1 and opening_period_exists:
                     record.period = f"{period_string} (3: First period)"
                 else:
                     record.period = period_string

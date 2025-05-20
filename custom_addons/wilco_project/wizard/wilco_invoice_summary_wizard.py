@@ -123,8 +123,11 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         account_opening_invoices = {}  # {sales_account_id: [invoice_data]}
         
         # Calculate the opening period start date and day before
-        opening_start_date = date(self.opening_year, opening_month_int, 1)
-        day_before_opening = opening_start_date - timedelta(days=1)
+        opening_start_date = None
+        day_before_opening = None
+        if self.use_opening_period and opening_month_int > 0:
+            opening_start_date = date(self.opening_year, opening_month_int, 1)
+            day_before_opening = opening_start_date - timedelta(days=1)
         
         # Group by sales account, year, month
         for invoice in invoices:
@@ -138,8 +141,8 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
             # Check if this invoice belongs to opening period
             is_opening_period = False
             if self.use_opening_period:
-                if (year < self.opening_year or 
-                    (year == self.opening_year and month < opening_month_int)):
+                if opening_start_date and ((year < self.opening_year or 
+                    (year == self.opening_year and month < opening_month_int))):
                     is_opening_period = True
             
             # Process each invoice line with account
@@ -162,12 +165,12 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     if is_downpayment_line:
                         # For down payment lines: 
                         # - Positive quantity: Down Payment amount
-                        # - Negative quantity: Down Payment Deducted amount
+                        # - Negative quantity: Down Payment Deducted amount (now positive in invoice)
                         if line.quantity > 0:
                             line_downpayment = line.price_subtotal
                             account_amount = 0.0  # Not counted in sales
                         else:
-                            line_downpayment_deducted = abs(line.price_subtotal)
+                            line_downpayment_deducted = line.price_subtotal * -1
                             account_amount = 0.0  # Not counted in sales
                     else:
                         # Regular line
@@ -175,18 +178,21 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                         
                     # Calculate settled amount for this line
                     line_total_settled = self._wilco_compute_line_settled_amount_as_of_date(line, self.as_of_date)
-                    line_before_settled = self._wilco_compute_line_settled_amount_as_of_date(line, day_before_opening) if is_opening_period else 0.0
+                    line_before_settled = 0.0
+                    if is_opening_period and day_before_opening:
+                        line_before_settled = self._wilco_compute_line_settled_amount_as_of_date(line, day_before_opening)
                     line_during_settled = line_total_settled - line_before_settled if is_opening_period else line_total_settled
                 elif invoice.move_type == 'out_refund':
                     if is_downpayment_line:
                         # For refund down payment lines:
-                        # - Positive quantity: refunding Down Payment Deducted
+                        # - Positive quantity: refunding Down Payment Deducted (now positive in invoice)
                         # - Negative quantity: refunding Down Payment
                         if line.quantity > 0:
+                            # Value is already positive in invoice, just negate for refund
                             line_downpayment_deducted = -line.price_subtotal  # Negative as it's a refund
                             account_amount = 0.0  # Not counted in sales
                         else:
-                            line_downpayment = -abs(line.price_subtotal)  # Negative as it's a refund
+                            line_downpayment = line.price_subtotal
                             account_amount = 0.0  # Not counted in sales
                     else:
                         # Regular refund line
@@ -194,7 +200,9 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                         
                     # Calculate settled amount for this line (negative for refunds)
                     line_total_settled = -self._wilco_compute_line_settled_amount_as_of_date(line, self.as_of_date)
-                    line_before_settled = -self._wilco_compute_line_settled_amount_as_of_date(line, day_before_opening) if is_opening_period else 0.0
+                    line_before_settled = 0.0
+                    if is_opening_period and day_before_opening:
+                        line_before_settled = -self._wilco_compute_line_settled_amount_as_of_date(line, day_before_opening)
                     line_during_settled = line_total_settled - line_before_settled if is_opening_period else line_total_settled
                 
                 if is_opening_period:
@@ -246,9 +254,16 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     account_opening_before[account_id]['amount_downpayment_deducted'] += line_downpayment_deducted
                     account_opening_during[account_id]['amount_downpayment_deducted'] += line_downpayment_deducted
                     
-                    # Add line-specific settlement amounts
-                    account_opening_before[account_id]['settled_amount'] += line_before_settled
-                    account_opening_during[account_id]['settled_amount'] += line_during_settled
+                    # Calculate settlement BEFORE opening period
+                    before_amount = 0.0
+                    if day_before_opening:
+                        before_amount = self._wilco_compute_settled_amount_as_of_date(invoice, day_before_opening)
+                    account_opening_before[account_id]['settled_amount'] += before_amount
+                    
+                    # Calculate settlement DURING opening period to as-of-date
+                    total_settled = self._wilco_compute_settled_amount_as_of_date(invoice, self.as_of_date)
+                    during_amount = total_settled - before_amount
+                    account_opening_during[account_id]['settled_amount'] += during_amount
                     
                     # Store invoice for breakdown if needed
                     if self.show_invoice_breakdown:
@@ -263,8 +278,8 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                         
                         if existing_entry:
                             # Update existing invoice entry
-                            existing_entry['before_amount'] += line_before_settled
-                            existing_entry['during_amount'] += line_during_settled
+                            existing_entry['before_amount'] += before_amount
+                            existing_entry['during_amount'] += during_amount
                             existing_entry['total_settled'] += line_total_settled
                             existing_entry['account_amount'] += account_amount
                             existing_entry['amount_downpayment'] += line_downpayment
@@ -273,8 +288,8 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                             # Add new invoice entry
                             account_opening_invoices[account_id].append({
                                 'invoice': invoice,
-                                'before_amount': line_before_settled,
-                                'during_amount': line_during_settled,
+                                'before_amount': before_amount,
+                                'during_amount': during_amount,
                                 'total_settled': line_total_settled,
                                 'account_id': account_id,
                                 'account_amount': account_amount,
@@ -466,7 +481,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
             account_id, year, month = key
             
             # Skip periods before the opening period if using opening period
-            if self.use_opening_period:
+            if self.use_opening_period and opening_start_date:
                 if (year < self.opening_year or 
                     (year == self.opening_year and month < opening_month_int)):
                     continue
@@ -617,9 +632,6 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         
         if not receivable_line:
             return 0.0
-            
-        # Get the total invoice amount
-        invoice_amount = abs(sum(receivable_line.mapped('amount_currency')))
         
         # If there's no partial reconciliation, return 0
         if not receivable_line.matched_credit_ids and not receivable_line.matched_debit_ids:
@@ -762,10 +774,13 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         period_invoices = {}  # Regular period invoices
         opening_invoices = {}  # Opening period invoices
         
-        # Calculate the opening period start date and day before
-        opening_start_date = date(self.opening_year, opening_month_int, 1)
-        day_before_opening = opening_start_date - timedelta(days=1)
-        _logger.info(f"Opening start date: {opening_start_date}, Day before: {day_before_opening}")
+        # Calculate the opening period start date and day before ONLY when use_opening_period is True
+        opening_start_date = None
+        day_before_opening = None
+        if self.use_opening_period and opening_month_int > 0:
+            opening_start_date = date(self.opening_year, opening_month_int, 1)
+            day_before_opening = opening_start_date - timedelta(days=1)
+            _logger.info(f"Opening start date: {opening_start_date}, Day before: {day_before_opening}")
         
         # Group by specific dimensions based on the group_by parameter
         invoice_count_opening = 0
@@ -800,8 +815,8 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
             # Check if this invoice belongs to opening period
             is_opening_period = False
             if self.use_opening_period:
-                if (year < self.opening_year or 
-                    (year == self.opening_year and month < opening_month_int)):
+                if opening_start_date and ((year < self.opening_year or 
+                    (year == self.opening_year and month < opening_month_int))):
                     is_opening_period = True
             
             # Get down payment amounts from invoice
@@ -870,7 +885,9 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 opening_data_during[opening_key]['amount_downpayment_deducted'] += invoice_downpayment_deducted
                 
                 # Calculate settlement BEFORE opening period
-                before_amount = self._wilco_compute_settled_amount_as_of_date(invoice, day_before_opening)
+                before_amount = 0.0
+                if day_before_opening:
+                    before_amount = self._wilco_compute_settled_amount_as_of_date(invoice, day_before_opening)
                 opening_data_before[opening_key]['settled_amount'] += before_amount
                 
                 # Calculate settlement DURING opening period to as-of-date
@@ -1137,7 +1154,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                 period_key = (year, month, False)
             
             # Skip periods before the opening period if using opening period
-            if self.use_opening_period:
+            if self.use_opening_period and opening_start_date:
                 if (year < self.opening_year or 
                     (year == self.opening_year and month < opening_month_int)):
                     _logger.info(f"Skipping period {year}-{month} as it's before opening period {self.opening_year}-{opening_month_int}")

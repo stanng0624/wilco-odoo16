@@ -40,21 +40,21 @@
                 <field name="period"/>
                 <field name="year" invisible="1"/>
                 <field name="month" invisible="1"/>
-                <field name="month_name"/>
-                <field name="partner_id"/>
-                <field name="sales_account_id"/>
-                <field name="project_id"/>
+                <field name="month_name" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="project_id" optional="show"/>
+                <field name="sales_account_id" optional="show"/>
                 <field name="invoice_date" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                 <field name="invoice_number" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                 <field name="settled_dates" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
                 <field name="invoice_count" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum="Total"/>
-                <field name="sales_amount" sum="Total"/>
-                <field name="total_sales_amount" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
-                <field name="amount_downpayment" sum="Total"/>
-                <field name="amount_downpayment_deducted" sum="Total"/>
-                <field name="settled_amount" sum="Total"/>
-                <field name="balance" sum="Total"/>
-                <field name="period_balance" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
+                <field name="sales_amount" optional="show" sum="Total"/>
+                <field name="total_sales_amount" optional="show" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
+                <field name="amount_downpayment" optional="show" sum="Total"/>
+                <field name="amount_downpayment_deducted" optional="show" sum="Total"/>
+                <field name="settled_amount" optional="show" sum="Total"/>
+                <field name="balance" optional="show" sum="Total"/>
+                <field name="period_balance" optional="show" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
                 <field name="is_opening" invisible="1"/>
                 <field name="is_breakdown" invisible="1"/>
                 <field name="as_of_date" invisible="1"/>

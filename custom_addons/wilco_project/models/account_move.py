@@ -81,7 +81,7 @@ class AccountMove(models.Model):
                 lambda line: line.quantity < 0 and line.is_downpayment
             )
             move.wilco_amount_downpayment = sum(downpayment_lines.mapped('price_subtotal'))
-            move.wilco_amount_downpayment_deducted = sum(downpayment_deducted_lines.mapped('price_subtotal'))
+            move.wilco_amount_downpayment_deducted = sum(downpayment_deducted_lines.mapped('price_subtotal')) * -1
 
     @api.onchange('wilco_revision_no')
     def onchange_wilco_revision_no(self):
