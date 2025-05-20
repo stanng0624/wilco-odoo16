@@ -17,8 +17,7 @@
                         <field name="opening_month" attrs="{'invisible': [('use_opening_period', '=', False)], 'required': [('use_opening_period', '=', True)]}"/>
                     </group>
                     <group>
-                        <field name="show_by_customer"/>
-                        <field name="show_by_sales_account"/>
+                        <field name="show_balance_by" widget="radio"/>
                         <field name="show_invoice_breakdown"/>
                     </group>
                 </group>
