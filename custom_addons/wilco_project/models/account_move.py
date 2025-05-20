@@ -26,6 +26,14 @@ class AccountMove(models.Model):
 
     wilco_amount_settled_total = fields.Monetary(string="Amount Settled", compute='_wilco_compute_settled_amounts')
     wilco_amount_settled_total_signed = fields.Monetary(string="Amount Settled in Currency", compute='_wilco_compute_settled_amounts')
+    wilco_amount_downpayment = fields.Monetary(
+        string="Down Payment Amount",
+        compute='_wilco_compute_downpayment_amounts'
+    )
+    wilco_amount_downpayment_deducted = fields.Monetary(
+        string="Down Payment Deducted Amount",
+        compute='_wilco_compute_downpayment_amounts'
+    )
 
     @api.depends('payment_state', 'line_ids.matched_debit_ids', 'line_ids.matched_credit_ids')
     def _compute_wilco_payment_dates(self):
@@ -62,6 +70,18 @@ class AccountMove(models.Model):
         for order in self:
             order.wilco_amount_settled_total = order.amount_total - order.amount_residual
             order.wilco_amount_settled_total_signed = order.amount_total_signed - order.amount_residual_signed
+
+    @api.depends('line_ids.is_downpayment', 'line_ids.price_subtotal', 'line_ids.display_type', 'line_ids.quantity')
+    def _wilco_compute_downpayment_amounts(self):
+        for move in self:
+            downpayment_lines = move.line_ids.filtered(
+                lambda line: line.quantity > 0 and line.is_downpayment
+            )
+            downpayment_deducted_lines = move.line_ids.filtered(
+                lambda line: line.quantity < 0 and line.is_downpayment
+            )
+            move.wilco_amount_downpayment = sum(downpayment_lines.mapped('price_subtotal'))
+            move.wilco_amount_downpayment_deducted = sum(downpayment_deducted_lines.mapped('price_subtotal'))
 
     @api.onchange('wilco_revision_no')
     def onchange_wilco_revision_no(self):

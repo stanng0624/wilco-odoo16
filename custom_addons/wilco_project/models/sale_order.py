@@ -62,7 +62,7 @@ class SaleOrder(models.Model):
     )
     wilco_amount_downpayment = fields.Monetary(
         string="Down Payment",
-        compute='_wilco_compute_downpayment'
+        compute='_wilco_compute_invoiced_amounts'
     )
     wilco_amount_downpayment_deducted = fields.Monetary(
         string="Down Payment Deducted",
@@ -118,6 +118,9 @@ class SaleOrder(models.Model):
                                 amount_budget_cost_total = sum(orders.mapped('wilco_amount_budget_cost_total'))
                                 line[field] = (amount_total - amount_budget_cost_total) / amount_total
                         else:
+                            # This ensures that when computing aggregated values, 
+                            # they're consistent with the individual records
+                            # which now exclude cancelled invoices
                             line[field] = sum(orders.mapped(field))
 
         return res
@@ -127,37 +130,43 @@ class SaleOrder(models.Model):
 
     @api.depends('order_line.invoice_lines')
     def _wilco_compute_invoiced_amounts(self):
+        """
+        Calculate invoiced amounts for the sales order.
+        Excludes cancelled invoices to ensure accurate financial reporting.
+        """
         for order in self:
             invoices = order.invoice_ids.filtered(
-                lambda inv: inv.move_type in ('out_invoice', 'out_refund') and not inv._is_downpayment()
+                lambda inv: inv.move_type in ('out_invoice', 'out_refund') and 
+                inv.state != 'cancel'
             )
-            
+            down_payment_lines = invoices.line_ids.filtered(
+                lambda line: line.quantity > 0 and line.is_downpayment
+            )
             down_payment_deducted_lines = invoices.line_ids.filtered(
                 lambda line: line.quantity < 0 and line.is_downpayment
             )
 
+            amount_downpayment = sum(down_payment_lines.mapped("price_unit"))
             amount_downpayment_deducted = sum(down_payment_deducted_lines.mapped("price_unit"))
-            amount_invoiced_total = sum(invoices.mapped("amount_total_signed")) + amount_downpayment_deducted
+            amount_invoiced_total = sum(invoices.mapped("amount_total_signed")) + amount_downpayment_deducted - amount_downpayment
             amount_invoice_remainder = max(order.amount_total - amount_invoiced_total, 0)
 
             order.update({
+                'wilco_amount_downpayment': amount_downpayment,
                 'wilco_amount_downpayment_deducted': amount_downpayment_deducted,
                 'wilco_amount_invoiced_total': amount_invoiced_total,
                 'wilco_amount_invoice_remainder': amount_invoice_remainder
             })
 
-    def _wilco_compute_downpayment(self):
-        for order in self:
-            down_payment_lines = order.order_line.filtered(
-                lambda line: (line.is_downpayment and 
-                            not line.display_type and 
-                            not line._get_downpayment_state())
-            )
-            order.wilco_amount_downpayment = sum(down_payment_lines.mapped("price_unit"))
-
     def _wilco_compute_settle_amounts(self):
+        """
+        Calculate settlement amounts based on invoices related to this sales order.
+        Filters out cancelled invoices to ensure accurate financial calculations.
+        """
         for order in self:
-            invoices = order.invoice_ids.filtered(lambda inv: inv.move_type in ('out_invoice', 'out_refund'))
+            invoices = order.invoice_ids.filtered(
+                lambda inv: inv.move_type in ('out_invoice', 'out_refund') and inv.state != 'cancel'
+            )
             order.wilco_amount_settled_total = sum(invoices.mapped("wilco_amount_settled_total_signed"))
             order.wilco_amount_residual_total = sum(invoices.mapped("amount_residual_signed"))
 
@@ -306,6 +315,11 @@ class SaleOrder(models.Model):
             order._wilco_update_invoice_status()
 
     def _wilco_update_invoice_status(self):
+        """
+        Updates the invoice status for the sale order.
+        Specifically handles the 'invoice_by_order' method and ensures that
+        cancelled invoices are excluded from status computation.
+        """
         self.ensure_one()
 
         if self.wilco_invoice_method == 'invoice_by_order':

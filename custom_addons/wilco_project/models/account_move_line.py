@@ -24,21 +24,13 @@ class AccountMoveLine(models.Model):
                         if sale_order.id and sale_order.wilco_invoice_method == 'invoice_by_order':
                             raise UserError(_("You can not remove the first order line since it will affect the sales order linkage with invoice"))
 
-    @api.onchange('product_id')
-    def _wilco_onchange_product_id(self):
-        if not self.product_id:
-            return
-
-        if self.display_type == 'product':
-            self._wilco_set_name_from_source_order()
-            self._wilco_set_analytic_distribution_from_project()
-
     @api.onchange('account_id')
     def _wilco_onchange_product_id(self):
         if not self.account_id:
             return
 
         if self.display_type == 'product':
+            self._wilco_set_name_from_source_order()
             self._wilco_set_analytic_distribution_from_project()
 
 
