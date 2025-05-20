@@ -18,10 +18,14 @@ class WilcoCustomerInvoiceSummary(models.Model):
     total_sales_amount = fields.Monetary(string='Total Sales', currency_field='company_currency_id', readonly=True, 
                                        help="Accumulated sales from previous periods including current period")
     settled_amount = fields.Monetary(string='Settled', currency_field='company_currency_id', readonly=True)
+    amount_downpayment = fields.Monetary(string='Down Payment', currency_field='company_currency_id', readonly=True,
+                                       help="Down payment amount for this period")
+    amount_downpayment_deducted = fields.Monetary(string='Down Payment Deducted', currency_field='company_currency_id', readonly=True,
+                                                help="Down payment deducted amount for this period")
     balance = fields.Monetary(string='Balance', currency_field='company_currency_id', readonly=True,
-                           help="Only used for invoice breakdowns: Sales - Settled for that invoice. For period records, it's always 0.")
+                           help="For invoice breakdowns: Sales - Settled + Down Payment - Down Payment Deducted. For period records, it's always 0.")
     period_balance = fields.Monetary(string='Period Balance', currency_field='company_currency_id', readonly=True,
-                               help="Running balance that includes all previous periods: previous period balance + current sales - current settled")
+                               help="Running balance that includes all previous periods: previous period balance + current sales - current settled + down payment - down payment deducted")
     is_opening = fields.Boolean(string='Is Opening Period', default=False, 
                               help="Indicates this is an opening period record with consolidated previous activity")
     description = fields.Char(string='Description', readonly=True,
@@ -45,6 +49,7 @@ class WilcoCustomerInvoiceSummary(models.Model):
     as_of_date = fields.Date(string='As Of Date')
     partner_id = fields.Many2one('res.partner', string='Customer')
     sales_account_id = fields.Many2one('account.account', string='Sales Account')
+    project_id = fields.Many2one('project.project', string='Project')
     
     @api.depends('year', 'month', 'is_opening', 'description')
     def _compute_period(self):
@@ -431,10 +436,10 @@ class WilcoCustomerInvoiceSummary(models.Model):
         invalid_group_fields = ['total_sales_amount', 'period_balance']
         
         # Fields that should exclude historical opening records from totals
-        exclude_historical_fields = ['invoice_count', 'sales_amount']
+        exclude_historical_fields = ['invoice_count', 'sales_amount', 'amount_downpayment', 'amount_downpayment_deducted']
         
         # Fields that should exclude invoice breakdown records from totals
-        exclude_breakdown_fields = ['sales_amount', 'settled_amount', 'balance']
+        exclude_breakdown_fields = ['sales_amount', 'settled_amount', 'balance', 'amount_downpayment', 'amount_downpayment_deducted']
         
         # Process all normal groups 
         result = super(WilcoCustomerInvoiceSummary, self).read_group(
