@@ -171,7 +171,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                             account_amount = 0.0  # Not counted in sales
                     else:
                         # Regular line
-                    account_amount = line.price_subtotal
+                        account_amount = line.price_subtotal
                         
                     # Calculate settled amount for this line
                     line_total_settled = self._wilco_compute_line_settled_amount_as_of_date(line, self.as_of_date)
@@ -190,7 +190,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                             account_amount = 0.0  # Not counted in sales
                     else:
                         # Regular refund line
-                    account_amount = -line.price_subtotal
+                        account_amount = -line.price_subtotal
                         
                     # Calculate settled amount for this line (negative for refunds)
                     line_total_settled = -self._wilco_compute_line_settled_amount_as_of_date(line, self.as_of_date)
@@ -234,7 +234,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     # Add to opening data counts and sales
                     if not is_downpayment_line or (is_downpayment_line and account_amount > 0):
                         # Only count invoice once for each account
-                    account_opening_before[account_id]['invoice_count'] += 1
+                        account_opening_before[account_id]['invoice_count'] += 1
                     
                     account_opening_before[account_id]['sales_amount'] += account_amount
                     account_opening_during[account_id]['sales_amount'] += account_amount
@@ -305,7 +305,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     
                     if not is_downpayment_line or (is_downpayment_line and account_amount > 0):
                         # Only count invoice once for each account
-                    account_invoice_data[key]['invoice_count'] += 1
+                        account_invoice_data[key]['invoice_count'] += 1
                     
                     account_invoice_data[key]['sales_amount'] += account_amount
                     account_invoice_data[key]['settled_amount'] += line_total_settled
