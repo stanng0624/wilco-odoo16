@@ -727,7 +727,7 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
         
         # Get total invoice amount (sum of all line subtotals)
         total_invoice_amount = sum(invoice.invoice_line_ids.filtered(
-            lambda l: l.display_type == 'product' and l.account_id and l.account_id.account_type == 'income'
+            lambda l: l.display_type == 'product' and l.account_id
         ).mapped('price_subtotal'))
         
         if total_invoice_amount <= 0:
@@ -774,9 +774,9 @@ class WilcoInvoiceSummaryWizard(models.TransientModel):
                     (year == self.opening_year and month < opening_month_int)):
                     is_opening_period = True
             
-            # Process each invoice line with income account
+            # Process each invoice line with account
             for line in invoice.invoice_line_ids.filtered(
-                lambda l: l.display_type == 'product' and l.account_id and l.account_id.account_type == 'income'
+                lambda l: l.display_type == 'product' and l.account_id
             ):
                 account_id = line.account_id.id
 
