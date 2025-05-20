@@ -442,7 +442,7 @@ class WilcoCustomerInvoiceSummary(models.Model):
         invalid_group_fields = ['total_sales_amount', 'period_balance']
         
         # Fields that should exclude historical opening records from totals
-        exclude_historical_fields = ['invoice_count', 'sales_amount', 'amount_downpayment', 'amount_downpayment_deducted']
+        exclude_historical_fields = ['invoice_count', 'sales_amount', 'settled_amount', 'amount_downpayment', 'amount_downpayment_deducted']
         
         # Fields that should exclude invoice breakdown records from totals
         exclude_breakdown_fields = ['sales_amount', 'settled_amount', 'balance', 'amount_downpayment', 'amount_downpayment_deducted']
