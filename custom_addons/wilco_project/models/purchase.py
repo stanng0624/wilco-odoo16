@@ -116,15 +116,15 @@ class PurchaseOrder(models.Model):
 
         return result
 
-    def write(self, values):
-        result = super().write(values)
+    def write(self, vals):
+        result = super().write(vals)
 
         for order in self:
-            if 'wilco_revision_no' in values:
+            if 'wilco_revision_no' in vals:
                 if order.wilco_revision_no > 0 and not order.wilco_revision_date:
                     order.wilco_revision_date = fields.datetime.today()
 
-            if 'name' in values and order.name:
+            if 'name' in vals and order.name:
                 order.write_external_identifier(order.name)
 
         return result

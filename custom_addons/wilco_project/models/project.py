@@ -48,13 +48,13 @@ class Project(models.Model):
         return result
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name='', args=None, operator='ilike', limit=100, name_get_uid=None):
         args = args or []
         domain = []
         if name:
             domain = ['|', ('name', operator, name), ('wilco_project_name', operator, name)]
-        return self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
-        # return super()._name_search(name, args, operator, limit, name_get_uid)
+        project_ids = self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
+        return list(project_ids)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -71,10 +71,10 @@ class Project(models.Model):
 
         return result
 
-    def write(self, values):
-        result = super(Project, self).write(values)
+    def write(self, vals):
+        result = super(Project, self).write(vals)
 
-        if 'partner_id' in values and self.analytic_account_id:
+        if 'partner_id' in vals and self.analytic_account_id:
             projects_read_group = self.env['project.project']._read_group(
                 [('analytic_account_id', 'in', self.analytic_account_id.ids)],
                 ['analytic_account_id'],
@@ -91,7 +91,7 @@ class Project(models.Model):
             if not project.analytic_account_id:
                 project._create_analytic_account()
 
-            if 'name' in values and project.name:
+            if 'name' in vals and project.name:
                 ExternalIdentifierUtil.write_external_identifier(
                     self.env, self._name, project.id, project.name)
 

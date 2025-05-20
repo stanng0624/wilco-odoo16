@@ -34,11 +34,11 @@ class ResPartner(models.Model):
 
         return result
 
-    def write(self, values):
-        result = super(ResPartner, self).write(values)
+    def write(self, vals):
+        result = super(ResPartner, self).write(vals)
 
         for partner in self:
-            if 'ref' in values:
+            if 'ref' in vals:
                 if partner.ref:
                     partner.write_external_identifier(partner.ref)
                 else:

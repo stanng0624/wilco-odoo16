@@ -214,22 +214,22 @@ class SaleOrder(models.Model):
 
         return records
 
-    def write(self, values):
-        result = super().write(values)
+    def write(self, vals):
+        result = super().write(vals)
         
         for record in self:
-            if 'wilco_project_id' in values:
+            if 'wilco_project_id' in vals:
                 if ((record.wilco_project_id and not record.project_id) or
                     (record.wilco_project_id and record.project_id != record.wilco_project_id) or
                     (record.wilco_project_id.analytic_account_id and 
                      record.analytic_account_id != record.wilco_project_id.analytic_account_id)):
                     record._wilco_set_project()
 
-            if 'wilco_revision_no' in values:
+            if 'wilco_revision_no' in vals:
                 if record.wilco_revision_no > 0 and not record.wilco_revision_date:
                     record.wilco_revision_date = fields.datetime.today()
 
-            if values.get('name'):
+            if vals.get('name'):
                 record.write_external_identifier(record.name)
 
         return result

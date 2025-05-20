@@ -40,12 +40,24 @@
   - **Dependencies**: Budget cost tracking
   - **Expected Impact**: Provide variance analysis for project managers
 
-- [ ] Implement Customer Invoice Summary report
-  - **Date**: May 10, 2025
-  - **Dependencies**: Account module
-  - **Expected Impact**: Provide financial overview of customer invoices with settled amounts and balances as of a specified date
-
 ## ✅ Completed Tasks
+
+- [x] Implement Customer Invoice Summary report
+  - **Date**: June 15, 2025
+  - **Dependencies**: Account module
+  - **Impact**: Comprehensive financial reporting system for customer invoices with the following features:
+    - Period-based reporting (monthly/yearly)
+    - Opening period support for historical data consolidation
+    - Multiple grouping options: by period, customer, project, or sales account
+    - Invoice breakdown view showing individual invoice details
+    - Running balance calculations (period_balance and total_sales_amount)
+    - Down payment tracking and deduction reporting
+    - Settlement tracking with payment dates
+    - Quick access to related invoices, journal entries, and line items
+    - Filtering by customer, project, and sales account
+    - Customizable as-of-date for point-in-time reporting
+    - Well-structured UI with tree and form views
+    - Proper handling of grouped aggregations through read_group overrides
 
 - [x] Implement sale order invoice by order total capability
   - **Date**: April 15, 2025
