@@ -27,9 +27,9 @@
                                            class="oe_account_terms mt-5 w-100"
                                            placeholder="Insert your terms &amp; conditions here..."/>
                                 </div>
-                                <div class="mt8" attrs="{'invisible': [('wilco_sale_terms_type', '!=', 'html')]}">
+                                <!-- <div class="mt8" attrs="{'invisible': [('wilco_sale_terms_type', '!=', 'html')]}">
                                     <button name="wilco_action_update_terms" icon="fa-arrow-right" type="object" string="Update Terms" class="btn-link"/>
-                                </div>
+                                </div> -->
                                 <field name="wilco_sale_terms_preview_ready" invisible="1"/>
                                 <div class="mt4 ms-1" attrs="{'invisible': [('wilco_sale_terms_preview_ready', '=', False)]}">
                                     <a class="btn-link" href="/terms" role="button">
