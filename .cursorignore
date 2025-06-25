@@ -1,0 +1,133 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Odoo specific
+filestore/
+web-data/
+cache/
+local/
+*.log
+*.tmp
+*.pot
+*.mo
+*.po
+*.pot~
+*.po~
+*.mo~
+*.pot~
+*.po~
+*.mo~
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment
+.env/
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Odoo database
+*.sql
+*.sqlite3
+*.db
+
+# Odoo addons
+# Uncomment if you want to ignore specific addons
+# custom_addons/your_addon_name/
+# third_party_addons/your_addon_name/
+
+# Temporary files
+*.bak
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Documentation
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# Test coverage
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST 

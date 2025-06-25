@@ -1,0 +1,454 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Odoo Terminal Execution Guide
+
+## Rule Description
+This rule provides comprehensive instructions for running Odoo code directly in terminal using the Odoo shell with configuration files. Use this when you need to execute Odoo model methods, perform database operations, or run automated scripts.
+
+**CRITICAL: Always specify a database name with `-d database_name` when running odoo-bin shell, otherwise the `env` object will not be available.**
+
+## Prerequisites
+- Odoo is installed and configured on the system
+- The target database is initialized and accessible
+- Terminal access is available with necessary permissions
+- Odoo configuration file exists (e.g., `odoo.conf`, `odoo16-macos.conf`)
+- The Odoo installation directory is known (e.g., `/path/to/odoo`)
+- **Database name is known** (e.g., `wilco-odoo-dev`)
+
+## Configuration File Usage
+
+### Understanding Odoo Configuration Files
+Odoo can use configuration files to specify database connections, addons paths, and other server parameters. Common configuration files in this project:
+- `conf/odoo16-macos.conf` - macOS configuration
+- `conf/odoo16-ubuntu.conf` - Ubuntu/Linux configuration
+- Custom configuration files as needed
+
+### Key Configuration Parameters
+```ini
+[options]
+db_host = localhost
+db_port = 5432
+db_user = odoo
+db_password = odoo
+dbfilter = your-database-name
+addons_path = ./odoo/addons, ./custom_addons, ./third_party_addons
+```
+
+## Steps to Run Odoo Code in Terminal
+
+### 1. Navigate to Odoo Installation Directory
+```bash
+cd /path/to/odoo
+# For this project specifically:
+cd /Users/Workspace/Development/workspace/odoo/wilco-odoo/16.0
+```
+
+### 2. Find Available Databases (if needed)
+Before launching the shell, you may need to identify available databases:
+
+```bash
+# List available databases
+./odoo/odoo-bin db --list -c conf/odoo16-macos.conf
+
+# Or check PostgreSQL directly
+psql -h localhost -U odoo -l
+
+# For this project, common databases:
+# - wilco-odoo-dev (development database)
+# - wilco-odoo-prod (production database)
+```
+
+### 3. Launch the Odoo Shell with Configuration File
+**ALWAYS specify a database with `-d` for the shell to work properly:**
+
+```bash
+# RECOMMENDED: Complete command with database specification
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev --no-http
+
+# With enhanced shell interface (IPython recommended)
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev --shell-interface ipython --no-http
+
+# Basic command (REQUIRES database specification)
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d your_database_name
+
+# ❌ WRONG - This will fail with "NameError: name 'env' is not defined"
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf
+
+# ✅ CORRECT - Always include database name
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev
+```
+
+### 4. Advanced Shell Options
+```bash
+# Complete shell command with all recommended options
+./odoo/odoo-bin shell \
+    -c conf/odoo16-macos.conf \
+    -d wilco-odoo-dev \
+    --shell-interface ipython \
+    --no-http \
+    --log-level=warn
+
+# For production database (use with caution)
+./odoo/odoo-bin shell \
+    -c conf/odoo16-ubuntu.conf \
+    -d wilco-odoo-prod \
+    --no-http \
+    --log-level=error
+```
+
+### 5. Access Odoo Models in Shell
+Once in the shell, use the `env` object to access models:
+
+```python
+# Available variables in shell:
+# env: <odoo.api.Environment object>
+# odoo: <module 'odoo'>
+# openerp: <module 'odoo'> (legacy alias)
+# self: res.users(1,) (current user)
+
+# Access models
+model = env['purchase.order']
+partner_model = env['res.partner']
+project_model = env['project.project']
+
+# For custom models in wilco_project
+wilco_model = env['wilco.vendor.bill.summary']
+```
+
+### 6. Search for Records
+```python
+# Search with domain filters
+records = model.search([('name', '=', 'PO00001')], limit=1)
+
+# Search all records
+all_records = model.search([])
+
+# Search with complex domain
+filtered_records = model.search([
+    ('state', '=', 'draft'),
+    ('partner_id.name', 'ilike', 'supplier')
+], order='create_date desc', limit=10)
+```
+
+### 7. Execute Model Methods and Access Fields
+```python
+# Access record fields
+print(records.name)
+print(records.partner_id.name)
+print(records.amount_total)
+
+# Execute model methods
+records.button_confirm()  # Confirm purchase order
+records.action_cancel()   # Cancel order
+
+# Batch operations
+for record in records:
+    print(f"Order: {record.name}, Total: {record.amount_total}")
+```
+
+### 8. Work with Related Records
+```python
+# Access related records
+order_lines = env['purchase.order.line'].search([('order_id', '=', records.id)])
+for line in order_lines:
+    print(f"{line.product_qty} - {line.product_id.name} - {line.price_unit}")
+
+# Direct relation access
+for line in records.order_line:
+    print(f"Line: {line.name}, Qty: {line.product_qty}")
+```
+
+### 9. Database Operations
+```python
+# Create new records
+new_partner = env['res.partner'].create({
+    'name': 'Test Partner',
+    'email': 'test@example.com',
+    'is_company': True
+})
+
+# Update records
+records.write({'notes': 'Updated via shell'})
+
+# Delete records (use with caution)
+# records.unlink()
+
+# Commit changes
+env.cr.commit()
+```
+
+### 10. Exit the Shell
+```python
+exit()
+# or
+quit()
+# or Ctrl+D
+```
+
+## Automated Shell Execution
+
+### Running Shell Commands from Bash Scripts
+```bash
+#!/bin/bash
+# Execute Odoo shell commands from bash script
+
+echo "
+# Your Python code here
+partner = env['res.partner'].search([('name', '=', 'Your Partner')], limit=1)
+print(f'Partner found: {partner.name}')
+env.cr.commit()
+" | ./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d your_database --no-http
+```
+
+### Example: Data Processing Script
+```bash
+#!/bin/bash
+# Process vendor bills summary
+
+echo "
+# Process all draft vendor bill summaries
+summaries = env['wilco.vendor.bill.summary'].search([('state', '=', 'draft')])
+for summary in summaries:
+    summary.action_process()
+    print(f'Processed: {summary.name}')
+env.cr.commit()
+print(f'Total processed: {len(summaries)}')
+" | ./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev --no-http
+```
+
+## Configuration File Examples
+
+### macOS Configuration (conf/odoo16-macos.conf)
+```ini
+[options]
+admin_passwd = [encrypted_password]
+db_host = localhost
+db_port = 5432
+db_user = odoo
+db_password = odoo
+dbfilter = wilco-odoo-dev
+http_port = 8069
+addons_path = ./odoo/addons, ./custom_addons, ./third_party_addons
+data_dir = ./filestore
+log_dir = ./logs
+```
+
+### Ubuntu Configuration (conf/odoo16-ubuntu.conf)
+```ini
+[options]
+admin_passwd = [encrypted_password]
+db_host = localhost
+db_port = 5432
+db_user = odoo
+db_password = odoo
+dbfilter = .*
+http_port = 8916
+addons_path = /opt/odoo/wilco-odoo/16.0/odoo/addons,
+              /opt/odoo/wilco-odoo/16.0/custom_addons,
+              /opt/odoo/wilco-odoo/16.0/third_party_addons
+data_dir = /opt/odoo/wilco-odoo/16.0/filestore
+log_dir = /opt/odoo/wilco-odoo/16.0/logs
+workers = 4
+proxy_mode = True
+```
+
+## Best Practices
+
+### Performance Optimization
+```bash
+# Use minimal logging for shell operations
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf --log-level=error
+
+# Disable HTTP server for shell-only operations
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf --no-http
+
+# Use specific database to avoid connection overhead
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d specific_db_name
+```
+
+### Security Considerations
+- Always use configuration files instead of command-line passwords
+- Restrict access to configuration files containing database credentials
+- Use database-specific users with limited privileges when possible
+- Test shell operations on development databases first
+
+### Error Handling
+```python
+# Wrap operations in try-catch blocks
+try:
+    records = env['purchase.order'].search([('name', '=', 'PO00001')])
+    if records:
+        records.button_confirm()
+        env.cr.commit()
+        print("Operation successful")
+    else:
+        print("No records found")
+except Exception as e:
+    print(f"Error: {e}")
+    env.cr.rollback()
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+**❌ "NameError: name 'env' is not defined" - MOST COMMON ISSUE:**
+This happens when you don't specify a database name. The `env` object is only available when connected to a specific database.
+
+```bash
+# ❌ WRONG - No database specified
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf
+
+# ✅ CORRECT - Database specified
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev
+```
+
+**Database Not Found Error:**
+```bash
+# List available databases first
+./odoo/odoo-bin db --list -c conf/odoo16-macos.conf
+
+# Or check PostgreSQL directly
+psql -h localhost -U odoo -l | grep wilco
+```
+
+**Configuration File Not Found:**
+```bash
+# Verify file path
+ls -la conf/odoo16-macos.conf
+# Use absolute path if needed
+./odoo/odoo-bin shell -c /full/path/to/conf/odoo16-macos.conf -d wilco-odoo-dev
+```
+
+**Database Connection Error:**
+- Verify database exists and is running
+- Check database credentials in configuration file
+- Ensure PostgreSQL service is running
+- Verify database name matches existing databases
+
+**Module Not Found:**
+- Verify addons_path in configuration file includes custom modules
+- Check module installation status
+- Ensure module dependencies are met
+
+**Permission Denied:**
+- Check file permissions on Odoo binary and configuration files
+- Ensure database user has necessary privileges
+- Verify system user permissions
+
+### Debug Mode
+```bash
+# Enable debug mode for detailed error information
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf --dev=all --log-level=debug
+```
+
+## Example Workflows
+
+### 1. Data Migration Script
+```python
+# Migrate old data format to new structure
+old_records = env['old.model'].search([])
+for old_record in old_records:
+    new_record = env['new.model'].create({
+        'name': old_record.name,
+        'value': old_record.legacy_value,
+        # ... other field mappings
+    })
+    print(f"Migrated: {old_record.name} -> {new_record.id}")
+env.cr.commit()
+```
+
+### 2. Bulk Data Processing
+```python
+# Process large datasets efficiently
+batch_size = 100
+total_records = env['target.model'].search_count([('state', '=', 'pending')])
+processed = 0
+
+while processed < total_records:
+    batch = env['target.model'].search([
+        ('state', '=', 'pending')
+    ], limit=batch_size)
+    
+    for record in batch:
+        record.process_record()
+        processed += 1
+    
+    env.cr.commit()
+    print(f"Processed {processed}/{total_records}")
+```
+
+### 3. Report Generation
+```python
+# Generate custom report data
+report_data = []
+projects = env['project.project'].search([])
+
+for project in projects:
+    analytics = env['account.analytic.account'].search([
+        ('wilco_project_id', '=', project.id)
+    ])
+    
+    total_revenue = sum(analytics.mapped('revenue_amount'))
+    total_expense = sum(analytics.mapped('expense_amount'))
+    
+    report_data.append({
+        'project': project.name,
+        'revenue': total_revenue,
+        'expense': total_expense,
+        'profit': total_revenue - total_expense
+    })
+
+for item in report_data:
+    print(f"Project: {item['project']}, Profit: {item['profit']}")
+```
+
+## When to Use This Rule
+- Need to execute Odoo model methods directly
+- Performing database operations outside the web interface
+- Running data migration scripts
+- Testing model functionality
+- Automating bulk data processing
+- Generating custom reports
+- Debugging model behavior
+- Setting up cron jobs or scheduled tasks
+
+## Quick Reference Commands
+
+### Database Management
+```bash
+# List available databases
+./odoo/odoo-bin db --list -c conf/odoo16-macos.conf
+
+# Check PostgreSQL databases
+psql -h localhost -U odoo -l | grep wilco
+```
+
+### Shell Access (ALWAYS include -d database_name)
+```bash
+# RECOMMENDED: Complete command for development
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev --no-http
+
+# With IPython interface (better UX)
+./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev --shell-interface ipython --no-http
+
+# For production (use with caution)
+./odoo/odoo-bin shell -c conf/odoo16-ubuntu.conf -d wilco-odoo-prod --no-http --log-level=error
+
+# Automated script execution
+echo "your_python_code" | ./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev --no-http
+```
+
+### Common Code Examples
+```bash
+# Count records
+echo "print(f'Sale Orders: {env[\"sale.order\"].search_count([])}')" | ./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev --no-http
+
+# List model fields
+echo "print(env['sale.order']._fields.keys())" | ./odoo/odoo-bin shell -c conf/odoo16-macos.conf -d wilco-odoo-dev --no-http
+```
+
+By following this cursor rule, you can reliably execute Odoo code in the terminal using configuration files, enabling efficient database operations, module testing, data migration, and automation tasks while maintaining security and performance best practices. 
