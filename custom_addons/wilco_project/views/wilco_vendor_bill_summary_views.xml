@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search View for Vendor Bill Summary -->
+    <record id="view_wilco_vendor_bill_summary_search" model="ir.ui.view">
+        <field name="name">wilco.vendor.bill.summary.search</field>
+        <field name="model">wilco.vendor.bill.summary</field>
+        <field name="arch" type="xml">
+            <search string="Search Vendor Bill Summary">
+                <field name="period"/>
+                <field name="month_name"/>
+                <field name="year"/>
+                <field name="partner_id"/>
+                <field name="expense_account_id"/>
+                <field name="project_id"/>
+                <field name="bill_number"/>
+                <field name="bill_date"/>
+                <field name="settled_dates"/>
+                <filter string="Opening Periods" name="is_opening" domain="[('is_opening', '=', True)]"/>
+                <filter string="Regular Periods" name="not_opening" domain="[('is_opening', '=', False)]"/>
+                <filter string="Period Summaries" name="not_breakdown" domain="[('is_breakdown', '=', False)]"/>
+                <filter string="Bill Breakdowns" name="is_breakdown" domain="[('is_breakdown', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Period" name="group_by_period" domain="[]" context="{'group_by': 'period'}"/>
+                    <filter string="Vendor" name="group_by_partner" domain="[]" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Expense Account" name="group_by_expense_account" domain="[]" context="{'group_by': 'expense_account_id'}"/>
+                    <filter string="Project" name="group_by_project" domain="[]" context="{'group_by': 'project_id'}"/>
+                    <filter string="Year" name="group_by_year" domain="[]" context="{'group_by': 'year'}"/>
+                    <filter string="Month" name="group_by_month" domain="[]" context="{'group_by': 'month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Tree View for Vendor Bill Summary -->
+    <record id="view_wilco_vendor_bill_summary_tree" model="ir.ui.view">
+        <field name="name">wilco.vendor.bill.summary.tree</field>
+        <field name="model">wilco.vendor.bill.summary</field>
+        <field name="arch" type="xml">
+            <tree string="Vendor Bill Summary" create="false" delete="false" edit="false">
+                <field name="period"/>
+                <field name="year" invisible="1"/>
+                <field name="month" invisible="1"/>
+                <field name="month_name" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="project_id" optional="show"/>
+                <field name="expense_account_id" optional="show"/>
+                <field name="bill_date" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
+                <field name="bill_number" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
+                <field name="settled_dates" optional="show" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
+                <field name="bill_count" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum="Total"/>
+                <field name="expense_amount" optional="show" sum="Total"/>
+                <field name="total_expense_amount" optional="show" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
+                <field name="amount_prepayment" optional="show" sum="Total"/>
+                <field name="amount_prepayment_applied" optional="show" sum="Total"/>
+                <field name="settled_amount" optional="show" sum="Total"/>
+                <field name="balance" optional="show" sum="Total"/>
+                <field name="period_balance" optional="show" attrs="{'invisible': [('is_breakdown', '=', True)]}" sum=""/>
+                <field name="is_opening" invisible="1"/>
+                <field name="is_breakdown" invisible="1"/>
+                <field name="as_of_date" invisible="1"/>
+                <field name="parent_period_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View for Vendor Bill Summary -->
+    <record id="view_wilco_vendor_bill_summary_form" model="ir.ui.view">
+        <field name="name">wilco.vendor.bill.summary.form</field>
+        <field name="model">wilco.vendor.bill.summary</field>
+        <field name="arch" type="xml">
+            <form string="Vendor Bill Summary" create="false" delete="false" edit="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Action buttons for period records -->
+                        <button name="wilco_action_view_bills" type="object"
+                            class="oe_stat_button" icon="fa-file-text-o"
+                            attrs="{'invisible': [('is_breakdown', '=', True)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value"><field name="bill_count"/></span>
+                                <span class="o_stat_text">Bills</span>
+                            </div>
+                        </button>
+                        <button name="wilco_action_view_bill_items" type="object"
+                            class="oe_stat_button" icon="fa-list"
+                            attrs="{'invisible': [('is_breakdown', '=', True)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Bill Items</span>
+                            </div>
+                        </button>
+                        <button name="wilco_action_view_journal_entries" type="object"
+                            class="oe_stat_button" icon="fa-book"
+                            attrs="{'invisible': [('is_breakdown', '=', True)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Journal Entries</span>
+                            </div>
+                        </button>
+                        <button name="wilco_action_view_journal_items" type="object"
+                            class="oe_stat_button" icon="fa-database"
+                            attrs="{'invisible': [('is_breakdown', '=', True)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Journal Items</span>
+                            </div>
+                        </button>
+                        
+                        <!-- Action buttons for bill breakdowns -->
+                        <button name="wilco_action_view_bill" type="object"
+                            class="oe_stat_button" icon="fa-file-text-o"
+                            attrs="{'invisible': [('is_breakdown', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Bill</span>
+                            </div>
+                        </button>
+                        <button name="wilco_action_view_bill_lines" type="object"
+                            class="oe_stat_button" icon="fa-list"
+                            attrs="{'invisible': [('is_breakdown', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Bill Lines</span>
+                            </div>
+                        </button>
+                        <button name="wilco_action_view_bill_journal_entry" type="object"
+                            class="oe_stat_button" icon="fa-book"
+                            attrs="{'invisible': [('is_breakdown', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Journal Entry</span>
+                            </div>
+                        </button>
+                        <button name="wilco_action_view_bill_journal_items" type="object"
+                            class="oe_stat_button" icon="fa-database"
+                            attrs="{'invisible': [('is_breakdown', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Journal Items</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1 class="mb-0" attrs="{'invisible': [('is_breakdown', '=', True)]}">
+                            <field name="month_name" class="text-primary"/>
+                            <field name="year" class="oe_inline text-primary"/>
+                        </h1>
+                        <h1 class="mb-0" attrs="{'invisible': [('is_breakdown', '=', False)]}">
+                            <field name="bill_number" class="text-primary"/>
+                        </h1>
+                        <h4 class="mt-0 text-muted" attrs="{'invisible': [('is_breakdown', '=', True)]}">
+                            Period: <field name="period" class="oe_inline"/>
+                        </h4>
+                        <h4 class="mt-0 text-muted" attrs="{'invisible': [('is_opening', '=', False)]}">
+                            Opening Period
+                        </h4>
+                        <h4 class="mt-0 text-muted" attrs="{'invisible': [('is_breakdown', '=', False)]}">
+                            Date: <field name="bill_date" class="oe_inline"/>
+                        </h4>
+                        <field name="month" invisible="1"/>
+                        <field name="is_breakdown" invisible="1"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="bill_count" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
+                            <field name="expense_amount"/>
+                            <field name="amount_prepayment"/>
+                            <field name="amount_prepayment_applied"/>
+                            <field name="settled_amount"/>
+                            <field name="balance" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
+                            <field name="period_balance" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
+                            <field name="total_expense_amount" attrs="{'invisible': [('is_breakdown', '=', True)]}"/>
+                        </group>
+                        <group>
+                            <field name="as_of_date"/>
+                            <field name="partner_id"/>
+                            <field name="expense_account_id"/>
+                            <field name="project_id"/>
+                            <field name="settled_dates" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
+                            <field name="is_opening" invisible="1"/>
+                            <field name="parent_period_id" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
+                            <field name="bill_id" attrs="{'invisible': [('is_breakdown', '=', False)]}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Action for Vendor Bill Summary -->
+    <record id="action_wilco_vendor_bill_summary" model="ir.actions.act_window">
+        <field name="name">Vendor Bill Summary</field>
+        <field name="res_model">wilco.vendor.bill.summary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_not_breakdown': 1, 'create': False, 'edit': False, 'delete': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No bill summary records found
+            </p>
+            <p>
+                Use the wizard to generate a vendor bill summary report.
+            </p>
+        </field>
+    </record>
+
+
+</odoo> 

@@ -6,6 +6,13 @@ __pycache__/
 # VS Code settings
 .vscode/
 
+#Add cursor rule and setting to git
+# Cursor settings
+#.cursor/*
+
+# GitHub Actions
+.github/
+
 # Ignore compiled files and temp files
 *.log
 *.tmp
@@ -32,9 +39,15 @@ filestore/*
 logs/*
 !logs/README.md
 .idea/
-**/.DS_Store
-
-#special modification to core odoo system
-!odoo/addons/account/views/report_invoice.xml
+web-data/*
+cache/*
+local/*
 
 !.gitignore
+
+# Planning and Task
+PLANNING.md
+TASK.md
+# Legacy planning files - content migrated to memory-bank/
+PLANNING.md
+TASK.md
