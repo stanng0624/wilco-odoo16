@@ -44,10 +44,3 @@ cache/*
 local/*
 
 !.gitignore
-
-# Planning and Task
-PLANNING.md
-TASK.md
-# Legacy planning files - content migrated to memory-bank/
-PLANNING.md
-TASK.md
