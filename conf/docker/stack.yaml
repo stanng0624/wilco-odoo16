@@ -1,0 +1,51 @@
+  services:
+    db:
+      image: postgres:17
+      container_name: wilco-odoo16-db
+      hostname: wilco-odoo16-db
+      security_opt:
+        - no-new-privileges:true
+      healthcheck:
+        test: ["CMD", "pg_isready", "-q", "-d", "postgres", "-U", "odoo"]
+        timeout: 45s
+        interval: 10s
+        retries: 10
+      ports:
+        - 10201:5432
+      volumes:
+        - /volume1/docker/wilco-odoo16/db:/var/lib/postgresql/data:rw
+      environment:
+        POSTGRES_DB: postgres
+        POSTGRES_USER: odoo
+        POSTGRES_PASSWORD: odoo
+      restart: always
+
+    wilco-odoo:
+      #image: odoo:16
+      image: wilco-odoo16:latest
+      container_name: wilco-odoo16-odoo
+      hostname: wilco-odoo16-odoo
+      security_opt:
+        - no-new-privileges:true
+      healthcheck:
+        test: curl -f http://localhost:8069/ || exit 1
+      ports:
+        - 10202:8069
+      volumes:
+        - /volume1/docker/wilco-odoo16/web-data:/var/lib/odoo:rw
+        - /volume1/docker/wilco-odoo16/config:/etc/odoo:ro
+        - /volume1/docker/wilco-odoo16/custom_addons:/mnt/custom_addons:rw
+        - /volume1/docker/wilco-odoo16/third_party_addons:/mnt/third_party_addons:rw      
+        - /volume1/docker/wilco-odoo16/cache:/.cache/pip:rw
+        - /volume1/docker/wilco-odoo16/local:/.local:rw
+        - /volume1/docker/wilco-odoo16/logs:/mnt/logs:rw
+        - /volume1/docker/wilco-odoo16/filestore:/mnt/filestore:rw
+      environment:
+        HOST: wilco-odoo16-db
+        PORT: 5432
+        USER: odoo
+        PASSWORD: odoo
+      restart: always
+      depends_on:
+        db:
+          condition: service_healthy
