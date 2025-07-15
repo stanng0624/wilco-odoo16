@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import time
+from datetime import datetime, timedelta
 from odoo import api, models, _
 from odoo.exceptions import UserError
 
@@ -14,8 +15,10 @@ class ReportTrialBalance(models.AbstractModel):
             return {}
         initial_balance = {}
 
+        date_from = datetime.strptime(self.env.context['date_from'], '%Y-%m-%d')
+        date_to = date_from - timedelta(days=1)
         context = {
-            'date_to': self.env.context['date_from'],
+            'date_to': date_to.strftime('%Y-%m-%d'),
         }
         tables, where_clause, where_params = self.env['account.move.line'].with_context(context)._query_get()
         tables = tables.replace('"', '') if tables else 'account_move_line'
