@@ -20,7 +20,7 @@
         POSTGRES_PASSWORD: odoo
       restart: always
 
-    wilco-odoo:
+    odoo:
       #image: odoo:16
       image: wilco-odoo16:latest
       container_name: wilco-odoo16-odoo
@@ -31,15 +31,18 @@
         test: curl -f http://localhost:8069/ || exit 1
       ports:
         - 10202:8069
+        - 10203:8072
+      user: 1000:1000
       volumes:
         - /volume1/docker/wilco-odoo16/web-data:/var/lib/odoo:rw
         - /volume1/docker/wilco-odoo16/config:/etc/odoo:ro
-        - /volume1/docker/wilco-odoo16/custom_addons:/mnt/custom_addons:rw
-        - /volume1/docker/wilco-odoo16/third_party_addons:/mnt/third_party_addons:rw      
+        - /volume1/docker/wilco-odoo16/application/custom_addons:/mnt/custom_addons:rw
+        - /volume1/docker/wilco-odoo16/application/third_party_addons:/mnt/third_party_addons:rw      
         - /volume1/docker/wilco-odoo16/cache:/.cache/pip:rw
         - /volume1/docker/wilco-odoo16/local:/.local:rw
         - /volume1/docker/wilco-odoo16/logs:/mnt/logs:rw
         - /volume1/docker/wilco-odoo16/filestore:/mnt/filestore:rw
+        - /volume1/docker/wilco-odoo16/backup:/mnt/backup:rw
       environment:
         HOST: wilco-odoo16-db
         PORT: 5432
@@ -48,4 +51,19 @@
       restart: always
       depends_on:
         db:
+          condition: service_healthy
+
+    nginx:
+      image: nginx:latest
+      container_name: wilco-odoo16-nginx
+      hostname: wilco-odoo16-nginx
+      ports:
+        - 10204:80
+      volumes:
+        - /volume1/docker/wilco-odoo16/nginx/html:/usr/share/nginx/html:rw
+        - /volume1/docker/wilco-odoo16/nginx/config/nginx.conf:/etc/nginx/conf.d/default.conf:rw
+        - /volume1/docker/wilco-odoo16/nginx/logs:/var/log/nginx:rw
+      restart: unless-stopped
+      depends_on:
+        odoo:
           condition: service_healthy
