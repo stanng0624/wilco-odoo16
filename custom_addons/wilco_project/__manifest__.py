@@ -37,6 +37,7 @@ This module contains all the common features of Wilco Project Management
         'report/purchase_report_views.xml',
         'report/invoice_report_inherit.xml',
         'report/payment_receipt_report_inherit.xml',
+        'report/journal_entries_report_inherit.xml',
         'report/signature_template.xml',
         'report/document_reference_template.xml',
         'report/report_template_inherit.xml',

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Journal Entries Report to change "Label" to "Description" and add Project column -->
+    <template id="report_journal_entries_inherit" inherit_id="accounting_pdf_reports.report_journal_entries">        
+        <!-- Add "Project" column header after "Analytic Account" -->
+        <xpath expr="//thead/tr/th[text()='Analytic Account']" position="after">
+            <th>Project Name</th>
+        </xpath>
+        
+        <!-- Add Project data column after Analytic Account data -->
+        <xpath expr="//tbody/t[@t-foreach='o.line_ids']/tr/td[5]" position="after">
+            <td>
+                <span t-if="line.wilco_project_id">
+                    <t t-if="line.wilco_project_id.wilco_project_name">
+                        <t t-esc="line.wilco_project_id.wilco_project_name"/>
+                    </t>
+                </span>
+            </td>
+        </xpath>
+        
+        <!-- Update colspan in footer to account for new column -->
+        <xpath expr="//tfooter/tr/td[@colspan='5']" position="attributes">
+            <attribute name="colspan">6</attribute>
+        </xpath>
+    </template>
+</odoo>
