@@ -46,23 +46,27 @@
 - **Follow Testing Patterns** from `memory-bank/systemPatterns.md`
 
 ### ✅ Task Completion
+- **Task Organization Rules**: Follow comprehensive guidelines in `memory-bank/rules/task-organization.md`
 - **Before Starting Task**:
-  1. Verify task exists in `memory-bank/tasks.md`
-  2. Check for related historical tasks in the same file
-  3. If not listed, propose adding it with:
-     - Brief description
-     - Today's date
-     - Dependencies from existing Memory Bank context
-     - Expected impact
+  1. Verify task exists in `memory-bank/tasks.md` or create following rules
+  2. Check `memory-bank/task/TXXX_name/task.md` for task details
+  3. Review any `plan.md` or `plan-XXX_*.md` files in task folder
+  4. If creating new task:
+     - Use next sequential ID (currently T041)
+     - Create folder: `memory-bank/task/TXXX_short-name/`
+     - Create `task.md` (required) and `plan.md` (if complex)
+     - Follow templates in `memory-bank/rules/task-organization.md`
 - **During Task**:
-  - Document any discovered sub-tasks in "Discovered During Work" section of `memory-bank/tasks.md`
+  - Update progress log in task folder's `task.md`
+  - Create detailed plan breakdowns (`plan-001_*.md`) as needed
   - Update related tasks if dependencies are found
   - Reference existing patterns from `memory-bank/systemPatterns.md`
 - **After Task**:
-  - Mark completed tasks in `memory-bank/tasks.md`
+  - Mark completed in task folder's `task.md` (status: Completed)
+  - Document results/deliverables in task.md
+  - Update `memory-bank/tasks.md` index with ✅ and completion date
   - Update `memory-bank/progress.md` with implementation status
   - Update `memory-bank/activeContext.md` with current focus
-  - Review and update impacted documentation in relevant Memory Bank files
 
 ### 📎 Style & Conventions
 - **Follow Wilco Naming Conventions** (from `memory-bank/systemPatterns.md`):
@@ -110,11 +114,18 @@
 ### 🏗️ Memory Bank Integration
 - **Single Source of Truth**: All project documentation lives in Memory Bank
 - **File Purpose Understanding**:
-  - `tasks.md`: Current priorities, historical context, bug tracking
+  - `tasks.md`: Task index and current priorities overview
+  - `task/TXXX_name/`: Individual task folders (self-contained with plans)
+  - `rules/task-organization.md`: Task structure and workflow guidelines
   - `systemPatterns.md`: Architecture, naming conventions, development guidelines
   - `productContext.md`: Business workflows and domain knowledge
   - `techContext.md`: Data structures, integration patterns, security
   - `progress.md`: Implementation tracking and milestones
   - `activeContext.md`: Current session state and focus
   - `projectbrief.md`: High-level project overview
+- **Task Structure**: 
+  - Each task in its own folder: `task/TXXX_short-name/`
+  - Required: `task.md` for tracking
+  - Optional: `plan.md` for strategy, `plan-XXX_*.md` for detailed specs
+  - See `memory-bank/task/T000_example-task/` for reference example
 - **Consistency Requirement**: All responses must align with Memory Bank content and update it when new information is discovered
