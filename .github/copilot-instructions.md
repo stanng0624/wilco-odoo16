@@ -19,6 +19,24 @@
   - Automatic analytic distribution from sales/purchase orders
   - Financial KPI computation patterns
 
+### 🐍 Environment Management
+- **MANDATORY: Use Conda Virtual Environment**:
+  - **Environment Name**: `wilco-odoo16`
+  - **ALL terminal commands** MUST be executed within the conda environment
+  - **Command Format**: Prefix all Python/Odoo commands with `conda run -n wilco-odoo16`
+  - **Examples**:
+    - ✅ `conda run -n wilco-odoo16 python odoo-bin --help`
+    - ✅ `conda run -n wilco-odoo16 pip install <package>`
+    - ✅ `conda run -n wilco-odoo16 ./odoo-bin -c conf/odoo16-macos.conf`
+    - ❌ `python odoo-bin --help` (NEVER use without conda)
+    - ❌ `pip install <package>` (NEVER use without conda)
+- **Environment Activation**: 
+  - When running interactive sessions, first activate: `conda activate wilco-odoo16`
+  - For single commands, use: `conda run -n wilco-odoo16 <command>`
+- **Package Management**:
+  - Always install Python packages using: `conda run -n wilco-odoo16 pip install <package>`
+  - Check installed packages with: `conda run -n wilco-odoo16 pip list`
+
 ### 🧪 Testing & Reliability
 - **Test Integration Points**:
   - Verify analytic distribution propagation
