@@ -1,0 +1,126 @@
+---
+mode: agent
+---
+git commit all changes based on the below Odoo 16 commit guidelines. 
+
+# Odoo 16 Git Guidelines
+
+This rule enforces Odoo 16's official git commit message guidelines as specified in the [official documentation](mdc:https:/www.odoo.com/documentation/16.0/contributing/development/git_guidelines.html).
+
+## Commit Message Structure
+
+All git commits MUST follow this exact 4-part structure:
+
+```
+[TAG] module: describe your change in a short sentence (ideally < 50 chars)
+
+Long version of the change description, including the rationale for the change,
+or a summary of the feature being introduced.
+
+Please spend a lot more time describing WHY the change is being done rather
+than WHAT is being changed. This is usually easy to grasp by actually reading
+the diff. WHAT should be explained only if there are technical choices
+or decision involved. In that case explain WHY this decision was taken.
+
+End the message with references, such as task or bug numbers, PR numbers, and
+OPW tickets, following the suggested format:
+task-123 (related to task)
+Fixes #123  (close related issue on Github)
+Closes #123  (close related PR on Github)
+opw-123 (related to ticket)
+```
+
+## Required Tags
+
+Use EXACTLY one of these tags (case-sensitive with square brackets):
+
+- **[FIX]** - Bug fixes (mostly stable versions, also recent bugs in development)
+- **[REF]** - Refactoring (when a feature is heavily rewritten)
+- **[ADD]** - Adding new modules
+- **[REM]** - Removing resources (dead code, views, modules)
+- **[REV]** - Reverting commits
+- **[MOV]** - Moving files (use git move, don't change content)
+- **[REL]** - Release commits (new major/minor stable versions)
+- **[IMP]** - Improvements (incremental improvements in development)
+- **[MERGE]** - Merge commits (forward ports, feature merges)
+- **[CLA]** - Signing Odoo Individual Contributor License
+- **[I18N]** - Translation file changes
+- **[PERF]** - Performance patches
+
+## Module Name Rules
+
+- Use the **technical name** (not functional name which may change)
+- For multiple modules: list them or use "various" for cross-modules
+- Avoid modifying multiple modules in same commit unless necessary
+
+## Header Requirements
+
+- **Limit to ~50 characters** for readability
+- Must be **self-explanatory** and include the reason
+- NO single words like "bugfix" or "improvements"
+- Must form valid sentence: "if applied, this commit will [header]"
+- Example: `[IMP] base: prevent to archive users linked to active partners`
+
+## Description Requirements
+
+- **Explain WHY first** - the purpose and rationale
+- WHAT can be seen in the diff - only explain if technical choices involved
+- Specify impacted code parts (module name, lib, transversal object)
+- Be verbose - people judge your work by commit messages
+- For R&D: "PO team asked me to do it" is NOT a valid why
+
+## Examples of Correct Commits
+
+```
+[REF] models: use `parent_path` to implement parent_store
+
+This replaces the former modified preorder tree traversal (MPTT) with the
+fields `parent_left`/`parent_right` because the new approach is more
+efficient and easier to maintain for hierarchical data structures.
+
+The parent_path field provides a direct way to query ancestors and
+descendants without complex recursive queries.
+
+task-456
+```
+
+```
+[FIX] account: remove frenglish terminology
+
+Mixed French-English terms were confusing users and inconsistent with
+the rest of the interface. This standardizes all user-facing text to
+proper English terminology as per our localization guidelines.
+
+Closes #22793
+Fixes #22769
+```
+
+```
+[FIX] website: remove unused alert div, fixes look of input-group-btn
+
+Bootstrap's CSS depends on the input-group-btn element being the
+first/last child of its parent. This was not the case because of
+the invisible and useless alert div which broke the styling.
+
+The alert was left over from a previous implementation and serves
+no purpose in the current code structure.
+```
+
+## Git Configuration Requirements
+
+Before committing, ensure:
+- `git config --global user.email` is set
+- `git config --global user.name` is set to your full name
+- GitHub profile has full name and team information
+
+## Enforcement
+
+When creating commits:
+1. Always use one of the specified tags in square brackets
+2. Include technical module name after tag
+3. Keep header under 50 chars and meaningful
+4. Always explain WHY in the description
+5. Include references to tasks/issues when applicable
+6. Avoid simultaneous multi-module impacts when possible
+
+Remember: **Take time to write clear commit messages** - they represent your work for decades to come.

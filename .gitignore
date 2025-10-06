@@ -11,7 +11,7 @@ __pycache__/
 #.cursor/*
 
 # GitHub Actions
-.github/
+#.github/
 
 # Ignore compiled files and temp files
 *.log
