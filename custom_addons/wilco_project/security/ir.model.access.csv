@@ -6,3 +6,4 @@ access_wilco_invoice_summary_wizard,access.wilco.invoice.summary.wizard,model_wi
 access_wilco_vendor_bill_summary,access.wilco.vendor.bill.summary,model_wilco_vendor_bill_summary,account.group_account_user,1,0,0,0
 access_wilco_vendor_bill_summary_manager,access.wilco.vendor.bill.summary.manager,model_wilco_vendor_bill_summary,account.group_account_manager,1,1,1,1
 access_wilco_vendor_bill_summary_wizard,access.wilco.vendor.bill.summary.wizard,model_wilco_vendor_bill_summary_wizard,account.group_account_user,1,1,1,1
+access_wilco_project_status_report_wizard,access.wilco.project.status.report.wizard,model_wilco_project_status_report_wizard,project.group_project_user,1,1,1,1

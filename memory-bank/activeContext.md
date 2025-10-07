@@ -1,9 +1,47 @@
 # ACTIVE CONTEXT
 
-## Current Session State
-- **Mode**: IMPLEMENT (Migration Implementation Complete)
-- **Phase**: Memory Bank Migration - Successfully Completed ✅
-- **Focus**: Legacy File Consolidation into Single Source of Truth
+**Last Updated**: October 6, 2025  
+**Current Mode**: PLAN MODE  
+**Current Task**: T001 - Project Status Report
+
+## 🎯 Current Session Focus
+
+### Active Task: T001 - Project Status Report
+
+**Objective**: Create a comprehensive Project Status Report feature that displays project information and lists all related sales orders, customer invoices, and vendor bills.
+
+**Key Requirements**:
+- Report accessible from project form view via button
+- Display project basic information (number, name, stage, dates)
+- List sales orders linked via `sale.order.wilco_project_id`
+- List customer invoices linked via `account.move.wilco_project_id` (move_type='out_invoice')
+- List vendor bills linked via `account.move.wilco_project_id` (move_type='in_invoice')
+- Generate printable PDF report
+- Follow existing Wilco report patterns
+
+**Status**: Planning phase completed ✅
+
+### Planning Completed
+
+**Documentation Created**:
+1. ✅ `task/T001_project-status-report/task.md` - Main task tracking document
+2. ✅ `task/T001_project-status-report/plan.md` - Comprehensive implementation plan
+3. ✅ `task/T001_project-status-report/technical-analysis.md` - Detailed technical analysis
+4. ✅ Updated `tasks.md` - Added T001 to active tasks index
+
+**Key Decisions Made**:
+- ✅ Use transient wizard pattern (simpler than permanent model)
+- ✅ Query based on `wilco_project_id` in order headers only
+- ✅ QWeb PDF report with on-screen preview
+- ✅ Button integration in project form view stat buttons area
+- ✅ No creative phases required - standard implementation
+
+**Next Steps**:
+1. Proceed to IMPLEMENT mode
+2. Create wizard model and data collection logic
+3. Build QWeb report template
+4. Integrate button in project view
+5. Test and validate
 
 ## Migration Implementation Results
 - **Status**: 100% COMPLETE

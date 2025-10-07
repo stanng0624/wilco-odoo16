@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_project_status_document">
+        <t t-call="web.html_container">
+            <t t-call="web.internal_layout">
+                <div class="page">
+                    <!-- Report Title -->
+                    <h2>Project Status Report</h2>
+                    
+                    <t t-foreach="docs" t-as="o">
+                        <!-- Project Information Section -->
+                        <div class="row mt-4 mb-4">
+                            <div class="col-6">
+                                <strong>Project Number:</strong> <span t-esc="o.project_id.name"/><br/>
+                                <strong>Project Name:</strong> <span t-esc="o.project_id.wilco_project_name"/><br/>
+                                <strong>Project Manager:</strong> <span t-esc="o.project_id.user_id.name if o.project_id.user_id else ''"/><br/>
+                                <strong>Stage:</strong> <span t-esc="o.project_id.stage_id.name if o.project_id.stage_id else ''"/><br/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Print Date:</strong> <span t-out="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/><br/>
+                                <strong>Award Date:</strong> <span t-esc="o.project_id.wilco_date_award"/><br/>
+                            </div>
+                        </div>
+
+                        <!-- Sales Orders Section -->
+                        <t t-set="sales_orders" t-value="o.env['sale.order'].search([('wilco_project_id', '=', o.project_id.id)], order='date_order desc, name desc')"/>
+                        <h3 class="mt-6">Sales Orders</h3>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-end">Invoiced</th>
+                                    <th class="text-end">Balance</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="sales_orders">
+                                    <tr t-foreach="sales_orders" t-as="order">
+                                        <td><span t-esc="order.name"/></td>
+                                        <td><span t-esc="order.date_order.strftime('%Y-%m-%d') if order.date_order else ''"/></td>
+                                        <td><span t-esc="order.partner_id.name"/></td>
+                                        <td class="text-end">
+                                            <span t-esc="order.amount_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="order.wilco_amount_invoiced_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="order.wilco_amount_invoice_remainder" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
+                                        </td>
+                                        <td><span t-esc="dict(order._fields['state'].selection).get(order.state, order.state)"/></td>
+                                    </tr>
+                                </t>
+                                <t t-else="">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">No sales orders found for this project</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <t t-if="sales_orders">
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3"><strong>Total</strong></td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(sales_orders.mapped('amount_total'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(sales_orders.mapped('wilco_amount_invoiced_total'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(sales_orders.mapped('wilco_amount_invoice_remainder'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </t>
+                        </table>
+
+                        <!-- Customer Invoices Section -->
+                        <t t-set="customer_invoices" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', '=', 'out_invoice')], order='invoice_date desc, name desc')"/>
+                        <h3 class="mt-6">Customer Invoices</h3>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-end">Settled</th>
+                                    <th class="text-end">Due</th>
+                                    <th>Payment Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="customer_invoices">
+                                    <tr t-foreach="customer_invoices" t-as="invoice">
+                                        <td><span t-esc="invoice.name"/></td>
+                                        <td><span t-out="invoice.invoice_date.strftime('%Y-%m-%d') if invoice.invoice_date else ''"/></td>
+                                        <td><span t-esc="invoice.partner_id.name"/></td>
+                                        <td class="text-end">
+                                            <span t-esc="invoice.amount_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': invoice.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="invoice.wilco_amount_settled_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': invoice.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="invoice.amount_residual" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': invoice.currency_id}"/>
+                                        </td>
+                                        <td><span t-esc="invoice.wilco_payment_dates"/></td>
+                                        <td><span t-out="dict(invoice._fields['payment_state'].selection).get(invoice.payment_state, invoice.payment_state)"/></td>
+                                    </tr>
+                                </t>
+                                <t t-else="">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted">No customer invoices found for this project</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <t t-if="customer_invoices">
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3"><strong>Total</strong></td>
+                                        <td class="text-end">
+                                            <strong><span t-out="sum(customer_invoices.mapped('amount_total'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-out="sum(customer_invoices.mapped('wilco_amount_settled_total'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-out="sum(customer_invoices.mapped('amount_residual'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </t>
+                        </table>
+
+                        <!-- Vendor Bills Section -->
+                        <t t-set="vendor_bills" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', '=', 'in_invoice')], order='invoice_date desc, name desc')"/>
+                        <h3 class="mt-6">Vendor Bills</h3>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Bill #</th>
+                                    <th>Date</th>
+                                    <th>Vendor</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-end">Settled</th>
+                                    <th class="text-end">Due</th>
+                                    <th>Payment Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="vendor_bills">
+                                    <tr t-foreach="vendor_bills" t-as="bill">
+                                        <td><span t-esc="bill.name"/></td>
+                                        <td><span t-esc="bill.invoice_date.strftime('%Y-%m-%d') if bill.invoice_date else ''"/></td>
+                                        <td><span t-esc="bill.partner_id.name"/></td>
+                                        <td class="text-end">
+                                            <span t-esc="bill.amount_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="bill.wilco_amount_settled_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="bill.amount_residual" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                        </td>
+                                        <td><span t-esc="bill.wilco_payment_dates or ''"/></td>
+                                        <td><span t-esc="dict(bill._fields['payment_state'].selection).get(bill.payment_state, bill.payment_state)"/></td>
+                                    </tr>
+                                </t>
+                                <t t-else="">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted">No vendor bills found for this project</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <t t-if="vendor_bills">
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3"><strong>Total</strong></td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(vendor_bills.mapped('amount_total'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(vendor_bills.mapped('wilco_amount_settled_total'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(vendor_bills.mapped('amount_residual'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </t>
+                        </table>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

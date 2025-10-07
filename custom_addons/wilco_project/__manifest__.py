@@ -14,6 +14,7 @@ This module contains all the common features of Wilco Project Management
     'data': [
         'data/ir_cron_data.xml',
         'views/res_partner_views_inherit.xml',
+        'wizard/wilco_project_status_report_wizard_views.xml',
         'views/project_views_inherit.xml',
         'views/sale_order_views_inherit.xml',
         'views/purchase_views_inherit.xml',
@@ -50,6 +51,8 @@ This module contains all the common features of Wilco Project Management
         'wizard/wilco_invoice_summary_wizard_views.xml',
         'views/wilco_vendor_bill_summary_views.xml',
         'wizard/wilco_vendor_bill_summary_wizard_views.xml',
+        'report/project_status_report_views.xml',
+        'report/project_status_report_template.xml',
         'security/ir.model.access.csv',
     ],
     'demo': [],
