@@ -23,8 +23,10 @@ Create a comprehensive Project Status Report that displays project information a
 
 3. **Report Access**
    - Action button on project form view
+   - Action button on customer invoice form view (added Oct 8, 2025)
    - Printable PDF report option
    - On-screen view with drill-down capabilities
+   - Invoice highlighting feature when opened from invoice form
 
 ### Technical Requirements
 - Follow Wilco naming conventions (`wilco_` prefix for custom fields/methods)
@@ -257,6 +259,8 @@ Create a comprehensive Project Status Report that displays project information a
    - `/views/project_views_inherit.xml` - Added Status Report button
    - `/security/ir.model.access.csv` - Added security access
    - `/__manifest__.py` - Added new files with proper loading order
+   - `/models/account_move.py` - Added `wilco_action_open_project_status_report()` method (Oct 8)
+   - `/views/account_move_views_inherit.xml` - Added Project Status Report button (Oct 8)
 
 ### Implementation Details:
 - **Data Collection**: Uses `wilco_project_id` field on order headers as specified
@@ -271,6 +275,12 @@ Create a comprehensive Project Status Report that displays project information a
   - Verify data accuracy with test projects
   - Test PDF output and formatting
   - Validate security and access controls
+
+**Phase 5: Invoice Form Integration - COMPLETED ✅** (October 8, 2025)
+- Added smart button to customer invoice form for opening Project Status Report
+- Button opens wizard with invoice's project pre-filled
+- Invoice automatically highlighted in report via `selected_customer_invoice_id` field
+- Implemented validation and user notifications for edge cases
 
 ### Bug Fixes - October 6, 2025
 
@@ -305,3 +315,44 @@ Create a comprehensive Project Status Report that displays project information a
 **Status**: ✅ Fixed and module re-upgraded successfully
 
 **Testing**: Ready for user to retry report generation - report should now display all content
+
+---
+
+### Enhancement: Invoice Form Integration - October 8, 2025
+
+**Requirement**: Add button to customer invoice form that opens Project Status Report with the invoice highlighted
+
+**Implementation**: Added invoice form integration for quick access to Project Status Report
+
+**Files Modified**:
+
+1. **`/models/account_move.py`** - Added action method
+   - Method: `wilco_action_open_project_status_report()`
+   - Validates invoice type (customer invoice only)
+   - Validates project existence
+   - Opens wizard with context:
+     - `default_project_id`: Invoice's project
+     - `default_selected_customer_invoice_id`: Current invoice ID
+   - Provides user notifications for invalid scenarios
+
+2. **`/views/account_move_views_inherit.xml`** - Added smart button
+   - Button: "Project Status Report"
+   - Icon: `fa-file-text-o`
+   - Visibility: Only for customer invoices with projects
+   - Position: In form view button box
+
+**Features**:
+- ✅ Direct access to Project Status Report from invoice context
+- ✅ Automatic project selection from invoice
+- ✅ Invoice highlighted in report for easy reference
+- ✅ Conditional visibility (customer invoices with projects only)
+- ✅ User-friendly notifications for edge cases
+- ✅ Follows Wilco naming conventions (`wilco_action_` prefix)
+
+**User Benefits**:
+- Seamless navigation between invoice and project reporting
+- Context preserved when viewing project status
+- Quick access to related project information
+- Enhanced workflow efficiency
+
+**Status**: ✅ Implementation Complete - Ready for Testing

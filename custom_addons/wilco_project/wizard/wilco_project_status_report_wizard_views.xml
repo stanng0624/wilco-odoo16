@@ -8,6 +8,7 @@
             <form string="Project Status Report">
                 <group>
                     <field name="project_id"/>
+                    <field name="selected_customer_invoice_id"/>
                 </group>
                 <footer>
                     <button name="wilco_action_print_report" string="Print Report" 
@@ -28,4 +29,18 @@
         <field name="binding_model_id" ref="project.model_project_project"/>
         <field name="binding_view_types">form</field>
     </record>
+    
+    <record id="action_wilco_project_status_report_wizard_form" model="ir.actions.act_window">
+        <field name="name">Project Status Report</field>
+        <field name="res_model">wilco.project.status.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+    </record>    
+    
+    <menuitem id="wilco_menu_project_report_status_report"
+              name="Project Status Report"
+              action="wilco_project.action_wilco_project_status_report_wizard_form"
+              parent="project.menu_project_report"
+              sequence="100"/>
 </odoo>

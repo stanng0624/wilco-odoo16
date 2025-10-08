@@ -106,6 +106,16 @@
                         <span class="o_stat_text">Items</span>
                     </div>
                 </button>
+                <button class="oe_stat_button"
+                        type="object"
+                        name="wilco_action_open_project_status_report"
+                        icon="fa-file-text-o"
+                        attrs="{'invisible': ['|', ('wilco_project_id', '=', False), ('move_type', 'not in', ('out_invoice', 'out_refund'))]}">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Project</span>
+                        <span class="o_stat_text">Status Report</span>
+                    </div>
+                </button>
             </xpath>
         </field>
     </record>

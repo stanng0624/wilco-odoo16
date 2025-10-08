@@ -34,6 +34,34 @@ class AccountMove(models.Model):
         string="Down Payment Deducted Amount",
         compute='_wilco_compute_downpayment_amounts'
     )
+    wilco_linked_sale_order = fields.Char(
+        string="Sales Order",
+        compute='_wilco_compute_linked_order',
+        help="Related Sales Order(s) for this invoice"
+    )
+    wilco_linked_purchase_order = fields.Char(
+        string="Purchase Order",
+        compute='_wilco_compute_linked_order',
+        help="Related Purchase Order(s) for this invoice"
+    )
+
+    def _wilco_compute_linked_order(self):
+        """Compute the sales order name(s) related to this invoice"""
+        for move in self:
+            move.wilco_linked_sale_order = ''
+            move.wilco_linked_purchase_order = ''
+            if move.move_type in ('out_invoice', 'out_refund'):
+                sale_orders = move.line_ids.sale_line_ids.order_id
+                if sale_orders:
+                    # If multiple orders, join them with comma
+                    move.wilco_linked_sale_order = ', '.join(sale_orders.mapped('name'))
+            elif move.move_type in ('in_invoice', 'in_refund'):
+                purchase_orders = move.line_ids.purchase_line_id.order_id
+                if purchase_orders:
+                    # If multiple orders, join them with comma
+                    move.wilco_linked_purchase_order = ', '.join(purchase_orders.mapped('name'))
+
+
 
     @api.depends('payment_state', 'line_ids.matched_debit_ids', 'line_ids.matched_credit_ids')
     def _compute_wilco_payment_dates(self):
@@ -136,4 +164,49 @@ class AccountMove(models.Model):
             'view_mode': 'tree,form,graph,pivot',
             # 'context': {'search_default_group_date': 1, 'default_account_id': self.wilco_project_id.analytic_account_id.id}
             'context': {'search_default_partner': 1, 'default_account_id': self.wilco_project_id.analytic_account_id.id}
+        }
+
+    def wilco_action_open_project_status_report(self):
+        """
+        Open the Project Status Report wizard with the current invoice's project
+        and pre-select this invoice to be highlighted in the report.
+        
+        Reason: This allows users to quickly view the project status report from
+        an invoice context, with the invoice automatically highlighted for easy reference.
+        """
+        self.ensure_one()
+        
+        # Only allow for customer invoices with a project
+        if self.move_type not in ('out_invoice', 'out_refund'):
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Warning'),
+                    'message': _('Project Status Report is only available for customer invoices.'),
+                    'type': 'warning',
+                }
+            }
+        
+        if not self.wilco_project_id:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Warning'),
+                    'message': _('This invoice is not linked to a project.'),
+                    'type': 'warning',
+                }
+            }
+        
+        return {
+            'name': _('Project Status Report'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'wilco.project.status.report.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_project_id': self.wilco_project_id.id,
+                'default_selected_customer_invoice_id': self.id,
+            }
         }
