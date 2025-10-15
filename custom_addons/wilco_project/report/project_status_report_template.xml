@@ -226,8 +226,7 @@
                                                   t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="'%.2f' % (order.wilco_gross_profit_percent * 100)"
-                                                  t-options="{'widget': 'percentage'}"/> %
+                                            <span t-out="'%.2f' % (order.wilco_gross_profit_percent * 100)"/> %
                                         </td>
                                         <td class="text-end">
                                             <span t-esc="order.wilco_amount_invoiced_total" 
@@ -268,7 +267,7 @@
                                                 <t t-set="total_revenue" t-value="sum(sales_orders.mapped('amount_total'))"/>
                                                 <t t-set="total_cost" t-value="sum(sales_orders.mapped('wilco_amount_budget_cost_total'))"/>
                                                 <t t-if="total_revenue">
-                                                    <span t-esc="(total_revenue - total_cost) / total_revenue * 100 if total_revenue else 0"/> %
+                                                    <span t-esc="'%.2f' % ((total_revenue - total_cost) / total_revenue * 100 if total_revenue else 0)"/> %
                                                 </t>
                                             </strong>
                                         </td>

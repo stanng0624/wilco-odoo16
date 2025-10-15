@@ -28,7 +28,7 @@ class SaleOrderLine(models.Model):
         compute='_wilco_compute_amount_budget_cost_total'
     )
     wilco_gross_profit_percent = fields.Float(
-        string="GP%",
+        string="Estimated GP%",
         compute='_wilco_compute_gross_profit_percent'
     )
 
