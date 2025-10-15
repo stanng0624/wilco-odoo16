@@ -100,7 +100,7 @@
                         type="object"
                         name="wilco_action_view_analytic_lines"
                         icon="fa-usd"
-                        attrs="{'invisible': [('wilco_project_id', '=', 0)]}">
+                        attrs="{'invisible': [('wilco_project_id', '=', False)]}">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_text">Analytic</span>
                         <span class="o_stat_text">Items</span>
@@ -110,7 +110,7 @@
                         type="object"
                         name="wilco_action_open_project_status_report"
                         icon="fa-file-text-o"
-                        attrs="{'invisible': ['|', ('wilco_project_id', '=', False), ('move_type', 'not in', ('out_invoice', 'out_refund'))]}">
+                        attrs="{'invisible': [('wilco_project_id', '=', False)]}">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_text">Project</span>
                         <span class="o_stat_text">Status Report</span>

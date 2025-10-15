@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.tools import is_html_empty
+from datetime import date
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -10,6 +11,11 @@ class AccountMove(models.Model):
     wilco_revision_no = fields.Integer(string='Revision no.', default=0)
     wilco_revision_date = fields.Date(string='Revision date')
     wilco_document_number = fields.Char(string='Document number', compute='_wilco_compute_document_name')
+    wilco_days_due = fields.Integer(
+        string='Days Due',
+        compute='_wilco_compute_days_due',
+        help='Number of days until due date (negative if overdue)'
+    )
 
     wilco_project_id = fields.Many2one(
         comodel_name='project.project', string='Project', readonly=True,
@@ -94,6 +100,24 @@ class AccountMove(models.Model):
             else:
                 move.wilco_payment_dates = False
 
+    @api.depends('invoice_date_due', 'amount_residual')
+    def _wilco_compute_days_due(self):
+        """
+        Compute the number of days until the invoice due date.
+        Positive values indicate days remaining, negative values indicate overdue days.
+        Returns 0 if fully paid (payment_state = 'paid', 'in_payment', 'reversed') or if no due date is set.
+        """
+        today = date.today()
+        for move in self:
+            # If fully paid, show 0 regardless of due date
+            if move.payment_state in ('paid', 'in_payment', 'reversed'):
+                move.wilco_days_due = 0
+            elif move.invoice_date_due:
+                delta = move.invoice_date_due - today
+                move.wilco_days_due = delta.days - 1
+            else:
+                move.wilco_days_due = 0
+
     def _wilco_compute_settled_amounts(self):
         for order in self:
             order.wilco_amount_settled_total = order.amount_total - order.amount_residual
@@ -174,19 +198,7 @@ class AccountMove(models.Model):
         Reason: This allows users to quickly view the project status report from
         an invoice context, with the invoice automatically highlighted for easy reference.
         """
-        self.ensure_one()
-        
-        # Only allow for customer invoices with a project
-        if self.move_type not in ('out_invoice', 'out_refund'):
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Warning'),
-                    'message': _('Project Status Report is only available for customer invoices.'),
-                    'type': 'warning',
-                }
-            }
+        self.ensure_one()        
         
         if not self.wilco_project_id:
             return {
@@ -207,6 +219,6 @@ class AccountMove(models.Model):
             'target': 'new',
             'context': {
                 'default_project_id': self.wilco_project_id.id,
-                'default_selected_customer_invoice_id': self.id,
+                'default_selected_account_move_id': self.id,
             }
         }

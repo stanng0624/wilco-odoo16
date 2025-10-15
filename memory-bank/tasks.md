@@ -47,11 +47,29 @@ task/
 
 ## Current Task Status
 - **Status**: ACTIVE - Implementation Phase
-- **Last Updated**: October 6, 2025
+- **Last Updated**: October 16, 2025
 - **Mode**: BUILD MODE (Testing Pending)
-- **Next Task ID**: T002
+- **Next Task ID**: T003
 
 ## Current Active Tasks
+
+### 🎯 T002: Invoice & Bill Due Date Display
+- **Status**: Implementation Complete - Testing Pending
+- **Complexity**: L1-Simple
+- **Priority**: Medium
+- **Created**: 2025-10-16
+- **Last Updated**: 2025-10-16
+- **Description**: Add visibility of Due Date and Days Remaining in Customer Invoice and Vendor Bill tree views
+- **Files**: [Task Details](./task/T002_invoice-due-date-display/task.md)
+- **Progress**:
+  - ✅ Phase 1: Model Extension - Complete
+  - ✅ Phase 2: View Updates - Complete
+  - ⏳ Phase 3: Testing - Pending
+- **Key Achievements**: 
+  - Added `wilco_days_due` computed field to account.move model
+  - Implemented automatic calculation (positive for future, negative for overdue)
+  - Updated invoice tree view with visual decorations (red for overdue, orange for due soon)
+  - Ready for module upgrade and testing
 
 ### 🎯 T001: Project Status Report
 - **Status**: Implementation Complete - Testing Pending

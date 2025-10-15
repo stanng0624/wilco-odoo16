@@ -5,18 +5,56 @@
             <t t-call="web.internal_layout">
                 <div class="page">
                     <!-- Report Title -->
-                    <h2 class="text-center mb-4">Project Status Report</h2>
+                    <h2 class="text-center mb-4">Project Status Report - <span t-esc="docs[0].project_id.name"/></h2>
                     
                     <t t-foreach="docs" t-as="o">
-                        <!-- Customer Invoice Reference (if selected) -->
-                        <t t-if="o.selected_customer_invoice_id">
+                        <!-- Invoice/Bill Reference (if selected) -->
+                        <t t-if="o.selected_account_move_id">
                             <div class="alert alert-info text-center mt-3 mb-4">
-                                <strong>Report Generated from Customer Invoice:</strong>
-                                <span t-esc="o.selected_customer_invoice_id.name"/>
+                                <strong>
+                                    <t t-if="o.selected_account_move_id.move_type == 'out_invoice'">
+                                        Report Generated from Customer Invoice:
+                                    </t>
+                                    <t t-elif="o.selected_account_move_id.move_type == 'in_invoice'">
+                                        Report Generated from Vendor Bill:
+                                    </t>
+                                </strong>
+                                <span t-esc="o.selected_account_move_id.name"/>
+                                <t t-if="o.selected_account_move_id.ref">
+                                    |
+                                    <strong>
+                                        <t t-if="o.selected_account_move_id.move_type == 'out_invoice'">
+                                            Customer Ref:
+                                        </t>
+                                        <t t-elif="o.selected_account_move_id.move_type == 'in_invoice'">
+                                            Bill Ref:
+                                        </t>
+                                    </strong>
+                                    <span t-esc="o.selected_account_move_id.ref"/>
+                                </t>
                                 <br/>
-                                <strong>Invoice Amount:</strong>
-                                <span t-out="o.selected_customer_invoice_id.amount_total" 
-                                      t-options="{'widget': 'monetary', 'display_currency': o.selected_customer_invoice_id.currency_id}"/>
+                                <strong>Partner:</strong>
+                                <u><span t-esc="o.selected_account_move_id.partner_id.name"/></u>
+                                |
+                                <strong>Currency:</strong>
+                                <span t-esc="o.selected_account_move_id.currency_id.name"/>
+                                |
+                                <strong>Amount:</strong>
+                                <span t-out="o.selected_account_move_id.amount_total" 
+                                      t-options="{'widget': 'monetary', 'display_currency': o.selected_account_move_id.currency_id}"/>
+                                <br/>
+                                <strong>Invoice Date:</strong>
+                                <span t-esc="o.selected_account_move_id.invoice_date.strftime('%Y-%m-%d') if o.selected_account_move_id.invoice_date else ''"/>
+                                |
+                                <strong>Payment Term:</strong>
+                                <span t-esc="o.selected_account_move_id.invoice_payment_term_id.name if o.selected_account_move_id.invoice_payment_term_id else 'N/A'"/>
+                                |
+                                <strong>Due Date:</strong>
+                                <span t-esc="o.selected_account_move_id.invoice_date_due.strftime('%Y-%m-%d') if o.selected_account_move_id.invoice_date_due else 'N/A'"/>
+                                |
+                                <strong>Days Due:</strong>
+                                <span t-att-style="'color: red; font-weight: bold;' if o.selected_account_move_id.wilco_days_due &lt; 0 else ('color: orange; font-weight: bold;' if o.selected_account_move_id.wilco_days_due &gt;= 0 and o.selected_account_move_id.wilco_days_due &lt;= 7 else '')"
+                                      t-esc="o.selected_account_move_id.wilco_days_due if o.selected_account_move_id.invoice_date_due else 'N/A'"/>
                             </div>
                         </t>
                         
@@ -44,6 +82,77 @@
                             </div>
                         </div>
 
+                        <!-- Project Financial Summary -->
+                        <t t-set="header_sales_orders" t-value="o.env['sale.order'].search([('wilco_project_id', '=', o.project_id.id), ('state', 'in', ['sale', 'done'])])"/>
+                        <t t-set="header_analytic_lines" t-value="o.env['account.analytic.line'].search([('account_id', '=', o.project_id.analytic_account_id.id)])"/>
+                        <t t-set="header_total_contract_sum" t-value="sum(header_sales_orders.mapped('amount_total'))"/>
+                        <t t-set="header_total_budget_cost" t-value="sum(header_sales_orders.mapped('wilco_amount_budget_cost_total'))"/>
+                        <t t-set="header_total_cash_flow" t-value="sum(header_analytic_lines.mapped('wilco_amount_cash_flow'))"/>
+                        <t t-set="header_total_net_payment" t-value="sum(header_analytic_lines.mapped('wilco_amount_payment'))"/>
+                        <t t-set="header_total_revenue" t-value="sum(header_analytic_lines.mapped('wilco_amount_revenue'))"/>
+                        <t t-set="header_total_gross_profit" t-value="sum(header_analytic_lines.mapped('wilco_amount_gross_profit'))"/>
+                        <t t-set="header_total_net_profit" t-value="sum(header_analytic_lines.mapped('wilco_amount_net_profit'))"/>
+                        <t t-set="header_estimated_gp_percent" t-value="((header_total_contract_sum - header_total_budget_cost) / header_total_contract_sum * 100) if header_total_contract_sum != 0 else 0"/>
+                        <t t-set="header_actual_gp_percent" t-value="(header_total_gross_profit / header_total_revenue * 100) if header_total_revenue != 0 else 0"/>
+                        <t t-set="header_actual_np_percent" t-value="(header_total_net_profit / header_total_revenue * 100) if header_total_revenue != 0 else 0"/>
+                        
+                        <div class="row mt-3 mb-4">
+                            <div class="col-12">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-center">Total Contract Sum</th>
+                                            <th class="text-center">Total Budget Cost</th>
+                                            <th class="text-center">Estimated GP%</th>
+                                            <th class="text-center">Actual Profit</th>
+                                            <th class="text-center">Total Net Payment Received</th>
+                                            <th class="text-center">Total Cash Flow</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-center">
+                                                <strong>
+                                                    <span t-out="header_total_contract_sum" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                                </strong>
+                                            </td>
+                                            <td class="text-center">
+                                                <strong>
+                                                    <span t-out="header_total_budget_cost" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                                </strong>
+                                            </td>
+                                            <td class="text-center">
+                                                <strong>
+                                                    <span t-out="'%.2f' % header_estimated_gp_percent"/> %
+                                                </strong>
+                                            </td>
+                                            <td class="text-center">
+                                                <strong>
+                                                    <span t-out="header_total_net_profit" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                                    (<span t-out="'%.2f' % header_actual_np_percent"/> %)
+                                                </strong>
+                                            </td>
+                                            <td class="text-center">
+                                                <strong>
+                                                    <span t-out="header_total_net_payment" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                                </strong>
+                                            </td>
+                                            <td class="text-center">
+                                                <strong>
+                                                    <span t-out="header_total_cash_flow" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                         <!-- Analytic Items Section -->
                         <t t-set="analytic_lines" t-value="o.env['account.analytic.line'].search([('account_id', '=', o.project_id.analytic_account_id.id)], order='partner_id, date desc, name')"/>
                         <h4 class="mt-5 mb-3 text-primary">Analytic Items by Partner</h4>
@@ -66,33 +175,54 @@
                                         <th>Partner</th>
                                         <th class="text-end">Revenue</th>
                                         <th class="text-end">Cost</th>
-                                        <th class="text-end">Gross Profit</th>
+                                        <th class="text-end">Actual GP</th>
+                                        <th class="text-end">Actual GP%</th>
                                         <th class="text-end">Income</th>
                                         <th class="text-end">Expense</th>
-                                        <th class="text-end">Net Profit</th>
+                                        <th class="text-end">Actual Profit</th>
+                                        <th class="text-end">Actual NP%</th>
                                         <th class="text-end">Receivable</th>
                                         <th class="text-end">Payable</th>
                                         <th class="text-end">Payment Received</th>
                                         <th class="text-end">Payment Issued</th>
-                                        <th class="text-end">Net Payment</th>
+                                        <th class="text-end">Net Payment Received</th>
+                                        <th class="text-end">Cash Flow</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr t-foreach="partners_dict.items()" t-as="partner_item">
+                                    <tr t-foreach="partners_dict.items()" t-as="partner_item" t-att-class="'table-warning fw-bold' if o.selected_account_move_id and partner_item[0] == o.selected_account_move_id.partner_id.id else ''">
                                         <t t-set="partner_id" t-value="partner_item[0]"/>
                                         <t t-set="partner_data" t-value="partner_item[1]"/>
-                                        <td><strong><span t-esc="partner_data['name']"/></strong></td>
+                                        <t t-set="partner_revenue" t-value="sum([l.wilco_amount_revenue for l in partner_data['lines']])"/>
+                                        <t t-set="partner_cost" t-value="sum([l.wilco_amount_cost for l in partner_data['lines']])"/>
+                                        <t t-set="partner_gross_profit" t-value="sum([l.wilco_amount_gross_profit for l in partner_data['lines']])"/>
+                                        <t t-set="partner_net_profit" t-value="sum([l.wilco_amount_net_profit for l in partner_data['lines']])"/>
+                                        <t t-set="partner_gp_percent" t-value="(partner_gross_profit / partner_revenue * 100) if partner_revenue != 0 else 0"/>
+                                        <t t-set="partner_np_percent" t-value="(partner_net_profit / partner_revenue * 100) if partner_revenue != 0 else 0"/>
+                                        <td>
+                                            <strong>
+                                                <t t-if="o.selected_account_move_id and partner_item[0] == o.selected_account_move_id.partner_id.id">
+                                                    <u><span t-esc="partner_data['name']"/></u>
+                                                </t>
+                                                <t t-else="">
+                                                    <span t-esc="partner_data['name']"/>
+                                                </t>
+                                            </strong>
+                                        </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_revenue for l in partner_data['lines']])" 
+                                            <span t-out="partner_revenue" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_cost for l in partner_data['lines']])" 
+                                            <span t-out="partner_cost" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_gross_profit for l in partner_data['lines']])" 
+                                            <span t-out="partner_gross_profit" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-out="'%.2f' % partner_gp_percent"/> %
                                         </td>
                                         <td class="text-end">
                                             <span t-out="sum([l.wilco_amount_income for l in partner_data['lines']])" 
@@ -103,8 +233,11 @@
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_net_profit for l in partner_data['lines']])" 
+                                            <span t-out="partner_net_profit" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-out="'%.2f' % partner_np_percent"/> %
                                         </td>
                                         <td class="text-end">
                                             <span t-out="sum([l.wilco_amount_receivable for l in partner_data['lines']])" 
@@ -126,22 +259,35 @@
                                             <span t-out="sum([l.wilco_amount_payment for l in partner_data['lines']])" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
+                                        <td class="text-end">
+                                            <span t-out="sum([l.wilco_amount_cash_flow for l in partner_data['lines']])" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                        </td>
                                     </tr>
                                 </tbody>
                                 <tfoot>
                                     <tr>
+                                        <t t-set="total_revenue" t-value="sum(analytic_lines.mapped('wilco_amount_revenue'))"/>
+                                        <t t-set="total_cost" t-value="sum(analytic_lines.mapped('wilco_amount_cost'))"/>
+                                        <t t-set="total_gross_profit" t-value="sum(analytic_lines.mapped('wilco_amount_gross_profit'))"/>
+                                        <t t-set="total_net_profit" t-value="sum(analytic_lines.mapped('wilco_amount_net_profit'))"/>
+                                        <t t-set="total_gp_percent" t-value="(total_gross_profit / total_revenue * 100) if total_revenue != 0 else 0"/>
+                                        <t t-set="total_np_percent" t-value="(total_net_profit / total_revenue * 100) if total_revenue != 0 else 0"/>
                                         <td><strong>Total</strong></td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_revenue'))" 
+                                            <strong><span t-out="total_revenue" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_cost'))" 
+                                            <strong><span t-out="total_cost" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_gross_profit'))" 
+                                            <strong><span t-out="total_gross_profit" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-out="'%.2f' % total_gp_percent"/> %</strong>
                                         </td>
                                         <td class="text-end">
                                             <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_income'))" 
@@ -152,8 +298,11 @@
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_net_profit'))" 
+                                            <strong><span t-out="total_net_profit" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-out="'%.2f' % total_np_percent"/> %</strong>
                                         </td>
                                         <td class="text-end">
                                             <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_receivable'))" 
@@ -175,6 +324,10 @@
                                             <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payment'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
+                                        <td class="text-end">
+                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_cash_flow'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -183,8 +336,85 @@
                             <p class="text-center text-muted">No analytic items found for this project</p>
                         </t>
 
+                        <!-- Quotations Section -->
+                        <t t-if="o.show_quotation">
+                        <t t-set="quotations" t-value="o.env['sale.order'].search([('wilco_project_id', '=', o.project_id.id), ('state', 'in', ['draft', 'sent'])], order='date_order desc, name desc')"/>
+                        <h4 class="mt-5 mb-3 text-primary">Quotations</h4>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Order #</th>
+                                    <th>Our Ref</th>
+                                    <th>Customer Ref</th>
+                                    <th class="col-1">Header</th>
+                                    <th>Customer</th>
+                                    <th>Salesperson</th>
+                                    <th class="text-end">Contract Total</th>
+                                    <th class="text-end">Budget Cost</th>
+                                    <th class="text-end">Estimated GP%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="quotations">
+                                    <tr t-foreach="quotations" t-as="order">
+                                        <td><span t-esc="order.date_order.strftime('%Y-%m-%d') if order.date_order else ''"/></td>
+                                        <td><span t-esc="order.name"/></td>
+                                        <td><span t-esc="order.wilco_our_ref"/></td>
+                                        <td><span t-esc="order.client_order_ref"/></td>
+                                        <td><span t-esc="order.wilco_order_header"/></td>
+                                        <td><span t-esc="order.partner_id.name"/></td>
+                                        <td><span t-out="order.user_id.name if order.user_id else ''"/></td>
+                                        <td class="text-end">
+                                            <span t-esc="order.amount_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="order.wilco_amount_budget_cost_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-out="'%.2f' % (order.wilco_gross_profit_percent * 100)"/> %
+                                        </td>
+                                    </tr>
+                                </t>
+                                <t t-else="">
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted">No quotations found for this project</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <t t-if="quotations">
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="7"><strong>Total</strong></td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(quotations.mapped('amount_total'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(quotations.mapped('wilco_amount_budget_cost_total'))" 
+                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <!-- Average GP% or blank -->
+                                            <strong>
+                                                <t t-set="quot_total_revenue" t-value="sum(quotations.mapped('amount_total'))"/>
+                                                <t t-set="quot_total_cost" t-value="sum(quotations.mapped('wilco_amount_budget_cost_total'))"/>
+                                                <t t-if="quot_total_revenue">
+                                                    <span t-esc="'%.2f' % ((quot_total_revenue - quot_total_cost) / quot_total_revenue * 100 if quot_total_revenue else 0)"/> %
+                                                </t>
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </t>
+                        </table>
+                        </t>
+
                         <!-- Sales Orders Section -->
-                        <t t-set="sales_orders" t-value="o.env['sale.order'].search([('wilco_project_id', '=', o.project_id.id)], order='date_order desc, name desc')"/>
+                        <t t-if="o.show_sales_order">
+                        <t t-set="sales_orders" t-value="o.env['sale.order'].search([('wilco_project_id', '=', o.project_id.id), ('state', 'in', ['sale', 'done'])], order='date_order desc, name desc')"/>
                         <h4 class="mt-5 mb-3 text-primary">Sales Orders</h4>
                         <table class="table table-sm o_main_table">
                             <thead>
@@ -193,13 +423,12 @@
                                     <th>Order #</th>
                                     <th>Our Ref</th>
                                     <th>Customer Ref</th>
-                                    <th>Quotation/Order</th>
                                     <th class="col-1">Header</th>
-                                    <th>Customer</th>
+                                    <th class="col-1">Customer</th>
                                     <th>Salesperson</th>
                                     <th class="text-end">Contract Total</th>
                                     <th class="text-end">Budget Cost</th>
-                                    <th class="text-end">GP%</th>
+                                    <th class="text-end">Estimated GP%</th>
                                     <th class="text-end">Invoiced</th>
                                     <th class="text-end">Invoice Reminder</th>
                                     <th class="text-end">Amount Due</th>
@@ -213,7 +442,6 @@
                                         <td><span t-esc="order.name"/></td>
                                         <td><span t-esc="order.wilco_our_ref"/></td>
                                         <td><span t-esc="order.client_order_ref"/></td>
-                                        <td><span t-esc="dict(order._fields['state'].selection).get(order.state, order.state)"/></td>
                                         <td><span t-esc="order.wilco_order_header"/></td>
                                         <td><span t-esc="order.partner_id.name"/></td>
                                         <td><span t-out="order.user_id.name if order.user_id else ''"/></td>
@@ -245,14 +473,14 @@
                                 </t>
                                 <t t-else="">
                                     <tr>
-                                        <td colspan="15" class="text-center text-muted">No sales orders found for this project</td>
+                                        <td colspan="14" class="text-center text-muted">No sales orders found for this project</td>
                                     </tr>
                                 </t>
                             </tbody>
                             <t t-if="sales_orders">
                                 <tfoot>
                                     <tr>
-                                        <td colspan="8"><strong>Total</strong></td>
+                                        <td colspan="7"><strong>Total</strong></td>
                                         <td class="text-end">
                                             <strong><span t-esc="sum(sales_orders.mapped('amount_total'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
@@ -264,10 +492,10 @@
                                         <td class="text-end">
                                             <!-- Average GP% or blank -->
                                             <strong>
-                                                <t t-set="total_revenue" t-value="sum(sales_orders.mapped('amount_total'))"/>
-                                                <t t-set="total_cost" t-value="sum(sales_orders.mapped('wilco_amount_budget_cost_total'))"/>
-                                                <t t-if="total_revenue">
-                                                    <span t-esc="'%.2f' % ((total_revenue - total_cost) / total_revenue * 100 if total_revenue else 0)"/> %
+                                                <t t-set="so_total_revenue" t-value="sum(sales_orders.mapped('amount_total'))"/>
+                                                <t t-set="so_total_cost" t-value="sum(sales_orders.mapped('wilco_amount_budget_cost_total'))"/>
+                                                <t t-if="so_total_revenue">
+                                                    <span t-esc="'%.2f' % ((so_total_revenue - so_total_cost) / so_total_revenue * 100 if so_total_revenue else 0)"/> %
                                                 </t>
                                             </strong>
                                         </td>
@@ -288,9 +516,67 @@
                                 </tfoot>
                             </t>
                         </table>
+                        </t>
+                        
+                        <!-- Purchase Orders Section -->
+                        <t t-if="o.show_purchase_order">
+                        <t t-set="purchase_orders" t-value="o.env['purchase.order'].search([('wilco_project_id', '=', o.project_id.id), ('state', '=', 'purchase')], order='date_approve desc, name desc')"/>
+                        <h4 class="mt-5 mb-3 text-primary">Purchase Orders</h4>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Order Date</th>
+                                    <th>Order #</th>
+                                    <th>Our Ref</th>
+                                    <th>Vendor Ref</th>
+                                    <th class="col-1">Header</th>
+                                    <th class="col-1">Vendor</th>
+                                    <th>Buyer</th>
+                                    <th class="text-end">Total Amount</th>
+                                    <th>Billing Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="purchase_orders">
+                                    <tr t-foreach="purchase_orders" t-as="po">
+                                        <td><span t-esc="po.date_approve.strftime('%Y-%m-%d') if po.date_approve else (po.date_order.strftime('%Y-%m-%d') if po.date_order else '')"/></td>
+                                        <td><span t-esc="po.name"/></td>
+                                        <td><span t-esc="po.wilco_our_ref"/></td>
+                                        <td><span t-esc="po.partner_ref"/></td>
+                                        <td><span t-esc="po.wilco_order_header"/></td>
+                                        <td><span t-esc="po.partner_id.name"/></td>
+                                        <td><span t-out="po.user_id.name if po.user_id else ''"/></td>
+                                        <td class="text-end">
+                                            <span t-esc="po.amount_total" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': po.currency_id}"/>
+                                        </td>
+                                        <td><span t-esc="po.invoice_status"/></td>
+                                    </tr>
+                                </t>
+                                <t t-else="">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">No purchase orders found for this project</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <t t-if="purchase_orders">
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="7"><strong>Total</strong></td>
+                                        <td class="text-end">
+                                            <strong><span t-esc="sum(purchase_orders.mapped('amount_total'))" 
+                                                              t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </t>
+                        </table>
+                        </t>
 
                         <!-- Customer Invoices Section -->
-                        <t t-set="customer_invoices" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', 'in', ['out_invoice', 'out_refund'])], order='invoice_date desc, name desc')"/>
+                        <t t-if="o.show_customer_invoice">
+                        <t t-set="customer_invoices" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', 'in', ['out_invoice', 'out_refund']), ('state', '=', 'posted')], order='invoice_date desc, name desc')"/>
                         <h4 class="mt-5 mb-3 text-primary">Customer Invoices</h4>
                         <table class="table table-sm o_main_table">
                             <thead>
@@ -300,23 +586,41 @@
                                     <th>Sale Order</th>
                                     <th>Our Ref</th>
                                     <th>Customer Ref</th>
-                                    <th>Customer</th>
+                                    <th class="col-1">Customer</th>
+                                    <th>Payment Terms</th>
                                     <th class="text-end">Amount</th>
                                     <th class="text-end">Settled</th>
                                     <th class="text-end">Due</th>
+                                    <th>Due Date</th>
+                                    <th class="text-end">Days Due</th>
                                     <th>Payment Date</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-if="customer_invoices">
-                                    <tr t-foreach="customer_invoices" t-as="invoice" t-att-class="'table-warning fw-bold' if o.selected_customer_invoice_id and invoice.id == o.selected_customer_invoice_id.id else ''">
+                                    <tr t-foreach="customer_invoices" t-as="invoice" t-att-class="'table-warning fw-bold' if o.selected_account_move_id and invoice.id == o.selected_account_move_id.id else ''">
                                         <td><span t-out="invoice.invoice_date.strftime('%Y-%m-%d') if invoice.invoice_date else ''"/></td>
-                                        <td><span t-esc="invoice.name"/></td>
+                                        <td>
+                                            <t t-if="o.selected_account_move_id and invoice.id == o.selected_account_move_id.id">
+                                                <u><span t-esc="invoice.name"/></u>
+                                            </t>
+                                            <t t-else="">
+                                                <span t-esc="invoice.name"/>
+                                            </t>
+                                        </td>
                                         <td><span t-out="invoice.wilco_linked_sale_order"/></td>
                                         <td><span t-esc="invoice.wilco_our_ref"/></td>
                                         <td><span t-esc="invoice.ref"/></td>
-                                        <td><span t-esc="invoice.partner_id.name"/></td>
+                                        <td>
+                                            <t t-if="o.selected_account_move_id and invoice.id == o.selected_account_move_id.id">
+                                                <u><span t-esc="invoice.partner_id.name"/></u>
+                                            </t>
+                                            <t t-else="">
+                                                <span t-esc="invoice.partner_id.name"/>
+                                            </t>
+                                        </td>
+                                        <td><span t-esc="invoice.invoice_payment_term_id.name if invoice.invoice_payment_term_id else ''"/></td>
                                         <td class="text-end">
                                             <span t-esc="invoice.amount_total" 
                                                   t-options="{'widget': 'monetary', 'display_currency': invoice.currency_id}"/>
@@ -329,20 +633,24 @@
                                             <span t-esc="invoice.amount_residual" 
                                                   t-options="{'widget': 'monetary', 'display_currency': invoice.currency_id}"/>
                                         </td>
+                                        <td><span t-out="invoice.invoice_date_due.strftime('%Y-%m-%d') if invoice.invoice_date_due else ''"/></td>
+                                        <td class="text-end" t-att-style="'color: red; font-weight: bold;' if invoice.wilco_days_due &lt; 0 else ('color: orange; font-weight: bold;' if invoice.wilco_days_due &gt;= 0 and invoice.wilco_days_due &lt;= 7 else '')">
+                                            <span t-esc="invoice.wilco_days_due if invoice.invoice_date_due else ''"/>
+                                        </td>
                                         <td><span t-esc="invoice.wilco_payment_dates"/></td>
                                         <td><span t-out="dict(invoice._fields['payment_state'].selection).get(invoice.payment_state, invoice.payment_state)"/></td>
                                     </tr>
                                 </t>
                                 <t t-else="">
                                     <tr>
-                                        <td colspan="11" class="text-center text-muted">No customer invoices found for this project</td>
+                                        <td colspan="14" class="text-center text-muted">No customer invoices found for this project</td>
                                     </tr>
                                 </t>
                             </tbody>
                             <t t-if="customer_invoices">
                                 <tfoot>
                                     <tr>
-                                        <td colspan="6"><strong>Total</strong></td>
+                                        <td colspan="7"><strong>Total</strong></td>
                                         <td class="text-end">
                                             <strong><span t-out="sum(customer_invoices.mapped('amount_total'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
@@ -355,14 +663,16 @@
                                             <strong><span t-out="sum(customer_invoices.mapped('amount_residual'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
-                                        <td colspan="2"></td>
+                                        <td colspan="4"></td>
                                     </tr>
                                 </tfoot>
                             </t>
                         </table>
+                        </t>
 
                         <!-- Vendor Bills Section -->
-                        <t t-set="vendor_bills" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', 'in', ['in_invoice', 'in_refund'])], order='invoice_date desc, name desc')"/>
+                        <t t-if="o.show_vendor_bill">
+                        <t t-set="vendor_bills" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', 'in', ['in_invoice', 'in_refund']), ('state', '=', 'posted')], order='invoice_date desc, name desc')"/>
                         <h4 class="mt-5 mb-3 text-primary">Vendor Bills</h4>
                         <table class="table table-sm o_main_table">
                             <thead>
@@ -372,23 +682,41 @@
                                     <th>Purchase Order</th>
                                     <th>Our Ref</th>
                                     <th>Bill Ref</th>
-                                    <th>Vendor</th>
+                                    <th class="col-1">Vendor</th>
+                                    <th>Payment Terms</th>
                                     <th class="text-end">Amount</th>
                                     <th class="text-end">Settled</th>
                                     <th class="text-end">Due</th>
+                                    <th>Due Date</th>
+                                    <th class="text-end">Days Due</th>
                                     <th>Payment Date</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-if="vendor_bills">
-                                    <tr t-foreach="vendor_bills" t-as="bill">
+                                    <tr t-foreach="vendor_bills" t-as="bill" t-att-class="'table-warning fw-bold' if o.selected_account_move_id and bill.id == o.selected_account_move_id.id else ''">
                                         <td><span t-esc="bill.invoice_date.strftime('%Y-%m-%d') if bill.invoice_date else ''"/></td>
-                                        <td><span t-esc="bill.name"/></td>
+                                        <td>
+                                            <t t-if="o.selected_account_move_id and bill.id == o.selected_account_move_id.id">
+                                                <u><span t-esc="bill.name"/></u>
+                                            </t>
+                                            <t t-else="">
+                                                <span t-esc="bill.name"/>
+                                            </t>
+                                        </td>
                                         <td><span t-esc="bill.wilco_linked_purchase_order"/></td>
                                         <td><span t-esc="bill.wilco_our_ref"/></td>
                                         <td><span t-esc="bill.ref"/></td>
-                                        <td><span t-esc="bill.partner_id.name"/></td>
+                                        <td>
+                                            <t t-if="o.selected_account_move_id and bill.id == o.selected_account_move_id.id">
+                                                <u><span t-esc="bill.partner_id.name"/></u>
+                                            </t>
+                                            <t t-else="">
+                                                <span t-esc="bill.partner_id.name"/>
+                                            </t>
+                                        </td>
+                                        <td><span t-esc="bill.invoice_payment_term_id.name if bill.invoice_payment_term_id else ''"/></td>
                                         <td class="text-end">
                                             <span t-esc="bill.amount_total" 
                                                   t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
@@ -401,20 +729,24 @@
                                             <span t-esc="bill.amount_residual" 
                                                   t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
                                         </td>
+                                        <td><span t-out="bill.invoice_date_due.strftime('%Y-%m-%d') if bill.invoice_date_due else ''"/></td>
+                                        <td class="text-end" t-att-style="'color: red; font-weight: bold;' if bill.wilco_days_due &lt; 0 else ('color: orange; font-weight: bold;' if bill.wilco_days_due &gt;= 0 and bill.wilco_days_due &lt;= 7 else '')">
+                                            <span t-esc="bill.wilco_days_due if bill.invoice_date_due else ''"/>
+                                        </td>
                                         <td><span t-esc="bill.wilco_payment_dates or ''"/></td>
                                         <td><span t-esc="dict(bill._fields['payment_state'].selection).get(bill.payment_state, bill.payment_state)"/></td>
                                     </tr>
                                 </t>
                                 <t t-else="">
                                     <tr>
-                                        <td colspan="11" class="text-center text-muted">No vendor bills found for this project</td>
+                                        <td colspan="14" class="text-center text-muted">No vendor bills found for this project</td>
                                     </tr>
                                 </t>
                             </tbody>
                             <t t-if="vendor_bills">
                                 <tfoot>
                                     <tr>
-                                        <td colspan="6"><strong>Total</strong></td>
+                                        <td colspan="7"><strong>Total</strong></td>
                                         <td class="text-end">
                                             <strong><span t-esc="sum(vendor_bills.mapped('amount_total'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
@@ -427,11 +759,12 @@
                                             <strong><span t-esc="sum(vendor_bills.mapped('amount_residual'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
-                                        <td colspan="2"></td>
+                                        <td colspan="4"></td>
                                     </tr>
                                 </tfoot>
                             </t>
                         </table>
+                        </t>
                     </t>
                 </div>
             </t>

@@ -8,7 +8,18 @@
             <form string="Project Status Report">
                 <group>
                     <field name="project_id"/>
-                    <field name="selected_customer_invoice_id"/>
+                    <field name="selected_account_move_id"/>
+                </group>
+                <group string="Report Sections">
+                    <group>
+                        <field name="show_quotation"/>
+                        <field name="show_sales_order"/>
+                        <field name="show_purchase_order"/>
+                    </group>
+                    <group>
+                        <field name="show_customer_invoice"/>
+                        <field name="show_vendor_bill"/>
+                    </group>
                 </group>
                 <footer>
                     <button name="wilco_action_print_report" string="Print Report" 
