@@ -2,6 +2,7 @@
 <odoo>
     <template id="report_project_status_document">
         <t t-call="web.html_container">
+            <t t-set="data_report_header_spacing" t-value="15"/>
             <t t-call="web.internal_layout">
                 <div class="page">
                     <!-- Report Title -->
@@ -200,8 +201,6 @@
                                         <th class="col-1">Partner</th>
                                         <th class="text-end">Revenue</th>
                                         <th class="text-end">Cost</th>
-                                        <th class="text-end">Actual GP</th>
-                                        <th class="text-end">Actual GP%</th>
                                         <th class="text-end">Income</th>
                                         <th class="text-end">Expense</th>
                                         <th class="text-end">Actual P&amp;L</th>
@@ -220,9 +219,7 @@
                                         <t t-set="partner_data" t-value="partner_item[1]"/>
                                         <t t-set="partner_revenue" t-value="sum([l.wilco_amount_revenue for l in partner_data['lines']])"/>
                                         <t t-set="partner_cost" t-value="sum([l.wilco_amount_cost for l in partner_data['lines']])"/>
-                                        <t t-set="partner_gross_profit" t-value="sum([l.wilco_amount_gross_profit for l in partner_data['lines']])"/>
                                         <t t-set="partner_net_profit" t-value="sum([l.wilco_amount_net_profit for l in partner_data['lines']])"/>
-                                        <t t-set="partner_gp_percent" t-value="(partner_gross_profit / partner_revenue * 100) if partner_revenue != 0 else 0"/>
                                         <t t-set="partner_np_percent" t-value="(partner_net_profit / partner_revenue * 100) if partner_revenue != 0 else 0"/>
                                         <td>
                                             <strong>
@@ -241,13 +238,6 @@
                                         <td class="text-end">
                                             <span t-out="partner_cost" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
-                                        </td>
-                                        <td class="text-end">
-                                            <span t-out="partner_gross_profit" 
-                                                  t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
-                                        </td>
-                                        <td class="text-end">
-                                            <span t-out="'%.2f' % partner_gp_percent"/> %
                                         </td>
                                         <td class="text-end">
                                             <span t-out="sum([l.wilco_amount_income for l in partner_data['lines']])" 
@@ -294,9 +284,7 @@
                                     <tr>
                                         <t t-set="total_revenue" t-value="sum(analytic_lines.mapped('wilco_amount_revenue'))"/>
                                         <t t-set="total_cost" t-value="sum(analytic_lines.mapped('wilco_amount_cost'))"/>
-                                        <t t-set="total_gross_profit" t-value="sum(analytic_lines.mapped('wilco_amount_gross_profit'))"/>
                                         <t t-set="total_net_profit" t-value="sum(analytic_lines.mapped('wilco_amount_net_profit'))"/>
-                                        <t t-set="total_gp_percent" t-value="(total_gross_profit / total_revenue * 100) if total_revenue != 0 else 0"/>
                                         <t t-set="total_np_percent" t-value="(total_net_profit / total_revenue * 100) if total_revenue != 0 else 0"/>
                                         <td><strong>Total</strong></td>
                                         <td class="text-end">
@@ -306,13 +294,6 @@
                                         <td class="text-end">
                                             <strong><span t-out="total_cost" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
-                                        </td>
-                                        <td class="text-end">
-                                            <strong><span t-out="total_gross_profit" 
-                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
-                                        </td>
-                                        <td class="text-end">
-                                            <strong><span t-out="'%.2f' % total_gp_percent"/> %</strong>
                                         </td>
                                         <td class="text-end">
                                             <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_income'))" 
