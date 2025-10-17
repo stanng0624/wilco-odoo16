@@ -1,6 +1,6 @@
 ---
 mode: agent
-model: Grok Code Fast 1 (Preview) (copilot)
+model: Grok Code Fast 1 (copilot)
 ---
 git commit all changes based on the below Odoo 16 commit guidelines. 
 

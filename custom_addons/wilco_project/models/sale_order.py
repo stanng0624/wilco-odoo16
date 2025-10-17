@@ -84,6 +84,11 @@ class SaleOrder(models.Model):
         string="GP%",
         compute='_wilco_compute_budget_amounts'
     )
+    wilco_invoice_due_dates = fields.Char(
+        string="Invoice Due Dates",
+        compute='_wilco_compute_invoice_due_dates',
+        help="Comma-separated list of due dates from related invoices"
+    )
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
@@ -184,6 +189,23 @@ class SaleOrder(models.Model):
                 order.wilco_gross_profit_percent = (
                     order.amount_total - order.wilco_amount_budget_cost_total
                 ) / order.amount_total
+
+    @api.depends('invoice_ids')
+    def _wilco_compute_invoice_due_dates(self):
+        """
+        Compute invoice due dates formatted as (date1,date2,...).
+        Filters for customer invoices/refunds that are not cancelled and have a due date.
+        """
+        for order in self:
+            invoices = order.invoice_ids.filtered(
+                lambda inv: inv.move_type in ('out_invoice', 'out_refund') and 
+                inv.state != 'cancel' and 
+                inv.invoice_date_due
+            )
+            # Sort by due date and extract dates
+            due_dates = sorted(invoices.mapped('invoice_date_due'))
+            due_dates_str = ','.join([d.strftime('%Y-%m-%d') for d in due_dates])
+            order.wilco_invoice_due_dates = f"({due_dates_str})" if due_dates_str else ""
 
     @api.onchange('wilco_project_id')
     def onchange_wilco_project_id(self):
