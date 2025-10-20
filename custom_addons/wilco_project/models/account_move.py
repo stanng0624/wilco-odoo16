@@ -114,7 +114,7 @@ class AccountMove(models.Model):
                 move.wilco_days_due = 0
             elif move.invoice_date_due:
                 delta = move.invoice_date_due - today
-                move.wilco_days_due = delta.days - 1
+                move.wilco_days_due = delta.days
             else:
                 move.wilco_days_due = 0
 
