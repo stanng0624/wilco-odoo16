@@ -22,10 +22,9 @@ class AccountAnalyticAccount(models.Model):
 
     wilco_amount_receivable = fields.Monetary(string='Receivable', compute='_wilco_compute_amounts')
     wilco_amount_payable = fields.Monetary(string='Payable', compute='_wilco_compute_amounts')
-    wilco_amount_payment = fields.Monetary(string='Net Payment Received', compute='_wilco_compute_amounts')
-    wilco_amount_payment_received = fields.Monetary(string='Payment Received', compute='_wilco_compute_amounts')
-    wilco_amount_payment_issued = fields.Monetary(string='Payment Issued', compute='_wilco_compute_amounts')
-    wilco_amount_cash_flow = fields.Monetary(string='Cash Flow', compute='_wilco_compute_amounts')
+    wilco_amount_payment = fields.Monetary(string='Actual Cash Flow', compute='_wilco_compute_amounts')
+    wilco_amount_payment_received = fields.Monetary(string='Cash In', compute='_wilco_compute_amounts')
+    wilco_amount_payment_issued = fields.Monetary(string='Cash Out', compute='_wilco_compute_amounts')
     wilco_amount_revenue = fields.Monetary(string='Revenue', compute='_wilco_compute_amounts')
     wilco_amount_income = fields.Monetary(string='Income', compute='_wilco_compute_amounts')
     wilco_amount_cost = fields.Monetary(string='Cost', compute='_wilco_compute_amounts')
@@ -101,7 +100,6 @@ class AccountAnalyticAccount(models.Model):
             amount_net_profit = 0
             amount_payment_received = 0
             amount_payment_issued = 0
-            amount_cash_flow = 0
 
             lines = account.line_ids
             if lines:
@@ -116,13 +114,11 @@ class AccountAnalyticAccount(models.Model):
                 amount_net_profit = sum(lines.mapped("wilco_amount_net_profit"))
                 amount_payment_received = sum(lines.mapped("wilco_amount_payment_received"))
                 amount_payment_issued = sum(lines.mapped("wilco_amount_payment_issued"))
-                amount_cash_flow = sum(lines.mapped("wilco_amount_cash_flow"))
 
             #Assume all are in same currency first
             account.wilco_amount_receivable = amount_receivable
             account.wilco_amount_payable = amount_payable
             account.wilco_amount_payment = amount_payment
-            account.wilco_amount_cash_flow = amount_cash_flow
             account.wilco_amount_revenue = amount_revenue
             account.wilco_amount_income = amount_income
             account.wilco_amount_cost = amount_cost

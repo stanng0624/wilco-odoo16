@@ -84,10 +84,11 @@ class SaleOrder(models.Model):
         string="GP%",
         compute='_wilco_compute_budget_amounts'
     )
-    wilco_invoice_due_dates = fields.Char(
+    wilco_project_status_report_invoice_due_dates = fields.Html(
         string="Invoice Due Dates",
         compute='_wilco_compute_invoice_due_dates',
-        help="Comma-separated list of due dates from related invoices"
+        help="Line-separated list of due dates from related invoices",
+        sanitize=False
     )
 
     @api.model
@@ -193,7 +194,7 @@ class SaleOrder(models.Model):
     @api.depends('invoice_ids')
     def _wilco_compute_invoice_due_dates(self):
         """
-        Compute invoice due dates formatted as (date1,date2,...).
+        Compute invoice due dates formatted with HTML line breaks.
         Filters for customer invoices/refunds that are not cancelled and have a due date.
         """
         for order in self:
@@ -204,8 +205,8 @@ class SaleOrder(models.Model):
             )
             # Sort by due date and extract dates
             due_dates = sorted(invoices.mapped('invoice_date_due'))
-            due_dates_str = ','.join([d.strftime('%Y-%m-%d') for d in due_dates])
-            order.wilco_invoice_due_dates = f"({due_dates_str})" if due_dates_str else ""
+            due_dates_str = '<br/>'.join([d.strftime('%Y-%m-%d') for d in due_dates])
+            order.wilco_project_status_report_invoice_due_dates = due_dates_str
 
     @api.onchange('wilco_project_id')
     def onchange_wilco_project_id(self):

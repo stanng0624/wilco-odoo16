@@ -30,10 +30,9 @@ class AccountAnalyticAccountLine(models.Model):
     wilco_amount_receivable = fields.Monetary(string='Receivable', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_payable = fields.Monetary(string='Payable', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_revenue = fields.Monetary(string='Revenue', compute='_wilco_compute_amounts', store=True, readonly=True)
-    wilco_amount_payment_received = fields.Monetary(string='Payment Received', compute='_wilco_compute_amounts', store=True, readonly=True)
-    wilco_amount_payment_issued = fields.Monetary(string='Payment Issued', compute='_wilco_compute_amounts', store=True, readonly=True)
-    wilco_amount_payment = fields.Monetary(string='Net Payment Received', compute='_wilco_compute_amounts', store=True, readonly=True)
-    wilco_amount_cash_flow = fields.Monetary(string='Cash Flow', compute='_wilco_compute_amounts', store=True, readonly=True)
+    wilco_amount_payment_received = fields.Monetary(string='Cash In', compute='_wilco_compute_amounts', store=True, readonly=True)
+    wilco_amount_payment_issued = fields.Monetary(string='Cash Out', compute='_wilco_compute_amounts', store=True, readonly=True)
+    wilco_amount_payment = fields.Monetary(string='Actual Cash Flow', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_income = fields.Monetary(string='Income', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_cost = fields.Monetary(string='Cost', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_amount_expense = fields.Monetary(string='Expense', compute='_wilco_compute_amounts', store=True, readonly=True)
@@ -146,7 +145,6 @@ class AccountAnalyticAccountLine(models.Model):
         self.wilco_amount_expense = 0
         self.wilco_amount_gross_profit = 0
         self.wilco_amount_net_profit = 0
-        self.wilco_amount_cash_flow = 0
 
         # line.amount positive is Credit, negative is Debit
         # Reverse sign to convert back to normal G/L entry amount
@@ -186,7 +184,5 @@ class AccountAnalyticAccountLine(models.Model):
                                      + self.wilco_amount_income \
                                      - self.wilco_amount_expense
         self.wilco_net_profit_percent = self.wilco_amount_net_profit / self.wilco_amount_revenue if self.wilco_amount_revenue != 0 else 0.0
-        self.wilco_amount_cash_flow = self.wilco_amount_payment_received - self.wilco_amount_payment_issued \
-                                    + self.wilco_amount_receivable - self.wilco_amount_payable
     
                                      
