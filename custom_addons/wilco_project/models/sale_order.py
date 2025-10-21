@@ -200,11 +200,12 @@ class SaleOrder(models.Model):
         for order in self:
             invoices = order.invoice_ids.filtered(
                 lambda inv: inv.move_type in ('out_invoice', 'out_refund') and 
-                inv.state != 'cancel' and 
+                inv.state == 'posted' and 
+                inv.payment_state not in ('paid', 'in_payment', 'reversed') and
                 inv.invoice_date_due
             )
             # Sort by due date and extract dates
-            due_dates = sorted(invoices.mapped('invoice_date_due'))
+            due_dates = sorted(set(invoices.mapped('invoice_date_due')))
             due_dates_str = '<br/>'.join([d.strftime('%Y-%m-%d') for d in due_dates])
             order.wilco_project_status_report_invoice_due_dates = due_dates_str
 
