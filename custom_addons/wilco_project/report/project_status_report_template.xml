@@ -668,7 +668,6 @@
 
                         <!-- Vendor Bills Section -->
                         <t t-if="o.show_vendor_bill">
-                        <t t-set="vendor_bills" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', 'in', ['in_invoice', 'in_refund']), ('state', '=', 'posted')], order='invoice_date desc, name desc')"/>
                         <h4 class="mt-5 mb-3 text-primary">Vendor Bills</h4>
                         <table class="table table-sm o_main_table">
                             <thead>
@@ -690,8 +689,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-if="vendor_bills">
-                                    <tr t-foreach="vendor_bills" t-as="bill" t-att-class="'table-warning fw-bold' if o.selected_account_move_id and bill.id == o.selected_account_move_id.id else ''">
+                                <t t-if="o.all_vendor_bills">
+                                    <tr t-foreach="o.all_vendor_bills" t-as="bill" t-att-class="'table-warning fw-bold' if o.selected_account_move_id and bill.id == o.selected_account_move_id.id else ''">
                                         <td><span t-esc="bill.invoice_date.strftime('%Y-%m-%d') if bill.invoice_date else ''"/></td>
                                         <td>
                                             <t t-if="o.selected_account_move_id and bill.id == o.selected_account_move_id.id">
@@ -739,20 +738,20 @@
                                     </tr>
                                 </t>
                             </tbody>
-                            <t t-if="vendor_bills">
+                            <t t-if="o.all_vendor_bills">
                                 <tfoot>
                                     <tr>
                                         <td colspan="7"><strong>Total</strong></td>
                                         <td class="text-end">
-                                            <strong><span t-esc="sum(vendor_bills.mapped('amount_total'))" 
+                                            <strong><span t-esc="sum(o.all_vendor_bills.mapped('amount_total'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-esc="sum(vendor_bills.mapped('wilco_amount_settled_total'))" 
+                                            <strong><span t-esc="sum(o.all_vendor_bills.mapped('wilco_amount_settled_total'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-esc="sum(vendor_bills.mapped('amount_residual'))" 
+                                            <strong><span t-esc="sum(o.all_vendor_bills.mapped('amount_residual'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td colspan="4"></td>
