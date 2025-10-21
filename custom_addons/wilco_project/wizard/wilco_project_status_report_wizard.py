@@ -24,7 +24,7 @@ class WilcoProjectStatusReportWizard(models.TransientModel):
         help='Select a customer invoice or vendor bill to highlight in the report'
     )
     
-    # Section Visibility Options
+    # Section Visibility Options    
     show_quotation = fields.Boolean(
         string='Show Quotation',
         default=True,
@@ -55,17 +55,30 @@ class WilcoProjectStatusReportWizard(models.TransientModel):
         help='Show the Vendor Bills section in the report'
     )
     
+    show_expense_report = fields.Boolean(
+        string='Show Expense Report',
+        default=False,
+        help='Show the Expense Report section in the report'
+    )
+    
     show_general_journal = fields.Boolean(
         string='Show General Journal',
         default=False,
         help='Show manually entered journal entries (excluding those from invoices/bills/payments)'
     )
-    
+
     all_vendor_bills = fields.Many2many(
         'account.move',
         string='All Vendor Bills',
         compute='_compute_all_vendor_bills',
         help='All vendor bills related to this project (direct or via analytic lines)'
+    )
+    
+    expense_report_bills = fields.Many2many(
+        'account.move',
+        string='Expense Report Bills',
+        compute='_compute_expense_report_bills',
+        help='Vendor bills linked to expense reports for this project'
     )
     
     manual_journal_entries = fields.Many2many(
@@ -75,33 +88,36 @@ class WilcoProjectStatusReportWizard(models.TransientModel):
         help='Manually entered journal entries for this project'
     )
     
-    @api.depends('project_id', 'show_vendor_bill')
+    @api.depends('project_id', 'show_vendor_bill', 'show_expense_report')
     def _compute_all_vendor_bills(self):
         """
-        Compute all vendor bills related to the project:
+        Compute all vendor bills related to the project (excluding expense report bills):
         1. Bills with direct project_id link
         2. Bills without project_id but with invoice lines having analytic distribution matching this project
+        Excludes bills that are linked to expense reports.
         """
         for wizard in self:
             if not wizard.project_id or not wizard.show_vendor_bill:
                 wizard.all_vendor_bills = self.env['account.move']
                 continue
             
-            # Get bills with direct project_id link
+            # Get bills with direct project_id link (excluding expense report bills)
             bills_with_project = self.env['account.move'].search([
                 ('wilco_project_id', '=', wizard.project_id.id),
                 ('move_type', 'in', ['in_invoice', 'in_refund']),
-                ('state', '=', 'posted')
+                ('state', '=', 'posted'),
+                ('expense_sheet_id', '=', False)  # Exclude expense report bills
             ], order='invoice_date desc, name desc')
             
             # Get the analytic account string for comparison
             analytic_account_str = str(wizard.project_id.analytic_account_id.id)
             
-            # Get bills without project_id but with matching analytic lines
+            # Get bills without project_id but with matching analytic lines (excluding expense report bills)
             bills_no_project = self.env['account.move'].search([
                 ('wilco_project_id', '=', False),
                 ('move_type', 'in', ['in_invoice', 'in_refund']),
-                ('state', '=', 'posted')
+                ('state', '=', 'posted'),
+                ('expense_sheet_id', '=', False)  # Exclude expense report bills
             ], order='invoice_date desc, name desc')
             
             # Filter bills that have at least one line with matching analytic distribution
@@ -114,6 +130,48 @@ class WilcoProjectStatusReportWizard(models.TransientModel):
             
             # Combine both recordsets (union automatically removes duplicates)
             wizard.all_vendor_bills = bills_with_project | bills_with_analytic
+
+    @api.depends('project_id', 'show_expense_report')
+    def _compute_expense_report_bills(self):
+        """
+        Compute vendor bills linked to expense reports for the project:
+        1. Bills with direct project_id link and expense_sheet_id
+        2. Bills without project_id but with invoice lines having analytic distribution matching this project and expense_sheet_id
+        """
+        for wizard in self:
+            if not wizard.project_id or not wizard.show_expense_report:
+                wizard.expense_report_bills = self.env['account.move']
+                continue
+            
+            # Get bills with direct project_id link and linked to expense reports
+            bills_with_project = self.env['account.move'].search([
+                ('wilco_project_id', '=', wizard.project_id.id),
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('state', '=', 'posted'),
+                ('expense_sheet_id', '!=', False)  # Only expense report bills
+            ], order='invoice_date desc, name desc')
+            
+            # Get the analytic account string for comparison
+            analytic_account_str = str(wizard.project_id.analytic_account_id.id)
+            
+            # Get bills without project_id but with matching analytic lines and linked to expense reports
+            bills_no_project = self.env['account.move'].search([
+                ('wilco_project_id', '=', False),
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('state', '=', 'posted'),
+                ('expense_sheet_id', '!=', False)  # Only expense report bills
+            ], order='invoice_date desc, name desc')
+            
+            # Filter bills that have at least one line with matching analytic distribution
+            bills_with_analytic = self.env['account.move']
+            for bill in bills_no_project:
+                for line in bill.invoice_line_ids:
+                    if line.analytic_distribution and analytic_account_str in line.analytic_distribution:
+                        bills_with_analytic |= bill
+                        break  # Found a matching line, no need to check more lines
+            
+            # Combine both recordsets (union automatically removes duplicates)
+            wizard.expense_report_bills = bills_with_project | bills_with_analytic
 
     @api.depends('project_id', 'show_general_journal')
     def _compute_manual_journal_entries(self):

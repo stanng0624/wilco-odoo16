@@ -19,6 +19,7 @@
                     <group>
                         <field name="show_customer_invoice"/>
                         <field name="show_vendor_bill"/>
+                        <field name="show_expense_report"/>
                         <field name="show_general_journal"/>
                     </group>
                 </group>
