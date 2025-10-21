@@ -681,7 +681,7 @@
                                     <th>Payment Terms</th>
                                     <th class="text-end">Amount</th>
                                     <th class="text-end">Settled</th>
-                                    <th class="text-end">Due</th>
+                                    <th class="text-end">Amount Due</th>
                                     <th>Due Date</th>
                                     <th class="text-end">Days Due</th>
                                     <th>Payment Date</th>
@@ -690,7 +690,10 @@
                             </thead>
                             <tbody>
                                 <t t-if="o.all_vendor_bills">
+                                    <t t-set="analytic_account_id" t-value="str(o.project_id.analytic_account_id.id)"/>
                                     <tr t-foreach="o.all_vendor_bills" t-as="bill" t-att-class="'table-warning fw-bold' if o.selected_account_move_id and bill.id == o.selected_account_move_id.id else ''">
+                                        <!-- Pre-calculate amount_for_project for bills without project -->
+                                        <t t-set="amount_for_project" t-value="0.0 if bill.wilco_project_id else sum([line.price_total for line in bill.invoice_line_ids if line.analytic_distribution and analytic_account_id in line.analytic_distribution])"/>
                                         <td><span t-esc="bill.invoice_date.strftime('%Y-%m-%d') if bill.invoice_date else ''"/></td>
                                         <td>
                                             <t t-if="o.selected_account_move_id and bill.id == o.selected_account_move_id.id">
@@ -713,16 +716,36 @@
                                         </td>
                                         <td><span t-esc="bill.invoice_payment_term_id.name if bill.invoice_payment_term_id else ''"/></td>
                                         <td class="text-end">
-                                            <span t-esc="bill.amount_total" 
-                                                  t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            <t t-if="bill.wilco_project_id">
+                                                <span t-esc="bill.amount_total" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            </t>
+                                            <t t-else="">
+                                                <span t-esc="amount_for_project" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            </t>
                                         </td>
                                         <td class="text-end">
-                                            <span t-esc="bill.wilco_amount_settled_total" 
-                                                  t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            <t t-if="bill.wilco_project_id">
+                                                <span t-esc="bill.wilco_amount_settled_total" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            </t>
+                                            <t t-else="">
+                                                <!-- If bill is paid, settled = amount_for_project; otherwise = 0 -->
+                                                <span t-esc="amount_for_project if bill.payment_state == 'paid' else 0.0" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            </t>
                                         </td>
                                         <td class="text-end">
-                                            <span t-esc="bill.amount_residual" 
-                                                  t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            <t t-if="bill.wilco_project_id">
+                                                <span t-esc="bill.amount_residual" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            </t>
+                                            <t t-else="">
+                                                <!-- If bill is not paid, due = amount_for_project; otherwise = 0 -->
+                                                <span t-esc="amount_for_project if bill.payment_state != 'paid' else 0.0" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': bill.currency_id}"/>
+                                            </t>
                                         </td>
                                         <td><span t-out="bill.invoice_date_due.strftime('%Y-%m-%d') if bill.invoice_date_due else ''"/></td>
                                         <td class="text-end" t-att-style="'color: red; font-weight: bold;' if bill.wilco_days_due &lt; 0 else ('color: orange; font-weight: bold;' if bill.wilco_days_due &gt;= 0 and bill.wilco_days_due &lt;= 7 else '')">
@@ -743,18 +766,157 @@
                                     <tr>
                                         <td colspan="7"><strong>Total</strong></td>
                                         <td class="text-end">
-                                            <strong><span t-esc="sum(o.all_vendor_bills.mapped('amount_total'))" 
-                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                            <strong>
+                                                <t t-set="analytic_account_id" t-value="str(o.project_id.analytic_account_id.id)"/>
+                                                <t t-set="total_amount" t-value="0.0"/>
+                                                <t t-foreach="o.all_vendor_bills" t-as="bill">
+                                                    <t t-if="bill.wilco_project_id">
+                                                        <t t-set="total_amount" t-value="total_amount + bill.amount_total"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-set="bill_amount" t-value="sum([line.price_total for line in bill.invoice_line_ids if line.analytic_distribution and analytic_account_id in line.analytic_distribution])"/>
+                                                        <t t-set="total_amount" t-value="total_amount + bill_amount"/>
+                                                    </t>
+                                                </t>
+                                                <span t-esc="total_amount" 
+                                                     t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                            </strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-esc="sum(o.all_vendor_bills.mapped('wilco_amount_settled_total'))" 
-                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                            <strong>
+                                                <t t-set="total_settled" t-value="0.0"/>
+                                                <t t-foreach="o.all_vendor_bills" t-as="bill">
+                                                    <t t-if="bill.wilco_project_id">
+                                                        <t t-set="total_settled" t-value="total_settled + bill.wilco_amount_settled_total"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <!-- If bill is paid, add amount_for_project to settled; otherwise add 0 -->
+                                                        <t t-set="bill_amount" t-value="sum([line.price_total for line in bill.invoice_line_ids if line.analytic_distribution and analytic_account_id in line.analytic_distribution])"/>
+                                                        <t t-set="settled_amount" t-value="bill_amount if bill.payment_state == 'paid' else 0.0"/>
+                                                        <t t-set="total_settled" t-value="total_settled + settled_amount"/>
+                                                    </t>
+                                                </t>
+                                                <span t-esc="total_settled" 
+                                                     t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                            </strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-esc="sum(o.all_vendor_bills.mapped('amount_residual'))" 
-                                                         t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
+                                            <strong>
+                                                <t t-set="total_due" t-value="0.0"/>
+                                                <t t-foreach="o.all_vendor_bills" t-as="bill">
+                                                    <t t-if="bill.wilco_project_id">
+                                                        <t t-set="total_due" t-value="total_due + bill.amount_residual"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <!-- If bill is not paid, add amount_for_project to due; otherwise add 0 -->
+                                                        <t t-set="bill_amount" t-value="sum([line.price_total for line in bill.invoice_line_ids if line.analytic_distribution and analytic_account_id in line.analytic_distribution])"/>
+                                                        <t t-set="due_amount" t-value="bill_amount if bill.payment_state != 'paid' else 0.0"/>
+                                                        <t t-set="total_due" t-value="total_due + due_amount"/>
+                                                    </t>
+                                                </t>
+                                                <span t-esc="total_due" 
+                                                     t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                            </strong>
                                         </td>
                                         <td colspan="4"></td>
+                                    </tr>
+                                </tfoot>
+                            </t>
+                        </table>
+                        </t>
+
+                        <!-- General Journal Entries Section -->
+                        <t t-if="o.show_general_journal">
+                        <h4 class="mt-5 mb-3 text-primary">General Journal Entries</h4>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Journal</th>
+                                    <th>Move #</th>
+                                    <th>Reference</th>
+                                    <th>Account</th>
+                                    <th>Partner</th>
+                                    <th class="text-end">Debit</th>
+                                    <th class="text-end">Credit</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="o.manual_journal_entries">
+                                    <t t-set="analytic_account_id" t-value="str(o.project_id.analytic_account_id.id)"/>
+                                    <t t-foreach="o.manual_journal_entries" t-as="journal_move">
+                                        <t t-foreach="journal_move.line_ids" t-as="line">
+                                            <!-- Only show lines that relate to this project -->
+                                            <t t-if="line.analytic_distribution and analytic_account_id in line.analytic_distribution">
+                                                <tr>
+                                                    <td><span t-esc="journal_move.date.strftime('%Y-%m-%d') if journal_move.date else ''"/></td>
+                                                    <td><span t-esc="journal_move.journal_id.name"/></td>
+                                                    <td><span t-esc="journal_move.name"/></td>
+                                                    <td><span t-esc="journal_move.ref or ''"/></td>
+                                                    <td><span t-esc="line.account_id.code"/> - <span t-esc="line.account_id.name"/></td>
+                                                    <td><span t-esc="line.partner_id.name if line.partner_id else ''"/></td>
+                                                    <td class="text-end">
+                                                        <span t-esc="line.debit if line.debit else 0.0" 
+                                                              t-options="{'widget': 'monetary', 'display_currency': journal_move.currency_id}"/>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <span t-esc="line.credit if line.credit else 0.0" 
+                                                              t-options="{'widget': 'monetary', 'display_currency': journal_move.currency_id}"/>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <span t-esc="(line.debit - line.credit) if (line.debit - line.credit) != 0 else 0.0" 
+                                                              t-options="{'widget': 'monetary', 'display_currency': journal_move.currency_id}"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </t>
+                                    </t>
+                                </t>
+                                <t t-else="">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">No manual journal entries found for this project</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <t t-if="o.manual_journal_entries">
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="6"><strong>Total</strong></td>
+                                        <td class="text-end">
+                                            <strong>
+                                                <t t-set="total_debit" t-value="0.0"/>
+                                                <t t-foreach="o.manual_journal_entries" t-as="journal_move">
+                                                    <t t-foreach="journal_move.line_ids" t-as="line">
+                                                        <t t-if="line.analytic_distribution and analytic_account_id in line.analytic_distribution">
+                                                            <t t-set="total_debit" t-value="total_debit + line.debit"/>
+                                                        </t>
+                                                    </t>
+                                                </t>
+                                                <span t-esc="total_debit" 
+                                                     t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                            </strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>
+                                                <t t-set="total_credit" t-value="0.0"/>
+                                                <t t-foreach="o.manual_journal_entries" t-as="journal_move">
+                                                    <t t-foreach="journal_move.line_ids" t-as="line">
+                                                        <t t-if="line.analytic_distribution and analytic_account_id in line.analytic_distribution">
+                                                            <t t-set="total_credit" t-value="total_credit + line.credit"/>
+                                                        </t>
+                                                    </t>
+                                                </t>
+                                                <span t-esc="total_credit" 
+                                                     t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                            </strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>
+                                                <span t-esc="total_debit - total_credit" 
+                                                     t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                            </strong>
+                                        </td>
                                     </tr>
                                 </tfoot>
                             </t>
@@ -766,3 +928,4 @@
         </t>
     </template>
 </odoo>
+

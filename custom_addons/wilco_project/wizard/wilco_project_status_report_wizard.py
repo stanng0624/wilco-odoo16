@@ -55,13 +55,26 @@ class WilcoProjectStatusReportWizard(models.TransientModel):
         help='Show the Vendor Bills section in the report'
     )
     
+    show_general_journal = fields.Boolean(
+        string='Show General Journal',
+        default=False,
+        help='Show manually entered journal entries (excluding those from invoices/bills/payments)'
+    )
+    
     all_vendor_bills = fields.Many2many(
         'account.move',
         string='All Vendor Bills',
         compute='_compute_all_vendor_bills',
         help='All vendor bills related to this project (direct or via analytic lines)'
     )
-
+    
+    manual_journal_entries = fields.Many2many(
+        'account.move',
+        string='Manual Journal Entries',
+        compute='_compute_manual_journal_entries',
+        help='Manually entered journal entries for this project'
+    )
+    
     @api.depends('project_id', 'show_vendor_bill')
     def _compute_all_vendor_bills(self):
         """
@@ -101,6 +114,45 @@ class WilcoProjectStatusReportWizard(models.TransientModel):
             
             # Combine both recordsets (union automatically removes duplicates)
             wizard.all_vendor_bills = bills_with_project | bills_with_analytic
+
+    @api.depends('project_id', 'show_general_journal')
+    def _compute_manual_journal_entries(self):
+        """
+        Compute manual journal entries for the project.
+        Only includes moves that are:
+        1. Related to the project (either direct project_id or via analytic distribution)
+        2. NOT created from invoices, bills, or payments (move_type not in invoice/refund types and not payment moves)
+        3. Posted state only
+        """
+        for wizard in self:
+            if not wizard.project_id or not wizard.show_general_journal:
+                wizard.manual_journal_entries = self.env['account.move']
+                continue
+            
+            analytic_account_str = str(wizard.project_id.analytic_account_id.id)
+            
+            # Get all general journal moves (move_type = 'entry') posted
+            # These are manually entered entries, not created from invoices/bills/payments
+            general_moves = self.env['account.move'].search([
+                ('move_type', '=', 'entry'),
+                ('state', '=', 'posted'),
+                ('journal_id.type', '=', 'general')  # Explicitly filter for general journals
+            ], order='date desc, name desc')
+            
+            manual_entries = self.env['account.move']
+            
+            for move in general_moves:
+                # Check if move has direct project_id
+                if move.wilco_project_id and move.wilco_project_id.id == wizard.project_id.id:
+                    manual_entries |= move
+                # Check if move has lines with matching analytic distribution
+                else:
+                    for line in move.line_ids:
+                        if line.analytic_distribution and analytic_account_str in line.analytic_distribution:
+                            manual_entries |= move
+                            break  # Found a matching line, no need to check more
+            
+            wizard.manual_journal_entries = manual_entries
 
     def wilco_action_print_report(self):
         self.ensure_one()
