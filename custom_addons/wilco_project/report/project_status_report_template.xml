@@ -4,6 +4,7 @@
         <t t-call="web.html_container">
             <t t-set="data_report_margin_top" t-value="20"/>
             <t t-set="data_report_header_spacing" t-value="15"/>
+            <t t-set="data_report_dpi" t-value="110"/>
             <t t-call="web.internal_layout">
                 <div class="page">
                     <!-- Report Title -->
@@ -96,12 +97,12 @@
                         <t t-set="header_estimated_gp_percent" t-value="((header_total_contract_sum - header_total_budget_cost) / header_total_contract_sum * 100) if header_total_contract_sum != 0 else 0"/>
                         <t t-set="header_actual_gp_percent" t-value="(header_total_gross_profit / header_total_revenue * 100) if header_total_revenue != 0 else 0"/>
                         <t t-set="header_actual_np_percent" t-value="(header_total_net_profit / header_total_revenue * 100) if header_total_revenue != 0 else 0"/>
-                        <t t-set="header_invoices" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', '=', 'out_invoice'), ('state', 'not in', ['draft', 'cancel'])])"/>
+                        <t t-set="header_invoices" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', 'in', ['out_invoice', 'out_refund']), ('state', 'in', ['posted'])])"/>
                         <!-- Get vendor bills with direct project_id link (excluding expense report bills) -->
-                        <t t-set="header_vendor_bills_with_project" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', 'in', ['in_invoice', 'in_refund']), ('state', 'not in', ['draft', 'cancel']), ('expense_sheet_id', '=', False)])"/>
+                        <t t-set="header_vendor_bills_with_project" t-value="o.env['account.move'].search([('wilco_project_id', '=', o.project_id.id), ('move_type', 'in', ['in_invoice', 'in_refund']), ('state', 'in', ['posted']), ('expense_sheet_id', '=', False)])"/>
                         <!-- Get vendor bills without project_id but with matching analytic distribution (excluding expense report bills) -->
                         <t t-set="header_analytic_account_str" t-value="str(o.project_id.analytic_account_id.id) if o.project_id.analytic_account_id else ''"/>
-                        <t t-set="header_vendor_bills_no_project" t-value="o.env['account.move'].search([('wilco_project_id', '=', False), ('move_type', 'in', ['in_invoice', 'in_refund']), ('state', 'not in', ['draft', 'cancel']), ('expense_sheet_id', '=', False)])"/>
+                        <t t-set="header_vendor_bills_no_project" t-value="o.env['account.move'].search([('wilco_project_id', '=', False), ('move_type', 'in', ['in_invoice', 'in_refund']), ('state', 'in', ['posted']), ('expense_sheet_id', '=', False)])"/>
                         <!-- Filter bills that have at least one line with matching analytic distribution -->
                         <t t-set="header_vendor_bills_with_analytic" t-value="o.env['account.move']"/>
                         <t t-foreach="header_vendor_bills_no_project" t-as="bill">

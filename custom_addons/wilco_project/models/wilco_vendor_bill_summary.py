@@ -3,7 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
-class WilcoVendorBillSummary(models.Model):
+class WilcoVendorBillSummary(models.TransientModel):
     _name = 'wilco.vendor.bill.summary'
     _description = 'Vendor Bill Summary Report'
     _order = 'is_opening desc, year asc, month asc, is_breakdown asc, bill_date asc, id asc'

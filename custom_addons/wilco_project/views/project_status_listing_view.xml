@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Project Status Listing Report View -->
+    
+    <!-- Tree View: Project Status Listing -->
+    <record id="wilco_view_project_status_listing_tree" model="ir.ui.view">
+        <field name="name">project.project.tree.status_listing.wilco_project</field>
+        <field name="model">project.project</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <tree expand="1" string="Project Status Listing" create="false" edit="false" delete="false">
+                <!-- Project Identification Section -->
+                <field name="name" string="Project #" width="80"/>
+                <field name="wilco_project_name" string="Project Name" width="150"/>
+                <field name="user_id" string="Manager" width="100"/>
+                <field name="stage_id" string="Stage" width="100"/>
+                
+                <!-- Project Timeline Section -->
+                <field name="wilco_date_award" string="Award Date" width="100"/>
+                <field name="date_start" string="Start Date" width="100"/>
+                <field name="date" string="End Date" width="100"/>
+                
+                <!-- Contract & Revenue Section -->
+                <field name="wilco_total_contract_sum" string="Contract Sum" width="120"/>
+                <field name="wilco_total_invoice_amount" string="Invoice Amount" width="120"/>
+                <field name="wilco_invoice_percent" string="Invoice %" width="80"/>
+                
+                <!-- Budget & Costs Section -->
+                <field name="wilco_total_budget_cost" string="Budget Cost" width="120"/>
+                <field name="wilco_total_vendor_bill_amount" string="Vendor Bill" width="120"/>
+                <field name="wilco_vendor_bill_percent" string="Bill %" width="80"/>
+                <field name="wilco_total_cost_expense" string="Cost &amp; Expense" width="120"/>
+                <field name="wilco_cost_expense_percent" string="CE %" width="80"/>
+                
+                <!-- Financial Performance Section -->
+                <field name="wilco_estimated_gp_percent" string="Est. GP%" width="80"/>
+                <field name="wilco_project_pnl" string="Project P&amp;L" width="120"/>
+                <field name="wilco_actual_np_percent" string="NP%" width="80"/>
+                
+                <!-- Cash Flow Section -->
+                <field name="wilco_actual_cash_flow" string="Cash Flow" width="120"/>
+                <field name="wilco_cash_flow_percent" string="CF %" width="80"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action: My Project Status Listing (Current User's Projects) -->
+    <record id="wilco_action_my_project_status_listing" model="ir.actions.act_window">
+        <field name="name">My Project Status Listing</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'tree', 'view_id': ref('wilco_view_project_status_listing_tree')})]"/>
+        <field name="domain">[('active', '=', True)]</field>
+        <field name="context">{'search_default_own_projects': 1, 'search_default_my_projects': 1, 'search_default_open_project': 1, 'search_default_groupby_stage': 1}}</field>
+        <field name="help">Project status listing for projects you manage</field>
+    </record>
+
+    <!-- Action: Project Status Listing - All Projects -->
+    <record id="wilco_action_project_status_listing_all" model="ir.actions.act_window">
+        <field name="name">Project Status Listing - All Projects</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'tree', 'view_id': ref('wilco_view_project_status_listing_tree')})]"/>
+        <field name="domain">[('active', '=', True)]</field>
+        <field name="context">{'search_default_Manager': 1, 'search_default_open_project': 1}</field>
+        <field name="help">Comprehensive project status listing with financial metrics for all projects</field>
+    </record>
+
+    <!-- Parent Menu Item: Project Status Listing (Submenu Container) -->
+    <menuitem
+        id="wilco_menu_project_status_listing"
+        name="Project Status Listing"
+        parent="project.menu_main_pm"
+        sequence="20"/>
+
+    <!-- Submenu Item: My Project Status Listing -->
+    <menuitem
+        id="wilco_menu_my_project_status_listing"
+        name="My Project Status Listing"
+        parent="wilco_menu_project_status_listing"
+        action="wilco_action_my_project_status_listing"
+        sequence="10"/>
+
+    <!-- Submenu Item: Project Status Listing - All Projects -->
+    <menuitem
+        id="wilco_menu_project_status_listing_all"
+        name="Project Status Listing - All Projects"
+        parent="wilco_menu_project_status_listing"
+        action="wilco_action_project_status_listing_all"
+        sequence="20"/>
+</odoo>

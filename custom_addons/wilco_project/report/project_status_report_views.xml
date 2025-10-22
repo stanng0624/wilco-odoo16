@@ -7,7 +7,7 @@
         <field name="report_type">qweb-html</field>
         <field name="report_name">wilco_project.report_project_status_document</field>
         <field name="report_file">wilco_project.report_project_status_document</field>
-        <field name="print_report_name">'Project Status - %s' % (object.project_id.name)</field>
+        <field name="print_report_name">object.report_print_name()</field>
         <field name="binding_model_id" ref="model_wilco_project_status_report_wizard"/>
         <field name="binding_type">report</field>
     </record>

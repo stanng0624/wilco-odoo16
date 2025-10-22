@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Report Definition for Project Status Listing Report -->
+    <record id="action_report_project_status_listing" model="ir.actions.report">
+        <field name="name">Project Status Listing Report</field>
+        <field name="model">project.project</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">wilco_project.report_project_status_listing_document</field>
+        <field name="report_file">wilco_project.report_project_status_listing_document</field>
+        <field name="print_report_name">object.wilco_project_status_report_listing_print_report_name()</field>
+        <field name="binding_model_id" ref="project.model_project_project"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="wilco_project.wilco_paperformat_landscape"/>
+    </record>
+
+    <!-- Menu Item under Project > Reporting (below Project Status Report) -->
+    <menuitem id="wilco_menu_project_report_status_listing"
+              name="Project Status Listing Report"
+              action="wilco_project.action_report_project_status_listing"
+              parent="project.menu_project_report"
+              sequence="110"/>
+</odoo>

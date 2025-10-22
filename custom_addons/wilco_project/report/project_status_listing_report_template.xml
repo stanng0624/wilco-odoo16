@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_project_status_listing_document">
+        <t t-call="web.html_container">
+            <t t-set="data_report_margin_top" t-value="20"/>
+            <t t-set="data_report_header_spacing" t-value="15"/>
+            <t t-call="web.internal_layout">
+                <div class="page">
+                    <!-- Fetch all projects if docs is empty or only has one item that's the model -->
+                    <t t-set="projects_to_display" t-value="docs if docs and len(docs) > 0 else env['project.project'].search([])"/>
+                    
+                    <!-- Report Title -->
+                    <h3 class="text-center mb-4">Project Status Listing Report</h3>
+                    
+                    <!-- Report Metadata -->
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <strong>Report Date:</strong> <span t-out="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/>
+                        </div>
+                    </div>
+
+                    <!-- Project Status Listing Table -->
+                    <table class="table table-sm table-bordered o_main_table" style="font-size: 9pt;">
+                        <thead class="table-light">
+                            <tr>
+                                <!-- Project Information Columns -->
+                                <th class="text-left">Project #</th>
+                                <th class="col-2 text-left">Project Name</th>
+                                <th class="text-left">Manager</th>
+                                <th class="text-left">Stage</th>
+                                <th class="text-center">Award Date</th>
+                                <th class="text-center">Start Date</th>
+                                <th class="text-center">End Date</th>
+                                
+                                <!-- Contract & Revenue Columns -->
+                                <th class="text-right">Contract Sum</th>
+                                <th class="text-right">Invoice Amt</th>
+                                <th class="text-right">Invoice %</th>
+                                
+                                <!-- Budget & Costs Columns -->
+                                <th class="text-right">Budget Cost</th>
+                                <th class="text-right">Vendor Bill</th>
+                                <th class="text-right">Bill %</th>
+                                <th class="text-right">Cost &amp; Exp</th>
+                                <th class="text-right">CE %</th>
+                                
+                                <!-- Performance Columns -->
+                                <th class="text-right">Est. GP%</th>
+                                <th class="text-right">Project P&amp;L</th>
+                                <th class="text-right">NP%</th>
+                                
+                                <!-- Cash Flow Columns -->
+                                <th class="text-right">Cash Flow</th>
+                                <th class="text-right">CF %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="projects_to_display" t-as="project">
+                                <!-- Financial Data Calculations for Each Project -->
+                                <t t-set="sales_orders" t-value="env['sale.order'].search([('wilco_project_id', '=', project.id), ('state', 'in', ['sale', 'done'])])"/>
+                                <t t-set="analytic_lines" t-value="env['account.analytic.line'].search([('account_id', '=', project.analytic_account_id.id)])"/>
+                                
+                                <!-- Sales & Budget Totals -->
+                                <t t-set="total_contract_sum" t-value="sum(sales_orders.mapped('amount_total'))"/>
+                                <t t-set="total_budget_cost" t-value="sum(sales_orders.mapped('wilco_amount_budget_cost_total'))"/>
+                                
+                                <!-- Invoicing -->
+                                <t t-set="invoices" t-value="env['account.move'].search([('wilco_project_id', '=', project.id), ('move_type', 'in', ['out_invoice', 'out_refund']), ('state', 'in', ['posted'])])"/>
+                                <t t-set="total_invoice_amount" t-value="sum(invoices.mapped('amount_total'))"/>
+                                <t t-set="invoice_percent" t-value="(total_invoice_amount / total_contract_sum * 100) if total_contract_sum != 0 else 0"/>
+                                
+                                <!-- Vendor Bills (complex logic handling both direct project link and analytic distribution) -->
+                                <t t-set="vendor_bills_with_project" t-value="env['account.move'].search([('wilco_project_id', '=', project.id), ('move_type', 'in', ['in_invoice', 'in_refund']), ('state', 'in', ['posted']), ('expense_sheet_id', '=', False)])"/>
+                                <t t-set="analytic_account_str" t-value="str(project.analytic_account_id.id) if project.analytic_account_id else ''"/>
+                                <t t-set="vendor_bills_no_project" t-value="env['account.move'].search([('wilco_project_id', '=', False), ('move_type', 'in', ['in_invoice', 'in_refund']), ('state', 'in', ['posted']), ('expense_sheet_id', '=', False)])"/>
+                                <t t-set="vendor_bills_with_analytic" t-value="env['account.move']"/>
+                                <t t-foreach="vendor_bills_no_project" t-as="bill">
+                                    <t t-if="any(line.analytic_distribution and analytic_account_str in line.analytic_distribution for line in bill.invoice_line_ids)">
+                                        <t t-set="vendor_bills_with_analytic" t-value="vendor_bills_with_analytic | bill"/>
+                                    </t>
+                                </t>
+                                <t t-set="vendor_bills" t-value="vendor_bills_with_project | vendor_bills_with_analytic"/>
+                                
+                                <!-- Calculate total vendor bill amount -->
+                                <t t-set="total_vendor_bill_amount" t-value="0.0"/>
+                                <t t-foreach="vendor_bills" t-as="bill">
+                                    <t t-if="bill.wilco_project_id">
+                                        <t t-set="total_vendor_bill_amount" t-value="total_vendor_bill_amount + bill.amount_total"/>
+                                    </t>
+                                    <t t-else="">
+                                        <t t-set="bill_amount_for_project" t-value="sum([line.price_total for line in bill.invoice_line_ids if line.analytic_distribution and analytic_account_str in line.analytic_distribution])"/>
+                                        <t t-set="total_vendor_bill_amount" t-value="total_vendor_bill_amount + bill_amount_for_project"/>
+                                    </t>
+                                </t>
+                                
+                                <!-- Cost & Expense Percentages -->
+                                <t t-set="total_cost_expense" t-value="sum([line.wilco_amount_cost + line.wilco_amount_expense for line in analytic_lines])"/>
+                                <t t-set="cost_expense_percent" t-value="(total_cost_expense / total_budget_cost * 100) if total_budget_cost != 0 else 0"/>
+                                <t t-set="vendor_bill_percent" t-value="(total_vendor_bill_amount / total_budget_cost * 100) if total_budget_cost != 0 else 0"/>
+                                
+                                <!-- Profit & Performance Metrics -->
+                                <t t-set="total_net_profit" t-value="sum(analytic_lines.mapped('wilco_amount_net_profit'))"/>
+                                <t t-set="total_revenue" t-value="sum(analytic_lines.mapped('wilco_amount_revenue'))"/>
+                                <t t-set="estimated_gp_percent" t-value="((total_contract_sum - total_budget_cost) / total_contract_sum * 100) if total_contract_sum != 0 else 0"/>
+                                <t t-set="actual_np_percent" t-value="(total_net_profit / total_revenue * 100) if total_revenue != 0 else 0"/>
+                                
+                                <!-- Cash Flow Metrics -->
+                                <t t-set="total_net_payment" t-value="sum(analytic_lines.mapped('wilco_amount_payment_display'))"/>
+                                <t t-set="cash_flow_percent" t-value="(total_net_payment / total_invoice_amount * 100) if total_invoice_amount != 0 else 0"/>
+                                
+                                <!-- Project Row -->
+                                <tr>
+                                    <!-- Project Information -->
+                                    <td class="text-left">
+                                        <span t-esc="project.name"/>
+                                    </td>
+                                    <td class="text-left">
+                                        <span t-esc="project.wilco_project_name"/>
+                                    </td>
+                                    <td class="text-left">
+                                        <span t-esc="project.user_id.name if project.user_id else ''"/>
+                                    </td>
+                                    <td class="text-left">
+                                        <span t-esc="project.stage_id.name if project.stage_id else ''"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-if="project.wilco_date_award" t-esc="project.wilco_date_award"/>
+                                        <span t-else="">-</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-if="project.date_start" t-esc="project.date_start"/>
+                                        <span t-else="">-</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-if="project.date" t-esc="project.date"/>
+                                        <span t-else="">-</span>
+                                    </td>
+                                    
+                                    <!-- Contract & Revenue -->
+                                    <td class="text-right">
+                                        <span t-out="total_contract_sum" t-options="{'widget': 'monetary', 'display_currency': project.company_id.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="total_invoice_amount" t-options="{'widget': 'monetary', 'display_currency': project.company_id.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="'%.2f' % invoice_percent"/>%
+                                    </td>
+                                    
+                                    <!-- Budget & Costs -->
+                                    <td class="text-right">
+                                        <span t-out="total_budget_cost" t-options="{'widget': 'monetary', 'display_currency': project.company_id.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="total_vendor_bill_amount" t-options="{'widget': 'monetary', 'display_currency': project.company_id.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="'%.2f' % vendor_bill_percent"/>%
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="total_cost_expense" t-options="{'widget': 'monetary', 'display_currency': project.company_id.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="'%.2f' % cost_expense_percent"/>%
+                                    </td>
+                                    
+                                    <!-- Performance Metrics -->
+                                    <td class="text-right">
+                                        <span t-out="'%.2f' % estimated_gp_percent"/>%
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="total_net_profit" t-options="{'widget': 'monetary', 'display_currency': project.company_id.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="'%.2f' % actual_np_percent"/>%
+                                    </td>
+                                    
+                                    <!-- Cash Flow -->
+                                    <td class="text-right">
+                                        <span t-out="total_net_payment" t-options="{'widget': 'monetary', 'display_currency': project.company_id.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-out="'%.2f' % cash_flow_percent"/>%
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

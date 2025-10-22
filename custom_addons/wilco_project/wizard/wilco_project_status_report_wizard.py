@@ -222,3 +222,16 @@ class WilcoProjectStatusReportWizard(models.TransientModel):
 
         # Return report action
         return self.env.ref('wilco_project.action_report_project_status').report_action(self)
+
+    def report_print_name(self):
+        """
+        Generate the report print name with timestamp suffix in format: _YYYYMMDD_HHMMSS
+        Returns: 'Project Status - {project_name}_{YYYYMMDD_HHMMSS}'
+        """
+        from datetime import datetime
+        self.ensure_one()
+        
+        project_name = self.project_id.name or 'Project'
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        return f'Project Status - {project_name}_{timestamp}'

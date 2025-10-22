@@ -19,6 +19,60 @@ class Project(models.Model):
     wilco_project_name = fields.Char(string='Project Name', translate=True, index=True)
     wilco_date_award = fields.Date(string='Award Date')
 
+    # Computed fields for Project Status Listing Report
+    wilco_total_contract_sum = fields.Monetary(
+        string='Total Contract Sum',
+        compute='_wilco_compute_project_financials',
+        help='Sum of confirmed sales orders')
+    wilco_total_invoice_amount = fields.Monetary(
+        string='Total Invoice Amount',
+        compute='_wilco_compute_project_financials',
+        help='Sum of customer invoices')
+    wilco_invoice_percent = fields.Float(
+        string='Invoice %',
+        compute='_wilco_compute_project_financials',
+        help='Invoice amount as percentage of contract sum')
+    wilco_total_budget_cost = fields.Monetary(
+        string='Total Budget Cost',
+        compute='_wilco_compute_project_financials',
+        help='Sum of budgeted costs from sales orders')
+    wilco_total_vendor_bill_amount = fields.Monetary(
+        string='Total Vendor Bill Amount',
+        compute='_wilco_compute_project_financials',
+        help='Sum of vendor bills for project')
+    wilco_vendor_bill_percent = fields.Float(
+        string='Vendor Bill %',
+        compute='_wilco_compute_project_financials',
+        help='Vendor bill amount as percentage of budget cost')
+    wilco_total_cost_expense = fields.Monetary(
+        string='Total Cost & Expense',
+        compute='_wilco_compute_project_financials',
+        help='Total cost and expense from analytic lines')
+    wilco_cost_expense_percent = fields.Float(
+        string='Cost & Expense %',
+        compute='_wilco_compute_project_financials',
+        help='Cost and expense as percentage of budget cost')
+    wilco_estimated_gp_percent = fields.Float(
+        string='Estimated GP%',
+        compute='_wilco_compute_project_financials',
+        help='Estimated gross profit percentage')
+    wilco_project_pnl = fields.Monetary(
+        string='Project P&L',
+        compute='_wilco_compute_project_financials',
+        help='Net profit from analytic distribution')
+    wilco_actual_np_percent = fields.Float(
+        string='Actual NP%',
+        compute='_wilco_compute_project_financials',
+        help='Actual net profit percentage')
+    wilco_actual_cash_flow = fields.Monetary(
+        string='Actual Cash Flow',
+        compute='_wilco_compute_project_financials',
+        help='Net payment from analytic distribution')
+    wilco_cash_flow_percent = fields.Float(
+        string='Cash Flow %',
+        compute='_wilco_compute_project_financials',
+        help='Cash flow as percentage of invoice amount')
+
     @api.constrains('name')
     def _wilco_check_name(self):
         for project in self:
@@ -97,6 +151,123 @@ class Project(models.Model):
 
         return result
 
+    @api.depends('partner_id', 'analytic_account_id')
+    def _wilco_compute_project_financials(self):
+        """
+        Compute financial metrics for project status listing report.
+        These are calculated on-demand (not stored) to ensure real-time accuracy.
+        """
+        for project in self:
+            # Get sales orders for this project
+            sale_orders = self.env['sale.order'].search([
+                ('wilco_project_id', '=', project.id),
+                ('state', 'in', ['sale', 'done'])
+            ])
+
+            # Get customer invoices
+            customer_invoices = self.env['account.move'].search([
+                ('wilco_project_id', '=', project.id),
+                ('move_type', 'in', ['out_invoice', 'out_refund']),
+                ('state', 'in', ['posted'])
+            ])
+
+            # Get analytic lines for this project
+            analytic_lines = self.env['account.analytic.line'].search([
+                ('account_id', '=', project.analytic_account_id.id)
+            ]) if project.analytic_account_id else self.env['account.analytic.line']
+
+            # Get vendor bills (both direct link and via analytic distribution)
+            vendor_bills_with_project = self.env['account.move'].search([
+                ('wilco_project_id', '=', project.id),
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('state', 'in', ['posted']),
+                ('expense_sheet_id', '=', False)
+            ])
+
+            vendor_bills_no_project = self.env['account.move'].search([
+                ('wilco_project_id', '=', False),
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('state', 'in', ['posted']),
+                ('expense_sheet_id', '=', False)
+            ])
+
+            # Filter vendor bills with matching analytic distribution
+            vendor_bills_with_analytic = self.env['account.move']
+            if project.analytic_account_id:
+                analytic_account_str = str(project.analytic_account_id.id)
+                for bill in vendor_bills_no_project:
+                    if any(line.analytic_distribution and analytic_account_str in line.analytic_distribution 
+                           for line in bill.invoice_line_ids):
+                        vendor_bills_with_analytic |= bill
+
+            vendor_bills = vendor_bills_with_project | vendor_bills_with_analytic
+
+            # Calculate totals
+            project.wilco_total_contract_sum = sum(sale_orders.mapped('amount_total'))
+            project.wilco_total_invoice_amount = sum(customer_invoices.mapped('amount_total'))
+            project.wilco_total_budget_cost = sum(sale_orders.mapped('wilco_amount_budget_cost_total'))
+
+            # Calculate percentages
+            project.wilco_invoice_percent = (
+                (project.wilco_total_invoice_amount / project.wilco_total_contract_sum * 100)
+                if project.wilco_total_contract_sum != 0 else 0.0
+            )
+
+            # Calculate vendor bill amount (accounting for partial project bills)
+            total_vendor_bill_amount = 0.0
+            if project.analytic_account_id:
+                analytic_account_str = str(project.analytic_account_id.id)
+                for bill in vendor_bills:
+                    if bill.wilco_project_id:
+                        # Bill directly linked to project
+                        total_vendor_bill_amount += bill.amount_total
+                    else:
+                        # Bill with analytic distribution - only count project portion
+                        for line in bill.invoice_line_ids:
+                            if line.analytic_distribution and analytic_account_str in line.analytic_distribution:
+                                total_vendor_bill_amount += line.price_total
+
+            project.wilco_total_vendor_bill_amount = total_vendor_bill_amount
+            project.wilco_vendor_bill_percent = (
+                (project.wilco_total_vendor_bill_amount / project.wilco_total_budget_cost * 100)
+                if project.wilco_total_budget_cost != 0 else 0.0
+            )
+
+            # Calculate cost and expense from analytic lines
+            total_cost_expense = sum(
+                (line.wilco_amount_cost or 0.0) + (line.wilco_amount_expense or 0.0)
+                for line in analytic_lines
+            )
+            project.wilco_total_cost_expense = total_cost_expense
+            project.wilco_cost_expense_percent = (
+                (total_cost_expense / project.wilco_total_budget_cost * 100)
+                if project.wilco_total_budget_cost != 0 else 0.0
+            )
+
+            # Calculate profit metrics
+            project.wilco_estimated_gp_percent = (
+                ((project.wilco_total_contract_sum - project.wilco_total_budget_cost) / 
+                 project.wilco_total_contract_sum * 100)
+                if project.wilco_total_contract_sum != 0 else 0.0
+            )
+
+            total_net_profit = sum(analytic_lines.mapped('wilco_amount_net_profit'))
+            project.wilco_project_pnl = total_net_profit
+
+            total_revenue = sum(analytic_lines.mapped('wilco_amount_revenue'))
+            project.wilco_actual_np_percent = (
+                (total_net_profit / total_revenue * 100)
+                if total_revenue != 0 else 0.0
+            )
+
+            # Calculate cash flow
+            total_net_payment = sum(analytic_lines.mapped('wilco_amount_payment_display'))
+            project.wilco_actual_cash_flow = total_net_payment
+            project.wilco_cash_flow_percent = (
+                (total_net_payment / project.wilco_total_invoice_amount * 100)
+                if project.wilco_total_invoice_amount != 0 else 0.0
+            )
+
     def wilco_action_view_analytic_lines(self):
         self.ensure_one()
         return {
@@ -112,4 +283,17 @@ class Project(models.Model):
             # 'context': {'search_default_group_date': 1, 'default_account_id': self.analytic_account_id.id}
             'context': {'search_default_partner': 1, 'default_account_id': self.analytic_account_id.id}
         }
+
+    def wilco_project_status_report_listing_print_report_name(self):
+        """
+        Generate the project status listing report print name with timestamp suffix in format: _YYYYMMDD_HHMMSS
+        Returns: 'Project Status Listing - {project_name}_{YYYYMMDD_HHMMSS}'
+        """
+        from datetime import datetime
+        self.ensure_one()
+        
+        project_name = self.name or 'Project'
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        return f'Project Status Listing - {project_name}_{timestamp}'
 
