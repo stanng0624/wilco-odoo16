@@ -41,6 +41,13 @@ class AccountAnalyticAccountLine(models.Model):
     wilco_amount_net_profit = fields.Monetary(string='Net Profit', compute='_wilco_compute_amounts', store=True, readonly=True)
     wilco_net_profit_percent = fields.Float(string="Actual NP%", compute='_wilco_compute_amounts')
 
+    # Display fields for analytic items without project header
+    wilco_amount_payable_display = fields.Monetary(string='Payable (Display)', compute='_wilco_compute_display_amounts', readonly=True)
+    wilco_amount_receivable_display = fields.Monetary(string='Receivable (Display)', compute='_wilco_compute_display_amounts', readonly=True)
+    wilco_amount_payment_received_display = fields.Monetary(string='Cash In (Display)', compute='_wilco_compute_display_amounts', readonly=True)
+    wilco_amount_payment_issued_display = fields.Monetary(string='Cash Out (Display)', compute='_wilco_compute_display_amounts', readonly=True)
+    wilco_amount_payment_display = fields.Monetary(string='Actual Cash Flow (Display)', compute='_wilco_compute_display_amounts', readonly=True, help='Net payment display (payment received - payment issued) for lines without project header')
+
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
 
@@ -184,5 +191,75 @@ class AccountAnalyticAccountLine(models.Model):
                                      + self.wilco_amount_income \
                                      - self.wilco_amount_expense
         self.wilco_net_profit_percent = self.wilco_amount_net_profit / self.wilco_amount_revenue if self.wilco_amount_revenue != 0 else 0.0
+
+    def _wilco_compute_display_amounts(self):
+        """
+        Compute display amounts for analytic items without project header.
+        Delegates calculation logic to _wilco_calc_display_amounts.
+        """
+        for line in self:
+            line._wilco_calc_display_amounts()
+
+    def _wilco_calc_display_amounts(self):
+        """
+        Calculate display amounts for a single analytic line without project header.
+        
+        Logic:
+        1. If line is AP/AR/Payment, use the existing values
+        2. If line is revenue/cost/income/expense:
+           - If account.move has project_id: set to same values
+           - If account.move has NO project_id AND payment_state == 'paid':
+             * Revenue/Income → wilco_amount_payment_received_display
+             * Cost/Expense → wilco_amount_payment_issued_display
+           - If account.move has NO project_id AND payment_state != 'paid':
+             * Revenue/Income → wilco_amount_receivable_display
+             * Cost/Expense → wilco_amount_payable_display
+        3. wilco_amount_payment_display = received - issued
+        """
+        self.ensure_one()
+
+        # Initialize all display fields to 0
+        self.wilco_amount_payable_display = 0
+        self.wilco_amount_receivable_display = 0
+        self.wilco_amount_payment_received_display = 0
+        self.wilco_amount_payment_issued_display = 0
+        self.wilco_amount_payment_display = 0
+
+        # Check if move has project_id
+        account_move = self.move_line_id.move_id
+        move_has_project = bool(account_move.wilco_project_id)
+        is_paid = account_move.payment_state == 'paid'
+
+        # Case 1: AP/AR/Payment lines - use existing values
+        if move_has_project:
+            self.wilco_amount_receivable_display = self.wilco_amount_receivable
+            self.wilco_amount_payable_display = self.wilco_amount_payable
+            self.wilco_amount_payment_received_display = self.wilco_amount_payment_received
+            self.wilco_amount_payment_issued_display = self.wilco_amount_payment_issued
+            self.wilco_amount_payment_display = self.wilco_amount_payment
+        # Case 2: Revenue/Cost/Income/Expense lines
+        # Skip if account.move has project_id (set to 0 which is already done)
+        else:
+            # Sub-case: Payment state is 'paid'
+            if is_paid:
+                if self.wilco_is_revenue or self.wilco_is_income:
+                    self.wilco_amount_payment_received_display = self.wilco_amount_revenue + self.wilco_amount_income
+                if self.wilco_is_cost or self.wilco_is_expense:
+                    self.wilco_amount_payment_issued_display = self.wilco_amount_cost + self.wilco_amount_expense
+                
+                # Calculate net payment display
+                self.wilco_amount_payment_display = (
+                    self.wilco_amount_payment_received_display - 
+                    self.wilco_amount_payment_issued_display
+                )
+            # Sub-case: Payment state is not 'paid'
+            else:
+                if self.wilco_is_revenue or self.wilco_is_income:
+                    self.wilco_amount_receivable_display = self.wilco_amount_revenue + self.wilco_amount_income
+                if self.wilco_is_cost or self.wilco_is_expense:
+                    self.wilco_amount_payable_display = self.wilco_amount_cost + self.wilco_amount_expense
+
     
+                                     
+
                                      

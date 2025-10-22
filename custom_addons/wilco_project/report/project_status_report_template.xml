@@ -89,7 +89,7 @@
                         <t t-set="header_analytic_lines" t-value="o.env['account.analytic.line'].search([('account_id', '=', o.project_id.analytic_account_id.id)])"/>
                         <t t-set="header_total_contract_sum" t-value="sum(header_sales_orders.mapped('amount_total'))"/>
                         <t t-set="header_total_budget_cost" t-value="sum(header_sales_orders.mapped('wilco_amount_budget_cost_total'))"/>
-                        <t t-set="header_total_net_payment" t-value="sum(header_analytic_lines.mapped('wilco_amount_payment'))"/>
+                        <t t-set="header_total_net_payment" t-value="sum(header_analytic_lines.mapped('wilco_amount_payment_display'))"/>
                         <t t-set="header_total_revenue" t-value="sum(header_analytic_lines.mapped('wilco_amount_revenue'))"/>
                         <t t-set="header_total_gross_profit" t-value="sum(header_analytic_lines.mapped('wilco_amount_gross_profit'))"/>
                         <t t-set="header_total_net_profit" t-value="sum(header_analytic_lines.mapped('wilco_amount_net_profit'))"/>
@@ -134,14 +134,14 @@
                                 <table class="table table-sm table-bordered">
                                     <thead class="table-light">
                                         <tr>
-                                            <th class="text-center">Total Contract Sum</th>
-                                            <th class="text-center">Total Invoice</th>
-                                            <th class="text-center">Total Budget Cost</th>
-                                            <th class="text-center">Total Vendor Bill</th>
-                                            <th class="text-center">Total Cost &amp; Expense</th>
-                                            <th class="text-center">Estimated GP%</th>
-                                            <th class="text-center">Project P&amp;L</th>
-                                            <th class="text-center">Actual Cash Flow</th>
+                                            <th class="text-center">Total Contract Sum (A)</th>
+                                            <th class="text-center">Total Invoice (B)</th>
+                                            <th class="text-center">Total Budget Cost (C)</th>
+                                            <th class="text-center">Total Vendor Bill (D)</th>
+                                            <th class="text-center">Total Cost &amp; Expense (E)</th>
+                                            <th class="text-center">Estimated GP% (F)</th>
+                                            <th class="text-center">Project P&amp;L (G)</th>
+                                            <th class="text-center">Actual Cash Flow (H)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -199,7 +199,34 @@
                                                 <strong>
                                                     <span t-out="header_total_net_payment" 
                                                           t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
+                                                    <br/>
+                                                    (<span t-out="'%.2f' % ((header_total_net_payment / header_total_invoice_amount * 100) if header_total_invoice_amount != 0 else 0)"/> %)
                                                 </strong>
+                                            </td>
+                                        </tr>
+                                        <!-- Formula Reference Row -->
+                                        <tr style="background-color: #f8f9fa; font-size: 0.85em;">
+                                            <td class="text-center text-muted">
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                <em>% = B / A</em>
+                                            </td>
+                                            <td class="text-center text-muted">
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                <em>% = D / C</em>
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                <em>% = E / C</em>
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                <em>% = (A - C) / A</em>
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                <em>% = G / Revenue</em>
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                <em>% = H / B</em>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -282,23 +309,23 @@
                                             <span t-out="'%.2f' % partner_np_percent"/> %
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_receivable for l in partner_data['lines']])" 
+                                            <span t-out="sum([l.wilco_amount_receivable_display for l in partner_data['lines']])" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_payable for l in partner_data['lines']])" 
+                                            <span t-out="sum([l.wilco_amount_payable_display for l in partner_data['lines']])" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_payment_received for l in partner_data['lines']])" 
+                                            <span t-out="sum([l.wilco_amount_payment_received_display for l in partner_data['lines']])" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_payment_issued for l in partner_data['lines']])" 
+                                            <span t-out="sum([l.wilco_amount_payment_issued_display for l in partner_data['lines']])" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
                                         <td class="text-end">
-                                            <span t-out="sum([l.wilco_amount_payment for l in partner_data['lines']])" 
+                                            <span t-out="sum([l.wilco_amount_payment_display for l in partner_data['lines']])" 
                                                   t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/>
                                         </td>
                                     </tr>
@@ -334,23 +361,23 @@
                                             <strong><span t-out="'%.2f' % total_np_percent"/> %</strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_receivable'))" 
+                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_receivable_display'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payable'))" 
+                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payable_display'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payment_received'))" 
+                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payment_received_display'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payment_issued'))" 
+                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payment_issued_display'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                         <td class="text-end">
-                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payment'))" 
+                                            <strong><span t-out="sum(analytic_lines.mapped('wilco_amount_payment_display'))" 
                                                          t-options="{'widget': 'monetary', 'display_currency': o.project_id.company_id.currency_id}"/></strong>
                                         </td>
                                     </tr>
