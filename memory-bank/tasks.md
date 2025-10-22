@@ -46,12 +46,36 @@ task/
 # MEMORY BANK - TASKS
 
 ## Current Task Status
-- **Status**: ACTIVE - Implementation Phase
-- **Last Updated**: October 16, 2025
-- **Mode**: BUILD MODE (Testing Pending)
-- **Next Task ID**: T003
+- **Status**: ACTIVE - Planning & Implementation Phase
+- **Last Updated**: October 22, 2025
+- **Mode**: PLAN MODE (T003 Created)
+- **Next Task ID**: T004
 
 ## Current Active Tasks
+
+### 🎯 T003: Project Status Listing Report
+- **Status**: 🎯 Planning - Ready for Implementation
+- **Complexity**: L3-High
+- **Priority**: High
+- **Created**: 2025-10-22
+- **Last Updated**: 2025-10-22
+- **Description**: Create a comprehensive Project Status Listing Report displaying all projects in table format with project information and financial summary columns
+- **Files**: [Task Details](./task/T003_project-status-listing/task.md) | [Implementation Plan](./task/T003_project-status-listing/plan.md)
+- **Progress**:
+  - ✅ Phase 0: Task & Plan Creation - Complete (Oct 22)
+  - ⏳ Phase 1: Report Template Creation - Ready to Start
+  - ⏳ Phase 2: Report Action Registration - Pending
+  - ⏳ Phase 3: Testing & Refinement - Pending
+- **Key Features**:
+  - Display all projects in list format with sortable columns
+  - Project Information: Number, Name, Manager, Stage, Award Date, Planned Dates
+  - Financial Summary: Contract Sum, Invoicing, Budget, Vendor Bills, P&L, Cash Flow
+  - PDF export capability
+  - Portfolio-level financial analysis dashboard
+- **Design Approach**: 
+  - QWeb template with project iteration (no wizard needed)
+  - Reuse financial calculation logic from T001
+  - Landscape table format for comprehensive column display
 
 ### 🎯 T002: Invoice & Bill Due Date Display
 - **Status**: Implementation Complete - Testing Pending
