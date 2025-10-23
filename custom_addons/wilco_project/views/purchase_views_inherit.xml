@@ -19,10 +19,6 @@
                 <field name="wilco_document_number"/>
             </xpath>
             <xpath expr="//field[@name='date_order']" position="attributes">
-<!--
-                &lt;!&ndash;Remove invisible of order date&ndash;&gt;
-                <attribute name="attrs">{}</attribute>
--->
                 <attribute name="widget">date</attribute>
             </xpath>
             <xpath expr="//field[@name='date_approve']" position="attributes">

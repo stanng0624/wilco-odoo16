@@ -6,10 +6,6 @@
         <field name="priority">100</field>
         <field name="inherit_id" ref="project.view_project_project_filter"/>
         <field name="arch" type="xml">
-            <!--<xpath expr="//field[@name='name']" position="after">
-              <field name="wilco_project_name" string="Project Name" />
-              <field name="description" string="Description"/>
-            </xpath>-->
             <xpath expr="//field[@name='name']" position="replace">
                 <field name="name"
                    filter_domain="['|', '|', ('name', 'ilike', self), ('wilco_project_name', 'ilike', self), ('description', 'ilike', self)]"/>
@@ -107,6 +103,32 @@
             </xpath>
             <xpath expr="//field[@name='date_start']" position="before">
                 <field name="wilco_date_award"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Kanban View Inheritance for Project with Status Report Button and Modified Click Action -->
+    <record id="wilco_view_project_kanban_inherit" model="ir.ui.view">
+        <field name="name">project.project.kanban.inherit.wilco_project</field>
+        <field name="model">project.project</field>
+        <field name="priority">100</field>
+        <field name="inherit_id" ref="project.view_project_kanban"/>
+        <field name="arch" type="xml">
+            <!-- Change the main kanban click action from action_view_tasks to wilco_action_open_project_master -->
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="action">wilco_action_open_project_master</attribute>
+            </xpath>
+            <!-- Add Project Master as first option in View menu and add Status Report link -->
+            <xpath expr="//a[@name='action_view_tasks']" position="before">
+                <div role="menuitem">
+                    <a name="wilco_action_open_project_master" type="object">Project Master</a>
+                </div>
+            </xpath>
+            <!-- Add Status Report link in the bottom right -->
+            <xpath expr="//div[@class='oe_kanban_bottom_right']" position="inside">
+                <a class="btn btn-sm btn-link" name="%(wilco_project.action_wilco_project_status_report_wizard)d" type="action" context="{'default_project_id': id}">
+                    <i class="fa fa-file-text-o"/> Status Report
+                </a>
             </xpath>
         </field>
     </record>

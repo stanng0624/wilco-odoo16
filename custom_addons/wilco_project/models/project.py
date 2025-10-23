@@ -268,6 +268,23 @@ class Project(models.Model):
                 if project.wilco_total_invoice_amount != 0 else 0.0
             )
 
+    def wilco_action_open_project_master(self):
+        """
+        Open the project in form view (Project Master).
+        Used as the main click action in the project Kanban view.
+        """
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Project Master'),
+            'res_model': 'project.project',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_type': 'form',
+            'views': [(False, 'form')],
+            'target': 'current',
+        }
+
     def wilco_action_view_analytic_lines(self):
         self.ensure_one()
         return {

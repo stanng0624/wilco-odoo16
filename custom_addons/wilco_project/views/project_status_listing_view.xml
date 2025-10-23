@@ -71,7 +71,7 @@
         id="wilco_menu_project_status_listing"
         name="Project Status Listing"
         parent="project.menu_main_pm"
-        sequence="20"/>
+        sequence="1"/>
 
     <!-- Submenu Item: My Project Status Listing -->
     <menuitem
