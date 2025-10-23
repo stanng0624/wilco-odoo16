@@ -50,6 +50,17 @@ class AccountMove(models.Model):
         compute='_wilco_compute_linked_order',
         help="Related Purchase Order(s) for this invoice"
     )
+    wilco_line_project_ids = fields.Many2many(
+        comodel_name='project.project',
+        string='Projects from Analytic Accounts',
+        compute='_wilco_compute_line_project_ids',
+        help='Project IDs extracted from all move lines\' analytic accounts'
+    )
+    wilco_is_linked_project = fields.Boolean(
+        string='Has Linked Project',
+        compute='_wilco_compute_is_linked_project',
+        help='Indicates if the move has a direct project link or line project links'
+    )
 
     def _wilco_compute_linked_order(self):
         """Compute the sales order name(s) related to this invoice"""
@@ -67,6 +78,59 @@ class AccountMove(models.Model):
                     # If multiple orders, join them with comma
                     move.wilco_linked_purchase_order = ', '.join(purchase_orders.mapped('name'))
 
+    @api.depends('line_ids.analytic_distribution')
+    def _wilco_compute_line_project_ids(self):
+        """
+        Compute project IDs from all move lines' analytic accounts.
+        
+        This method extracts project IDs by:
+        1. Collecting all analytic account IDs from the move lines' analytic_distribution
+        2. Finding projects that have these analytic accounts using a single 'in' query
+        3. Returning a many2many of unique project IDs
+        
+        Reason: This allows quick access to all projects associated with a move,
+        even if the move itself doesn't have a direct wilco_project_id.
+        Using a single 'in' query is more performant than searching one-by-one.
+        """
+        for move in self:
+            account_ids = set()
+            
+            # Collect all analytic account IDs from move lines
+            for line in move.line_ids:
+                if line.analytic_distribution:
+                    # analytic_distribution is a dict: {account_id_str: percentage}
+                    for account_id_str in line.analytic_distribution.keys():
+                        try:
+                            account_id = int(account_id_str)
+                            account_ids.add(account_id)
+                        except (ValueError, TypeError):
+                            # Skip if account_id_str is not a valid integer
+                            pass
+            
+            # Find all projects with these analytic accounts in a single query
+            if account_ids:
+                projects = self.env['project.project'].search(
+                    [('analytic_account_id', 'in', list(account_ids))]
+                )
+                move.wilco_line_project_ids = projects
+            else:
+                move.wilco_line_project_ids = self.env['project.project'].browse()
+
+
+    @api.depends('wilco_project_id', 'wilco_line_project_ids')
+    def _wilco_compute_is_linked_project(self):
+        """
+        Check if the move has any project link (direct or from analytic accounts).
+        
+        Returns True if:
+        - The move has a direct project link (wilco_project_id), OR
+        - The move has projects from analytic accounts (wilco_line_project_ids)
+        
+        Reason: This is used to control button visibility for project-related actions
+        in a single condition, instead of checking both fields separately.
+        """
+        for move in self:
+            move.wilco_is_linked_project = bool(move.wilco_project_id or move.wilco_line_project_ids)
 
 
     @api.depends('payment_state', 'line_ids.matched_debit_ids', 'line_ids.matched_credit_ids')
@@ -192,21 +256,43 @@ class AccountMove(models.Model):
 
     def wilco_action_open_project_status_report(self):
         """
-        Open the Project Status Report wizard with the current invoice's project
+        Open the Project Status Report wizard with the current invoice's project(s)
         and pre-select this invoice to be highlighted in the report.
         
+        Combines projects from:
+        1. Direct project link (wilco_project_id) - header project
+        2. Projects from analytic accounts in move lines (wilco_line_project_ids)
+        
+        Example: If header has project A and lines have projects B, C,
+        then the report will show all three: A, B, C
+        
         Reason: This allows users to quickly view the project status report from
-        an invoice context, with the invoice automatically highlighted for easy reference.
+        an invoice context, with the invoice automatically highlighted for easy reference,
+        and to see all related projects in one view.
         """
         self.ensure_one()        
         
-        if not self.wilco_project_id:
+        # Collect all projects: header + line projects
+        project_ids = []
+        
+        # Add header project if exists
+        if self.wilco_project_id:
+            project_ids.append(self.wilco_project_id.id)
+        
+        # Add line projects if exist
+        if self.wilco_line_project_ids:
+            project_ids.extend(self.wilco_line_project_ids.ids)
+        
+        # Remove duplicates while preserving order
+        project_ids = list(dict.fromkeys(project_ids))
+        
+        if not project_ids:
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
                     'title': _('Warning'),
-                    'message': _('This invoice is not linked to a project.'),
+                    'message': _('This invoice is not linked to any project.'),
                     'type': 'warning',
                 }
             }
@@ -218,7 +304,7 @@ class AccountMove(models.Model):
             'view_mode': 'form',
             'target': 'new',
             'context': {
-                'default_project_id': self.wilco_project_id.id,
+                'default_project_ids': project_ids,
                 'default_selected_account_move_id': self.id,
             }
         }
