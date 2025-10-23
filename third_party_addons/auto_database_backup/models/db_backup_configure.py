@@ -662,9 +662,17 @@ class DbBackupConfigure(models.Model):
                     if rec.auto_remove:
                         files = ftp_server.nlst()
                         for file in files:
-                            create_time = fields.datetime.strptime(
-                                ftp_server.sendcmd('MDTM ' + file)[4:],
-                                "%Y%m%d%H%M%S")
+                            create_time_response = ftp_server.sendcmd(
+                                'MDTM ' + file)
+                            timestamp_str = create_time_response[4:].strip()
+                            try:
+                                create_time = fields.datetime.strptime(
+                                    timestamp_str, "%Y%m%d%H%M%S")
+                            except ValueError as e:
+                                _logger.error(
+                                    "Failed to parse timestamp '%s' from FTP server response: %s",
+                                    timestamp_str, e)
+                                create_time = None
                             diff_days = (
                                     fields.datetime.now() - create_time).days
                             if diff_days >= rec.days_to_remove:
@@ -1025,7 +1033,7 @@ class DbBackupConfigure(models.Model):
         if backup_format == 'zip':
             with tempfile.TemporaryDirectory() as dump_dir:
                 filestore = odoo.tools.config.filestore(db_name)
-                cmd.append('--file=' + os.path.join(dump_dir, 'dump.sql'))
+                cmd.insert(-1, '--file=' + os.path.join(dump_dir, 'dump.sql'))
                 subprocess.run(cmd, env=env, stdout=subprocess.DEVNULL,
                                stderr=subprocess.STDOUT, check=True)
                 if os.path.exists(filestore):
@@ -1048,7 +1056,7 @@ class DbBackupConfigure(models.Model):
                     t.seek(0)
                     return t
         else:
-            cmd.append('--format=c')
+            cmd.insert(-1,'--format=c')
             process = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE)
             stdout, _ = process.communicate()
             if stream:
