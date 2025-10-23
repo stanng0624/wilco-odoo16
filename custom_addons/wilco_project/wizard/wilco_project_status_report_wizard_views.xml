@@ -7,8 +7,8 @@
         <field name="arch" type="xml">
             <form string="Project Status Report">
                 <group>
-                    <field name="project_id"/>
-                    <field name="selected_account_move_id"/>
+                    <field name="project_ids" widget="many2many_tags"/>
+                    <field name="selected_account_move_id" domain="[('move_type', 'in', ['out_invoice', 'in_invoice'])]"/>
                 </group>
                 <group string="Report Sections">
                     <group>
@@ -31,19 +31,8 @@
             </form>
         </field>
     </record>
-
-    <!-- Wizard Action -->
-    <record id="action_wilco_project_status_report_wizard" model="ir.actions.act_window">
-        <field name="name">Project Status Report</field>
-        <field name="res_model">wilco.project.status.report.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="context">{'default_project_id': active_id}</field>
-        <field name="binding_model_id" ref="project.model_project_project"/>
-        <field name="binding_view_types">form</field>
-    </record>
     
-    <record id="action_wilco_project_status_report_wizard_form" model="ir.actions.act_window">
+    <record id="action_wilco_project_status_report_wizard" model="ir.actions.act_window">
         <field name="name">Project Status Report</field>
         <field name="res_model">wilco.project.status.report.wizard</field>
         <field name="view_mode">form</field>
@@ -51,9 +40,19 @@
         <field name="context">{}</field>
     </record>    
     
+    <record id="action_wilco_project_status_report_wizard_project" model="ir.actions.act_window">
+        <field name="name">Project Status Report</field>
+        <field name="res_model">wilco.project.status.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_project_ids': active_ids}</field>
+        <field name="binding_model_id" ref="project.model_project_project"/>
+        <field name="binding_view_types">tree,form</field>
+    </record>
+    
     <menuitem id="wilco_menu_project_report_status_report"
               name="Project Status Report"
-              action="wilco_project.action_wilco_project_status_report_wizard_form"
+              action="action_wilco_project_status_report_wizard"
               parent="project.menu_project_report"
               sequence="100"/>
 </odoo>

@@ -69,6 +69,7 @@
             <xpath expr="//field[@name='payment_reference']" position="after">
                 <field name="wilco_our_ref"/>
                 <field name="wilco_contact_info"/>
+                <field name="wilco_is_linked_project" invisible="1"/>
             </xpath>
             <xpath expr="//field[@name='partner_bank_id']" position="after">
                 <field name="invoice_incoterm_id"
@@ -100,7 +101,7 @@
                         type="object"
                         name="wilco_action_view_analytic_lines"
                         icon="fa-usd"
-                        attrs="{'invisible': [('wilco_project_id', '=', False)]}">
+                        attrs="{'invisible': [('wilco_is_linked_project', '=', False)]}">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_text">Analytic</span>
                         <span class="o_stat_text">Items</span>
@@ -110,10 +111,10 @@
                         type="object"
                         name="wilco_action_open_project_status_report"
                         icon="fa-file-text-o"
-                        attrs="{'invisible': [('wilco_project_id', '=', False)]}">
+                        attrs="{'invisible': [('wilco_is_linked_project', '=', False)]}">
                     <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_text">Project</span>
-                        <span class="o_stat_text">Status Report</span>
+                        <span class="o_stat_text">Status</span>
+                        <span class="o_stat_text">Report</span>
                     </div>
                 </button>
             </xpath>
